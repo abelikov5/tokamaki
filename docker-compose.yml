@@ -1,0 +1,65 @@
+name: paints-by-numbers
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: infra/nginx/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - php
+
+  php:
+    build: ./apps/web
+    environment:
+      APP_NAME: Paints by Numbers
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: "base64:1pQXFNn3NK1FpSMFVyEpSqERa3z55XvLh1HJ2avdr/I="
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: paints
+      DB_USERNAME: paints
+      DB_PASSWORD: paints
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      GENERATOR_URL: http://generator:8000
+    command: sh -c "php artisan migrate --force && php-fpm"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      generator:
+        condition: service_started
+
+  generator:
+    build: ./services/generator
+    volumes:
+      - generator-results:/app/data/results
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: paints
+      POSTGRES_USER: paints
+      POSTGRES_PASSWORD: paints
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paints -d paints"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+volumes:
+  generator-results:
+  postgres-data:
+  redis-data:

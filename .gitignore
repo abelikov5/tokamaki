@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+.next/
+services/generator/demo-output/
+services/generator/data/results/
+!.gitkeep
+.env
+apps/web/vendor/
+apps/web/storage/*.key
+apps/web/storage/framework/cache/data/*
+apps/web/storage/framework/sessions/*
+apps/web/storage/framework/views/*
+apps/web/storage/logs/*
+apps/web/database/database.sqlite

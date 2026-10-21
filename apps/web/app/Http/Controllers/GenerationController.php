@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Generation;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
+use Throwable;
+
+class GenerationController extends Controller
+{
+    public function index()
+    {
+        return view('generations.index');
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:20480'],
+            'colors' => ['required', 'integer', Rule::in([16, 24, 36, 48])],
+            'min_region_size' => ['required', 'integer', 'between:10,5000'],
+            'smoothing' => ['required', 'numeric', 'between:0,5'],
+            'min_region_width' => ['required', 'numeric', 'between:0,20'],
+            'contour_smoothing' => ['required', 'numeric', 'between:0.25,8'],
+            'complexity' => ['required', Rule::in(['detailed', 'balanced', 'simple', 'minimal'])],
+            'line_separation' => ['required', 'numeric', 'between:0,10'],
+            'label_density' => ['required', 'numeric', 'between:0.25,3'],
+        ]);
+
+        $image = $request->file('image');
+        $settings = collect($validated)->except('image')->all();
+        $generation = Generation::create([
+            'status' => 'processing',
+            'original_name' => $image->getClientOriginalName(),
+            'settings' => $settings,
+        ]);
+
+        try {
+            $response = Http::timeout(config('services.generator.timeout'))
+                ->attach(
+                    'file',
+                    file_get_contents($image->getRealPath()),
+                    $image->getClientOriginalName(),
+                    ['Content-Type' => $image->getMimeType()]
+                )
+                ->post(config('services.generator.url').'/api/v1/process', $settings);
+
+            if ($response->failed()) {
+                $message = $response->json('detail') ?? 'Генератор не смог обработать изображение.';
+                $generation->update(['status' => 'failed', 'error' => $message]);
+
+                return response()->json(['message' => $message], $response->status());
+            }
+
+            $payload = $response->json();
+            $generation->update([
+                'status' => 'completed',
+                'result_id' => $payload['result_id'],
+                'palette' => $payload['palette'],
+                'diagnostics' => $payload['diagnostics'],
+                'completed_at' => now(),
+            ]);
+
+            $payload['generation_id'] = $generation->id;
+            $payload['downloads'] = collect([
+                'preview' => 'preview.png',
+                'svg' => 'scheme.svg',
+                'pdf' => 'scheme.pdf',
+                'palette' => 'palette.json',
+                'diagnostics' => 'diagnostics.json',
+            ])->map(fn (string $filename) => route('generations.download', [$generation, $filename]));
+
+            return response()->json($payload);
+        } catch (ConnectionException) {
+            $message = 'Python-генератор недоступен. Запустите его на порту 8001.';
+            $generation->update(['status' => 'failed', 'error' => $message]);
+
+            return response()->json(['message' => $message], 503);
+        } catch (Throwable $exception) {
+            report($exception);
+            $generation->update(['status' => 'failed', 'error' => $exception->getMessage()]);
+
+            return response()->json(['message' => 'Внутренняя ошибка обработки изображения.'], 500);
+        }
+    }
+
+    public function download(Generation $generation, string $filename): Response
+    {
+        abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+
+        $response = Http::timeout(config('services.generator.timeout'))
+            ->get(config('services.generator.url')."/api/v1/results/{$generation->result_id}/{$filename}");
+
+        abort_if($response->failed(), $response->status());
+
+        return response($response->body(), 200, [
+            'Content-Type' => $response->header('Content-Type', 'application/octet-stream'),
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
+        ]);
+    }
+}
