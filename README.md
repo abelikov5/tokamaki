@@ -48,7 +48,23 @@ php artisan serve --port 8000
 docker compose up --build
 ```
 
-Страница будет доступна на `http://localhost:8080`. Compose поднимает Nginx, Laravel/PHP-FPM, Python-генератор, PostgreSQL и Redis.
+По умолчанию страница будет доступна только локально на `http://127.0.0.1:8081`. Compose поднимает Nginx, Laravel/PHP-FPM, Python-генератор, PostgreSQL и Redis.
+
+## Production-деплой
+
+Production использует отдельный Compose project `tokamaki` и публикует контейнерный Nginx только на `127.0.0.1:8081`. Системный Nginx проксирует домен `tokamaki.ru` на этот порт.
+
+Первичная настройка на сервере:
+
+```bash
+git clone https://github.com/abelikov5/tokamaki.git /opt/tokamaki
+cd /opt/tokamaki
+cp .env.production.example .env
+# Укажите APP_KEY и случайный DB_PASSWORD в .env
+./scripts/deploy.sh
+```
+
+После первичной настройки push в `main` запускает `.github/workflows/deploy.yml`: сервер получает актуальный commit через Git и пересобирает только контейнеры проекта `tokamaki`. Секреты `DEPLOY_SSH_KEY` и `DEPLOY_KNOWN_HOSTS` хранятся в GitHub Environment `production`, а production `.env` остаётся только на VDS.
 
 ## Тесты
 

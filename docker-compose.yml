@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: infra/nginx/Dockerfile
     ports:
-      - "8080:80"
+      - "${TOKAMAKI_BIND_ADDRESS:-127.0.0.1}:${TOKAMAKI_HTTP_PORT:-8081}:80"
+    restart: unless-stopped
     depends_on:
       - php
 
@@ -16,19 +17,22 @@ services:
       APP_NAME: Paints by Numbers
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_KEY: "base64:1pQXFNn3NK1FpSMFVyEpSqERa3z55XvLh1HJ2avdr/I="
-      APP_URL: http://localhost:8080
+      APP_KEY: ${APP_KEY:?APP_KEY must be set in the root .env file}
+      APP_URL: ${APP_URL:-https://tokamaki.ru}
+      LOG_LEVEL: ${LOG_LEVEL:-warning}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
       DB_DATABASE: paints
       DB_USERNAME: paints
-      DB_PASSWORD: paints
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in the root .env file}
       CACHE_STORE: database
       SESSION_DRIVER: database
       QUEUE_CONNECTION: database
       GENERATOR_URL: http://generator:8000
+      GENERATOR_TIMEOUT: 360
     command: sh -c "php artisan migrate --force && php-fpm"
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +41,8 @@ services:
 
   generator:
     build: ./services/generator
+    init: true
+    restart: unless-stopped
     volumes:
       - generator-results:/app/data/results
 
@@ -45,7 +51,8 @@ services:
     environment:
       POSTGRES_DB: paints
       POSTGRES_USER: paints
-      POSTGRES_PASSWORD: paints
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in the root .env file}
+    restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -56,6 +63,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     volumes:
       - redis-data:/data
 
