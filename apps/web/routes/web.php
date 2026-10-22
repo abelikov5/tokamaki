@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [GenerationController::class, 'index'])->name('home');
 Route::post('/generations', [GenerationController::class, 'store'])->name('generations.store');
+Route::post('/generations/{generation}/edit', [GenerationController::class, 'edit'])->name('generations.edit');
 Route::get('/generations/{generation}/files/{filename}', [GenerationController::class, 'download'])
     ->where('filename', 'preview\.png|scheme\.svg|scheme\.pdf|palette\.json|diagnostics\.json')
     ->name('generations.download');

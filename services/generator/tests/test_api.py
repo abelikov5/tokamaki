@@ -1,3 +1,4 @@
+import base64
 import io
 
 import numpy as np
@@ -5,7 +6,14 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.main import app
-from app.services.processor import _place_label_points, _separate_close_lines
+from app.services.processor import (
+    _estimate_color_count,
+    _erase_selected_components,
+    _erase_stroke_locally,
+    _merge_unlabeled_components,
+    _place_label_points,
+    _separate_close_lines,
+)
 
 
 def sample_png() -> bytes:
@@ -44,6 +52,8 @@ def test_process_full_flow():
     assert body["svg_data_url"].startswith("data:image/svg+xml;base64,")
     assert body["diagnostics"]["segments"] > 0
     assert 1 <= body["diagnostics"]["actual_colors"] <= 16
+    assert body["diagnostics"]["color_mode"] == "manual"
+    assert body["diagnostics"]["estimated_colors"] is None
     assert body["diagnostics"]["thin_regions_after_merge"] == 0
     assert body["diagnostics"]["contour_smoothing"] == 2
     assert body["diagnostics"]["complexity"] == "balanced"
@@ -55,6 +65,154 @@ def test_process_full_flow():
     svg = client.get(f'/api/v1/results/{body["result_id"]}/scheme.svg')
     assert svg.status_code == 200
     assert b"<svg" in svg.content and b"<text" in svg.content
+
+
+def test_auto_color_mode_detects_flat_illustration_palette():
+    client = TestClient(app)
+    response = client.post(
+        "/api/v1/process",
+        files={"file": ("sample.png", sample_png(), "image/png")},
+        data={"auto_colors": "true", "min_region_size": "25"},
+    )
+
+    assert response.status_code == 200, response.text
+    diagnostics = response.json()["diagnostics"]
+    assert diagnostics["color_mode"] == "auto"
+    assert diagnostics["estimated_colors"] == 4
+    assert diagnostics["requested_colors"] == 4
+    assert diagnostics["actual_colors"] <= 4
+
+
+def test_color_estimator_ignores_jpeg_edge_noise():
+    colors = np.asarray([
+        [24, 54, 93],
+        [245, 151, 148],
+        [255, 248, 224],
+        [235, 190, 74],
+        [65, 151, 126],
+        [189, 71, 126],
+        [114, 92, 146],
+        [238, 106, 61],
+    ], dtype=np.uint8)
+    image = np.repeat(colors[np.newaxis, :, :], 120, axis=0)
+    image = np.repeat(image, 80, axis=1)
+    buffer = io.BytesIO()
+    Image.fromarray(image).save(buffer, "JPEG", quality=86)
+    decoded = np.asarray(Image.open(io.BytesIO(buffer.getvalue())).convert("RGB"))
+
+    assert 7 <= _estimate_color_count(decoded) <= 9
+
+
+def test_editor_can_unify_connected_background_and_rebuild_files():
+    client = TestClient(app)
+    generated = client.post(
+        "/api/v1/process",
+        files={"file": ("sample.png", sample_png(), "image/png")},
+        data={"colors": "16", "min_region_size": "25"},
+    ).json()
+
+    edited = client.post(
+        f'/api/v1/results/{generated["result_id"]}/edit',
+        json={
+            "operation": "unify_background",
+            "x": 5,
+            "y": 5,
+            "target_number": generated["palette"][0]["number"],
+            "tolerance": 100,
+        },
+    )
+
+    assert edited.status_code == 200, edited.text
+    body = edited.json()
+    assert body["result_id"] != generated["result_id"]
+    assert body["diagnostics"]["actual_colors"] == 1
+    assert body["diagnostics"]["segments"] == 1
+    assert client.get(body["pdf_url"]).content.startswith(b"%PDF")
+
+
+def test_editor_applies_queued_eraser_and_smoothing_strokes():
+    client = TestClient(app)
+    generated = client.post(
+        "/api/v1/process",
+        files={"file": ("sample.png", sample_png(), "image/png")},
+        data={"colors": "16", "min_region_size": "25"},
+    ).json()
+
+    target = generated["palette"][0]
+    preview_bytes = base64.b64decode(generated["preview_data_url"].split(",", 1)[1])
+    preview = np.asarray(Image.open(io.BytesIO(preview_bytes)).convert("RGB"))
+    target_pixels = np.argwhere(np.all(preview == target["rgb"], axis=2))
+    y, x = (int(value) for value in target_pixels[len(target_pixels) // 2])
+    response = client.post(
+        f'/api/v1/results/{generated["result_id"]}/edit',
+        json={
+            "operations": [
+                {
+                    "operation": "erase_stroke",
+                    "erase_mode": "color",
+                    "target_number": target["number"],
+                    "points": [[x, y]],
+                    "radius": 3,
+                },
+                {
+                    "operation": "erase_stroke",
+                    "erase_mode": "local",
+                    "points": [[120, 90], [125, 90]],
+                    "radius": 3,
+                },
+                {
+                    "operation": "smooth_stroke",
+                    "points": [[70, 80], [95, 95], [120, 92]],
+                    "radius": 7,
+                },
+                {
+                    "operation": "magic_stroke",
+                    "points": [[40, 40], [45, 45]],
+                    "radius": 6,
+                },
+            ]
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["result_id"] != generated["result_id"]
+
+
+def test_eraser_merges_the_complete_selected_component_into_a_neighbor():
+    labels = np.zeros((12, 12), dtype=np.int32)
+    labels[3:9, 4:8] = 1
+    centers = np.asarray([[128, 128, 128], [180, 128, 128]], dtype=np.uint8)
+    stroke_mask = np.zeros_like(labels, dtype=bool)
+    stroke_mask[5, 5] = True
+
+    edited = _erase_selected_components(labels, centers, stroke_mask, target_index=1)
+
+    assert not np.any(edited == 1)
+
+
+def test_local_eraser_only_replaces_pixels_under_the_stroke():
+    labels = np.zeros((12, 12), dtype=np.int32)
+    labels[3:9, 4:8] = 1
+    stroke_mask = labels == 1
+
+    edited = _erase_stroke_locally(labels, stroke_mask)
+
+    assert not np.any(edited == 1)
+    assert np.array_equal(edited[~stroke_mask], labels[~stroke_mask])
+
+
+def test_magic_brush_merges_an_unlabeled_component_into_the_largest_neighbor():
+    labels = np.zeros((20, 20), dtype=np.int32)
+    labels[:, 12:] = 2
+    labels[8:11, 10:13] = 1
+    stroke_mask = np.zeros_like(labels, dtype=bool)
+    stroke_mask[9, 11] = True
+
+    edited = _merge_unlabeled_components(labels, stroke_mask, min_size=100, label_density=1)
+
+    assert not np.any(edited == 1)
+    assert np.all(edited[8:11, 10:13] == 0)
+    assert np.array_equal(edited[~(labels == 1)], labels[~(labels == 1)])
 
 
 def test_rejects_wrong_file_type():

@@ -26,11 +26,17 @@
 
         <section class="controls">
             <div class="control-row">
-                <label>Количество цветов
-                    <select name="colors">
-                        <option>16</option><option selected>24</option><option>36</option><option>48</option>
-                    </select>
-                </label>
+                <div class="color-control">
+                    <label class="range" id="color-range">Количество цветов <output data-for="colors">24</output>
+                        <input id="colors" name="colors" type="range" min="4" max="48" step="1" value="24">
+                    </label>
+                    <label class="auto-colors" for="auto-colors">
+                        <input id="auto-colors" name="auto_colors" type="checkbox" value="1">
+                        <span aria-hidden="true"></span>
+                        <strong>Авто</strong>
+                        <small>Определить число заметных цветов по изображению</small>
+                    </label>
+                </div>
                 <label>Сложность областей
                     <select name="complexity">
                         <option value="detailed">Детальная</option>
@@ -67,10 +73,89 @@
 
     <section id="result" class="result" hidden>
         <div id="stats" class="stats"></div>
-        <div class="visuals">
-            <article class="panel"><h2>Цветное превью</h2><img id="result-preview" alt="Цветное превью"></article>
-            <article class="panel"><h2>Схема с номерами</h2><img id="result-scheme" alt="Схема с номерами"></article>
-        </div>
+        <article class="panel editor-panel">
+            <div class="editor-heading">
+                <div>
+                    <p class="eyebrow">Редактор картины</p>
+                    <h2>Локальная правка контуров</h2>
+                </div>
+                <p>Нанесите несколько правок, затем перестройте контуры и номера одной кнопкой или клавишей Enter.</p>
+            </div>
+            <div class="editor-workspace">
+                <aside class="toolbox" aria-label="Инструменты редактора">
+                    <div class="tool-group">
+                        <strong>Вид</strong>
+                        <div class="segmented">
+                            <button type="button" data-view="scheme" class="selected">Контуры</button>
+                            <button type="button" data-view="color">Цвет</button>
+                        </div>
+                    </div>
+                    <div class="tool-group">
+                        <strong>Инструмент</strong>
+                        <div class="tool-grid">
+                            <button type="button" data-tool="pan" class="selected">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V7a2 2 0 0 1 4 0v3-5a2 2 0 0 1 4 0v5-3a2 2 0 0 1 4 0v7c0 5-3 8-8 8-3 0-5-2-7-5l-2-3a2 2 0 0 1 3-2l2 2v-3Z"/></svg>
+                                Рука
+                            </button>
+                            <button type="button" data-tool="eyedropper">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m19 3 2 2-9.5 9.5-4 1 1-4L18 2l1 1Z"/><path d="m14 6 4 4M7.5 15.5 4 19v2h2l3.5-3.5"/></svg>
+                                Пипетка
+                            </button>
+                            <button type="button" data-tool="brush">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14 15 7-7-5-5-7 7"/><path d="M14 15c-1 5-4 7-9 6 2-1 1-3 2-5 1-3 4-4 7-1Z"/></svg>
+                                Кисть
+                            </button>
+                            <button type="button" data-tool="eraser">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 15 9-10a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-7 8H7l-4-4a2 2 0 0 1 0-2Z"/><path d="m8 10 7 7M13 21h8"/></svg>
+                                Ластик
+                            </button>
+                            <button type="button" data-tool="smooth">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15c3-8 6 8 9 0s6 8 9 0"/><path d="M4 20h16"/></svg>
+                                Сгладить
+                            </button>
+                            <button type="button" data-tool="magic">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 10-10"/><path d="m12 8 4 4"/><path d="M18 2v4M16 4h4M7 3v3M5.5 4.5h3M20 15v3M18.5 16.5h3"/></svg>
+                                Волшебная кисть
+                            </button>
+                        </div>
+                    </div>
+                    <div id="eraser-options" class="tool-group" hidden>
+                        <strong>Режим ластика</strong>
+                        <div class="segmented eraser-modes">
+                            <button type="button" data-eraser-mode="color" class="selected">По цвету</button>
+                            <button type="button" data-eraser-mode="local">Обычный</button>
+                        </div>
+                        <small id="eraser-mode-help">Удаляет весь сегмент выбранного цвета.</small>
+                    </div>
+                    <div class="tool-group">
+                        <strong>Масштаб</strong>
+                        <div class="zoom-controls">
+                            <button id="zoom-out" type="button" title="Уменьшить">−</button>
+                            <output id="zoom-value">100%</output>
+                            <button id="zoom-in" type="button" title="Увеличить">+</button>
+                            <button id="zoom-fit" type="button">Вписать</button>
+                        </div>
+                    </div>
+                    <label class="range tool-size">Размер инструмента <output data-for="brush-size">12 px</output>
+                        <input id="brush-size" type="range" min="2" max="60" step="1" value="12" data-unit=" px">
+                    </label>
+                    <div id="brush-colors" class="tool-group">
+                        <strong>Выбранный цвет</strong>
+                        <div id="editor-palette" class="editor-palette"></div>
+                    </div>
+                    <p id="tool-help" class="tool-help">Перетаскивайте холст мышью. Масштаб также меняется колёсиком с Ctrl.</p>
+                    <div class="edit-actions">
+                        <button id="apply-edits" type="button" disabled>Применить изменения <kbd>Enter</kbd></button>
+                        <button id="discard-edits" type="button" disabled>Отменить правки</button>
+                    </div>
+                    <span id="editor-status"></span>
+                </aside>
+                <div id="editor-stage" class="editor-stage">
+                    <canvas id="editor-canvas" aria-label="Редактируемая схема"></canvas>
+                    <div id="editor-loader" hidden>Перестраиваем схему…</div>
+                </div>
+            </div>
+        </article>
         <nav id="downloads" class="downloads" aria-label="Скачать результаты"></nav>
         <article class="panel palette-panel"><h2>Палитра</h2><div id="palette" class="palette"></div></article>
     </section>

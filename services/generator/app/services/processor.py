@@ -42,6 +42,14 @@ class ProcessingResult:
     pdf: bytes
     palette: list[dict]
     diagnostics: dict
+    editor_state: "EditorState"
+
+
+@dataclass
+class EditorState:
+    labels: np.ndarray
+    lab_centers: np.ndarray
+    settings: dict
 
 
 def _resize_for_processing(image: np.ndarray, max_side: int) -> np.ndarray:
@@ -78,6 +86,56 @@ def _lab_distance(a: np.ndarray, b: np.ndarray) -> float:
         return np.array([value[0] * 100.0 / 255.0, value[1] - 128.0, value[2] - 128.0])
 
     return float(deltaE_ciede2000(standard(a), standard(b)))
+
+
+def _estimate_color_count(rgb: np.ndarray, max_colors: int = 48) -> int:
+    """Estimate a useful palette size while ignoring JPEG noise and edge blends."""
+    preview = _resize_for_processing(rgb, 220)
+    lab = cv2.cvtColor(preview, cv2.COLOR_RGB2LAB)
+    pixels = lab.reshape(-1, 3).astype(np.float32)
+    if len(pixels) > 20_000:
+        indices = np.linspace(0, len(pixels) - 1, 20_000, dtype=np.int32)
+        pixels = pixels[indices]
+
+    unique_colors = np.unique(pixels, axis=0)
+    candidate_count = min(32, max_colors, len(unique_colors))
+    if candidate_count <= 1:
+        return 1
+
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 24, 0.6)
+    cv2.setRNGSeed(42)
+    _, assignments, centers = cv2.kmeans(
+        pixels,
+        candidate_count,
+        None,
+        criteria,
+        2,
+        cv2.KMEANS_PP_CENTERS,
+    )
+    counts = np.bincount(assignments.ravel(), minlength=candidate_count)
+    minimum_cluster_size = max(10, round(len(pixels) * 0.0075))
+    merged_centers: list[np.ndarray] = []
+    merged_counts: list[int] = []
+
+    for index in np.argsort(counts)[::-1]:
+        count = int(counts[index])
+        if count < minimum_cluster_size:
+            continue
+        center = centers[index].astype(np.float64)
+        if merged_centers:
+            distances = [_lab_distance(center, existing) for existing in merged_centers]
+            nearest = int(np.argmin(distances))
+            if distances[nearest] < 10.0:
+                total = merged_counts[nearest] + count
+                merged_centers[nearest] = (
+                    merged_centers[nearest] * merged_counts[nearest] + center * count
+                ) / total
+                merged_counts[nearest] = total
+                continue
+        merged_centers.append(center)
+        merged_counts.append(count)
+
+    return max(1, min(max_colors, len(merged_centers)))
 
 
 def _smooth_image(rgb: np.ndarray, strength: float) -> np.ndarray:
@@ -471,47 +529,27 @@ def _build_pdf(
     return output.getvalue()
 
 
-def process_image(
-    data: bytes,
-    color_count: int,
-    min_region_size: int,
-    max_side: int = 1200,
-    smoothing: float = 2.0,
-    min_region_width: float = 4.0,
-    contour_smoothing: float = 2.0,
-    complexity: str = "balanced",
-    line_separation: float = 2.0,
-    label_density: float = 1.0,
-) -> ProcessingResult:
-    started = time.perf_counter()
-    if complexity not in COMPLEXITY_PRESETS:
-        raise ValueError(f"Unknown complexity preset: {complexity}")
-    if not 0.25 <= label_density <= 3.0:
-        raise ValueError("label_density must be between 0.25 and 3")
-    preset = COMPLEXITY_PRESETS[complexity]
-    effective_min_size = max(1, round(min_region_size * preset["area"]))
-    effective_min_width = min_region_width * preset["width"]
-    effective_contour_smoothing = contour_smoothing * preset["contour"]
-    effective_line_separation = line_separation * preset["separation"]
-    rgb = _decode_image(data, max_side)
-    smoothed_rgb = _smooth_image(rgb, smoothing)
-    labels, centers = _quantize_lab(smoothed_rgb, color_count)
-    labels = _separate_close_lines(labels, effective_line_separation)
-    labels, small_before, thin_before = _merge_small_regions(
-        labels, centers, effective_min_size, effective_min_width
-    )
-
+def _palette_layout(labels: np.ndarray, rgb_centers: np.ndarray) -> tuple[list[int], dict[int, int]]:
     used = sorted(int(index) for index in np.unique(labels))
-    rgb_centers = _palette_rgb(centers)
     # Stable numbering: darkest to lightest, then hue-like RGB order.
     used.sort(key=lambda index: (int(np.sum(rgb_centers[index])), *map(int, rgb_centers[index])))
-    palette_numbers = {index: number for number, index in enumerate(used, 1)}
-    target_area_per_label = labels.size * (0.012 / label_density)
+    return used, {index: number for number, index in enumerate(used, 1)}
+
+
+def _render_editable_result(
+    labels: np.ndarray,
+    centers: np.ndarray,
+    settings: dict,
+    started: float,
+) -> ProcessingResult:
+    rgb_centers = _palette_rgb(centers)
+    used, palette_numbers = _palette_layout(labels, rgb_centers)
+    target_area_per_label = labels.size * (0.012 / settings["label_density"])
     regions, small_after, thin_after = _extract_regions(
         labels,
-        effective_min_size,
-        effective_min_width,
-        effective_contour_smoothing,
+        settings["effective_min_region_size"],
+        settings["effective_min_region_width"],
+        settings["effective_contour_smoothing"],
         target_area_per_label,
     )
 
@@ -533,19 +571,353 @@ def process_image(
         })
 
     height, width = labels.shape
-    boundaries = _extract_unique_boundaries(labels, effective_contour_smoothing)
-    svg = _build_svg(width, height, regions, palette_numbers, boundaries, preset["curve"])
+    boundaries = _extract_unique_boundaries(labels, settings["effective_contour_smoothing"])
+    svg = _build_svg(width, height, regions, palette_numbers, boundaries, settings["curve_strength"])
     pdf = _build_pdf(
-        width, height, regions, palette_numbers, palette, boundaries, preset["curve"]
+        width, height, regions, palette_numbers, palette, boundaries, settings["curve_strength"]
     )
     diagnostics = {
-        "requested_colors": color_count,
+        "requested_colors": settings["requested_colors"],
         "actual_colors": len(used),
+        "color_mode": settings.get("color_mode", "manual"),
+        "estimated_colors": settings.get("estimated_colors"),
         "segments": len(regions),
-        "small_regions_before_merge": small_before,
+        "small_regions_before_merge": settings.get("small_regions_before_merge", 0),
         "small_regions_after_merge": small_after,
-        "thin_regions_before_merge": thin_before,
+        "thin_regions_before_merge": settings.get("thin_regions_before_merge", 0),
         "thin_regions_after_merge": thin_after,
+        "smoothing": settings["smoothing"],
+        "min_region_width": settings["min_region_width"],
+        "contour_smoothing": settings["contour_smoothing"],
+        "complexity": settings["complexity"],
+        "line_separation": settings["line_separation"],
+        "effective_min_region_size": settings["effective_min_region_size"],
+        "effective_min_region_width": round(settings["effective_min_region_width"], 2),
+        "effective_contour_smoothing": round(settings["effective_contour_smoothing"], 2),
+        "effective_line_separation": round(settings["effective_line_separation"], 2),
+        "boundary_paths": len(boundaries),
+        "label_density": settings["label_density"],
+        "labels_placed": sum(len(region.label_points) for region in regions),
+        "processing_width": width,
+        "processing_height": height,
+        "processing_ms": round((time.perf_counter() - started) * 1000),
+    }
+    state = EditorState(labels.copy(), centers.copy(), settings.copy())
+    return ProcessingResult(buffer.getvalue(), svg, pdf, palette, diagnostics, state)
+
+
+def _stroke_mask(shape: tuple[int, int], points: list[tuple[float, float]], radius: int) -> np.ndarray:
+    if not points:
+        raise ValueError("Stroke must contain at least one point")
+    height, width = shape
+    clipped = [
+        (
+            min(width - 1, max(0, int(round(x)))),
+            min(height - 1, max(0, int(round(y)))),
+        )
+        for x, y in points
+    ]
+    mask = np.zeros(shape, dtype=np.uint8)
+    thickness = max(1, radius * 2)
+    if len(clipped) == 1:
+        cv2.circle(mask, clipped[0], radius, 1, thickness=-1)
+    else:
+        for start, end in zip(clipped, clipped[1:]):
+            cv2.line(mask, start, end, 1, thickness=thickness, lineType=cv2.LINE_AA)
+        cv2.circle(mask, clipped[0], radius, 1, thickness=-1)
+        cv2.circle(mask, clipped[-1], radius, 1, thickness=-1)
+    return mask.astype(bool)
+
+
+def _smooth_labels_in_mask(labels: np.ndarray, mask: np.ndarray, kernel_size: int) -> np.ndarray:
+    kernel_size = max(3, kernel_size | 1)
+    used = [int(value) for value in np.unique(labels)]
+    scores = np.stack([
+        cv2.boxFilter(
+            (labels == index).astype(np.float32),
+            ddepth=-1,
+            ksize=(kernel_size, kernel_size),
+            normalize=False,
+            borderType=cv2.BORDER_REPLICATE,
+        )
+        for index in used
+    ])
+    majority = np.asarray(used, dtype=np.int32)[np.argmax(scores, axis=0)]
+    smoothed = labels.copy()
+    smoothed[mask] = majority[mask]
+    return smoothed
+
+
+def _erase_selected_components(
+    labels: np.ndarray,
+    centers: np.ndarray,
+    stroke_mask: np.ndarray,
+    target_index: int,
+) -> np.ndarray:
+    target_mask = (labels == target_index).astype(np.uint8)
+    _, components = cv2.connectedComponents(target_mask, 8)
+    selected_components = [
+        int(component_id)
+        for component_id in np.unique(components[stroke_mask & (components > 0)])
+        if component_id > 0
+    ]
+    if not selected_components:
+        raise ValueError("The eraser did not touch the selected color")
+
+    edited = labels.copy()
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    for component_id in selected_components:
+        component = components == component_id
+        border = cv2.dilate(component.astype(np.uint8), kernel, iterations=1).astype(bool) & ~component
+        neighbor_values = edited[border]
+        neighbor_values = neighbor_values[neighbor_values != target_index]
+        if not neighbor_values.size:
+            raise ValueError("Cannot determine a neighboring area for the eraser")
+        candidates, border_counts = np.unique(neighbor_values, return_counts=True)
+        scores = [
+            _lab_distance(centers[target_index], centers[int(candidate)])
+            - min(12.0, float(border_count) * 0.35)
+            for candidate, border_count in zip(candidates, border_counts)
+        ]
+        edited[component] = int(candidates[int(np.argmin(scores))])
+    return edited
+
+
+def _erase_stroke_locally(labels: np.ndarray, stroke_mask: np.ndarray) -> np.ndarray:
+    if np.all(stroke_mask):
+        raise ValueError("The eraser stroke cannot cover the entire image")
+    nearest = distance_transform_edt(
+        stroke_mask,
+        return_distances=False,
+        return_indices=True,
+    )
+    edited = labels.copy()
+    nearest_labels = labels[tuple(nearest)]
+    edited[stroke_mask] = nearest_labels[stroke_mask]
+    return edited
+
+
+def _merge_unlabeled_components(
+    labels: np.ndarray,
+    stroke_mask: np.ndarray,
+    min_size: int,
+    label_density: float,
+) -> np.ndarray:
+    region_ids = np.full(labels.shape, -1, dtype=np.int32)
+    region_masks: list[np.ndarray] = []
+    region_palette_indices: list[int] = []
+    region_areas: list[int] = []
+    unlabeled_region_ids: set[int] = set()
+    target_area_per_label = labels.size * (0.012 / label_density)
+
+    for palette_index in sorted(int(value) for value in np.unique(labels)):
+        binary = (labels == palette_index).astype(np.uint8)
+        count, components, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        for component_id in range(1, count):
+            component = components == component_id
+            area = int(stats[component_id, cv2.CC_STAT_AREA])
+            region_id = len(region_masks)
+            region_ids[component] = region_id
+            region_masks.append(component)
+            region_palette_indices.append(palette_index)
+            region_areas.append(area)
+
+            label_points: list[tuple[float, float]] = []
+            if area >= max(24, min_size // 2):
+                label_points = _place_label_points(
+                    component.astype(np.uint8),
+                    area,
+                    target_area_per_label,
+                )
+            if not label_points:
+                unlabeled_region_ids.add(region_id)
+
+    touched_region_ids = {
+        int(region_id)
+        for region_id in np.unique(region_ids[stroke_mask])
+        if int(region_id) in unlabeled_region_ids
+    }
+    edited = labels.copy()
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    for region_id in sorted(touched_region_ids, key=lambda value: region_areas[value]):
+        component = region_masks[region_id]
+        border = cv2.dilate(component.astype(np.uint8), kernel, iterations=1).astype(bool) & ~component
+        neighboring_ids, border_counts = np.unique(region_ids[border], return_counts=True)
+        candidates = [
+            (int(neighbor_id), int(border_count))
+            for neighbor_id, border_count in zip(neighboring_ids, border_counts)
+            if neighbor_id >= 0 and int(neighbor_id) not in touched_region_ids
+        ]
+        if not candidates:
+            candidates = [
+                (int(neighbor_id), int(border_count))
+                for neighbor_id, border_count in zip(neighboring_ids, border_counts)
+                if neighbor_id >= 0 and int(neighbor_id) != region_id
+            ]
+        if not candidates:
+            continue
+        target_region_id, _ = max(
+            candidates,
+            key=lambda candidate: (region_areas[candidate[0]], candidate[1]),
+        )
+        edited[component] = region_palette_indices[target_region_id]
+    return edited
+
+
+def _apply_edit_operation(
+    labels: np.ndarray,
+    centers: np.ndarray,
+    number_to_index: dict[int, int],
+    settings: dict,
+    operation: dict,
+) -> np.ndarray:
+    operation_name = operation["operation"]
+    erase_mode = operation.get("erase_mode", "color")
+    target_number = operation.get("target_number")
+    target_index = number_to_index.get(target_number)
+    needs_target = operation_name in {"recolor_region", "unify_background", "paint_stroke"} or (
+        operation_name == "erase_stroke" and erase_mode == "color"
+    )
+    if needs_target:
+        if target_index is None:
+            raise ValueError("Target palette number is not used in this result")
+
+    if operation_name in {"recolor_region", "unify_background"}:
+        x = int(operation.get("x", 0))
+        y = int(operation.get("y", 0))
+        height, width = labels.shape
+        if not (0 <= x < width and 0 <= y < height):
+            raise ValueError("Selected point is outside the image")
+
+    if operation_name == "recolor_region":
+        source_index = int(labels[y, x])
+        source_mask = (labels == source_index).astype(np.uint8)
+        _, components = cv2.connectedComponents(source_mask, 8)
+        selected_component = int(components[y, x])
+        edited = labels.copy()
+        edited[components == selected_component] = target_index
+        return edited
+    if operation_name == "unify_background":
+        source_index = int(labels[y, x])
+        tolerance = float(operation.get("tolerance", 12.0))
+        allowed = [
+            index for index in np.unique(labels)
+            if _lab_distance(centers[source_index], centers[int(index)]) <= tolerance
+        ]
+        candidate_mask = np.isin(labels, allowed).astype(np.uint8)
+        _, components = cv2.connectedComponents(candidate_mask, 8)
+        selected_component = int(components[y, x])
+        edited = labels.copy()
+        edited[components == selected_component] = target_index
+        return edited
+
+    points = operation.get("points") or []
+    radius = int(operation.get("radius", 8))
+    changed_mask = _stroke_mask(labels.shape, points, radius)
+    if operation_name == "paint_stroke":
+        edited = labels.copy()
+        edited[changed_mask] = target_index
+        return edited
+    if operation_name == "erase_stroke":
+        if erase_mode == "local":
+            return _erase_stroke_locally(labels, changed_mask)
+        return _erase_selected_components(labels, centers, changed_mask, target_index)
+    if operation_name == "smooth_stroke":
+        return _smooth_labels_in_mask(labels, changed_mask, max(3, radius // 2))
+    if operation_name == "magic_stroke":
+        return _merge_unlabeled_components(
+            labels,
+            changed_mask,
+            settings["effective_min_region_size"],
+            settings["label_density"],
+        )
+    raise ValueError("Unknown editor operation")
+
+
+def edit_result_batch(state: EditorState, operations: list[dict]) -> ProcessingResult:
+    if not operations:
+        raise ValueError("At least one editor operation is required")
+    started = time.perf_counter()
+    labels = state.labels.copy()
+    rgb_centers = _palette_rgb(state.lab_centers)
+    _, palette_numbers = _palette_layout(labels, rgb_centers)
+    number_to_index = {number: index for index, number in palette_numbers.items()}
+    for operation in operations:
+        labels = _apply_edit_operation(
+            labels,
+            state.lab_centers,
+            number_to_index,
+            state.settings,
+            operation,
+        )
+
+    settings = state.settings.copy()
+    settings["small_regions_before_merge"] = 0
+    settings["thin_regions_before_merge"] = 0
+    return _render_editable_result(labels, state.lab_centers, settings, started)
+
+
+def edit_result(
+    state: EditorState,
+    operation: str,
+    x: int = 0,
+    y: int = 0,
+    target_number: int | None = None,
+    tolerance: float = 12.0,
+    points: list[tuple[float, float]] | None = None,
+    radius: int = 8,
+    erase_mode: str = "color",
+) -> ProcessingResult:
+    return edit_result_batch(state, [{
+        "operation": operation,
+        "x": x,
+        "y": y,
+        "target_number": target_number,
+        "tolerance": tolerance,
+        "points": points or [],
+        "radius": radius,
+        "erase_mode": erase_mode,
+    }])
+
+
+def process_image(
+    data: bytes,
+    color_count: int,
+    min_region_size: int,
+    max_side: int = 1200,
+    smoothing: float = 2.0,
+    min_region_width: float = 4.0,
+    contour_smoothing: float = 2.0,
+    complexity: str = "balanced",
+    line_separation: float = 2.0,
+    label_density: float = 1.0,
+    auto_colors: bool = False,
+) -> ProcessingResult:
+    started = time.perf_counter()
+    if complexity not in COMPLEXITY_PRESETS:
+        raise ValueError(f"Unknown complexity preset: {complexity}")
+    if not 0.25 <= label_density <= 3.0:
+        raise ValueError("label_density must be between 0.25 and 3")
+    preset = COMPLEXITY_PRESETS[complexity]
+    effective_min_size = max(1, round(min_region_size * preset["area"]))
+    effective_min_width = min_region_width * preset["width"]
+    effective_contour_smoothing = contour_smoothing * preset["contour"]
+    effective_line_separation = line_separation * preset["separation"]
+    rgb = _decode_image(data, max_side)
+    smoothed_rgb = _smooth_image(rgb, smoothing)
+    resolved_color_count = _estimate_color_count(smoothed_rgb) if auto_colors else color_count
+    labels, centers = _quantize_lab(smoothed_rgb, resolved_color_count)
+    labels = _separate_close_lines(labels, effective_line_separation)
+    labels, small_before, thin_before = _merge_small_regions(
+        labels, centers, effective_min_size, effective_min_width
+    )
+
+    settings = {
+        "requested_colors": resolved_color_count,
+        "color_mode": "auto" if auto_colors else "manual",
+        "estimated_colors": resolved_color_count if auto_colors else None,
+        "small_regions_before_merge": small_before,
+        "thin_regions_before_merge": thin_before,
         "smoothing": smoothing,
         "min_region_width": min_region_width,
         "contour_smoothing": contour_smoothing,
@@ -555,14 +927,10 @@ def process_image(
         "effective_min_region_width": round(effective_min_width, 2),
         "effective_contour_smoothing": round(effective_contour_smoothing, 2),
         "effective_line_separation": round(effective_line_separation, 2),
-        "boundary_paths": len(boundaries),
         "label_density": label_density,
-        "labels_placed": sum(len(region.label_points) for region in regions),
-        "processing_width": width,
-        "processing_height": height,
-        "processing_ms": round((time.perf_counter() - started) * 1000),
+        "curve_strength": preset["curve"],
     }
-    return ProcessingResult(buffer.getvalue(), svg, pdf, palette, diagnostics)
+    return _render_editable_result(labels, centers, settings, started)
 
 
 def data_url(mime: str, content: bytes) -> str:
