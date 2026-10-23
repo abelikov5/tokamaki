@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Создать картину по номерам по фото онлайн — Токамаки</title>
-    <meta name="description" content="Бесплатный онлайн-генератор картины по номерам из фотографии. Настройте число цветов и детализацию, отредактируйте схему и скачайте SVG или PDF.">
+    <meta name="description" content="Бесплатно создать картину по номерам по фото в онлайн-генераторе Токамаки. Настройте цвета и детализацию, отредактируйте схему и скачайте SVG или PDF.">
     <link rel="canonical" href="https://tokamaki.ru/kartina-po-nomeram-po-foto">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ru_RU">
     <meta property="og:site_name" content="Токамаки">
     <meta property="og:title" content="Картина по номерам по фото — онлайн-генератор">
-    <meta property="og:description" content="Загрузите фотографию, настройте палитру и получите готовую схему картины по номерам.">
+    <meta property="og:description" content="Бесплатно создать картину по номерам по фото: загрузите фотографию, настройте палитру и получите готовую схему.">
     <meta property="og:url" content="https://tokamaki.ru/kartina-po-nomeram-po-foto">
     <meta property="og:image" content="https://tokamaki.ru/images/logo_tokamaki.webp">
     <meta name="theme-color" content="#0b1f3a">
@@ -28,7 +28,7 @@
             "applicationCategory": "DesignApplication",
             "operatingSystem": "Web",
             "offers": {"@@type": "Offer", "price": "0", "priceCurrency": "RUB"},
-            "description": "Онлайн-сервис для создания схемы картины по номерам из фотографии."
+            "description": "Бесплатно создать картину по номерам по фото в онлайн-генераторе Токамаки."
         }
     </script>
 </head>
