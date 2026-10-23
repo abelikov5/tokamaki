@@ -4,16 +4,52 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Картина по номерам</title>
+    <title>Создать картину по номерам по фото онлайн — Токамаки</title>
+    <meta name="description" content="Бесплатный онлайн-генератор картины по номерам из фотографии. Настройте число цветов и детализацию, отредактируйте схему и скачайте SVG или PDF.">
+    <link rel="canonical" href="https://tokamaki.ru/kartina-po-nomeram-po-foto">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="Токамаки">
+    <meta property="og:title" content="Картина по номерам по фото — онлайн-генератор">
+    <meta property="og:description" content="Загрузите фотографию, настройте палитру и получите готовую схему картины по номерам.">
+    <meta property="og:url" content="https://tokamaki.ru/kartina-po-nomeram-po-foto">
+    <meta property="og:image" content="https://tokamaki.ru/images/tokamaki-logo.png">
+    <meta name="theme-color" content="#0b1f3a">
+    <link rel="icon" type="image/png" href="{{ asset('images/tokamaki-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <script src="{{ asset('js/app.js') }}" defer></script>
+    <script type="application/ld+json">
+        {
+            "@@context": "https://schema.org",
+            "@@type": "WebApplication",
+            "name": "Генератор картин по номерам Токамаки",
+            "url": "https://tokamaki.ru/kartina-po-nomeram-po-foto",
+            "applicationCategory": "DesignApplication",
+            "operatingSystem": "Web",
+            "offers": {"@@type": "Offer", "price": "0", "priceCurrency": "RUB"},
+            "description": "Онлайн-сервис для создания схемы картины по номерам из фотографии."
+        }
+    </script>
 </head>
-<body>
+<body class="generator-page">
+<header class="brand-header">
+    <a class="brand-mark" href="{{ route('home') }}" aria-label="Токамаки — на главную">
+        <img src="{{ asset('images/tokamaki-logo.png') }}" alt="Токамаки" width="56" height="56">
+        <span>Токамаки<small>изо студио</small></span>
+    </a>
+    <nav class="brand-nav" aria-label="Основная навигация">
+        <a href="{{ route('home') }}#products">Продукция</a>
+        <a href="{{ route('home') }}#personal">По фото</a>
+        <a href="{{ route('home') }}#business">Для бизнеса</a>
+        <a class="nav-action" href="{{ route('home') }}">На главную</a>
+    </nav>
+</header>
 <main class="shell">
-    <header class="hero">
-        <p class="eyebrow">Технический прототип</p>
+    <header class="hero generator-intro">
+        <p class="eyebrow">Онлайн-генератор Токамаки</p>
         <h1>Картина по номерам<br><span>из вашей фотографии</span></h1>
-        <p>Laravel управляет интерфейсом и заданиями, отдельный Python-сервис строит палитру, контуры, номера и PDF.</p>
+        <p>Загрузите JPG или PNG, подберите палитру и детализацию. Сервис построит контуры, расставит номера и подготовит файлы для печати.</p>
     </header>
 
     <form id="generation-form" class="panel workspace" action="{{ route('generations.store') }}" method="post" enctype="multipart/form-data">
@@ -159,6 +195,30 @@
         <nav id="downloads" class="downloads" aria-label="Скачать результаты"></nav>
         <article class="panel palette-panel"><h2>Палитра</h2><div id="palette" class="palette"></div></article>
     </section>
+
+    <section class="seo-content" aria-label="О генераторе картин по номерам">
+        <article class="seo-card">
+            <h2>Как сделать картину по номерам из фото</h2>
+            <ol>
+                <li>Выберите чёткую фотографию в формате JPG или PNG.</li>
+                <li>Настройте количество цветов, сглаживание и сложность областей.</li>
+                <li>Создайте схему, при необходимости поправьте её кистью и скачайте SVG или PDF.</li>
+            </ol>
+        </article>
+        <article class="seo-card">
+            <h2>Какая фотография подойдёт</h2>
+            <p>Лучше всего работают снимки с хорошим освещением, заметным главным объектом и различимыми цветовыми областями. Для портретов выбирайте кадр без сильных теней, а для пейзажей — изображение с понятным передним и задним планом.</p>
+        </article>
+        <article class="seo-card">
+            <h2>Что можно настроить</h2>
+            <p>Управляйте числом цветов, размером мелких участков, плавностью контуров и плотностью номеров. Встроенный редактор позволяет локально менять цвет, стирать и сглаживать области.</p>
+        </article>
+        <article class="seo-card">
+            <h2>Файлы для дальнейшей работы</h2>
+            <p>После обработки доступны цветное превью, векторная схема SVG, PDF для печати и палитра. Сохраните результат, чтобы подготовить собственный творческий проект.</p>
+        </article>
+    </section>
 </main>
+<footer class="generator-footer"><span>© {{ date('Y') }} Токамаки</span><a href="{{ route('home') }}">Товары для творчества →</a></footer>
 </body>
 </html>

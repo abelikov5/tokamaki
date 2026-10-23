@@ -14,6 +14,10 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('Токамаки')
+            ->assertSee('Товары для творчества')
+            ->assertSee(route('generator'), false)
+            ->assertSee('application/ld+json', false);
     }
 }

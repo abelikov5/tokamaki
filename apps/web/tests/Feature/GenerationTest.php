@@ -13,11 +13,12 @@ class GenerationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_page_is_available(): void
+    public function test_generator_page_is_available(): void
     {
-        $this->get('/')
+        $this->get('/kartina-po-nomeram-po-foto')
             ->assertOk()
             ->assertSee('Картина по номерам')
+            ->assertSee('canonical', false)
             ->assertSee('data-tool="eyedropper"', false)
             ->assertSee('data-tool="magic"', false)
             ->assertSee('data-eraser-mode="local"', false)
