@@ -17,12 +17,19 @@ const editorStatus = document.querySelector('#editor-status');
 const brushSize = document.querySelector('#brush-size');
 const zoomValue = document.querySelector('#zoom-value');
 const applyEditsButton = document.querySelector('#apply-edits');
+const undoChangeButton = document.querySelector('#undo-change');
 const discardEditsButton = document.querySelector('#discard-edits');
 const eraserOptions = document.querySelector('#eraser-options');
 const eraserModeHelp = document.querySelector('#eraser-mode-help');
 const colorCount = document.querySelector('#colors');
 const autoColors = document.querySelector('#auto-colors');
 const colorRange = document.querySelector('#color-range');
+const savedProjectsSection = document.querySelector('#saved-projects');
+const savedProjectList = document.querySelector('#saved-project-list');
+const resumeLoading = document.querySelector('#resume-loading');
+const saveProjectButton = document.querySelector('#save-project');
+const projectName = document.querySelector('#project-name');
+const projectSaveStatus = document.querySelector('#project-save-status');
 const samplerCanvas = document.createElement('canvas');
 const samplerContext = samplerCanvas.getContext('2d', { willReadFrequently: true });
 
@@ -32,6 +39,8 @@ let currentTool = 'pan';
 let currentView = 'scheme';
 let zoom = 1;
 let baseImage = null;
+let unlabeledImage = null;
+let unlabeledLoading = false;
 let pointerDown = false;
 let strokePoints = [];
 let panStart = null;
@@ -43,9 +52,12 @@ let preparedImageBlob = null;
 let preparedImageUrl = null;
 let fitMode = 'crop';
 let imagePreparationRevision = 0;
+let editorBusyTimer = null;
 
 const PREPARED_IMAGE_WIDTH = 1600;
 const PREPARED_IMAGE_HEIGHT = 2000;
+const SAVED_PROJECTS_KEY = 'tokamaki.saved-projects.v1';
+const MAX_SAVED_PROJECTS = 3;
 
 document.querySelectorAll('input[type="range"]').forEach((input) => {
     const key = input.name || input.id;
@@ -264,10 +276,19 @@ document.querySelector('#zoom-in').addEventListener('click', () => setZoom(zoom 
 document.querySelector('#zoom-out').addEventListener('click', () => setZoom(zoom / 1.25));
 document.querySelector('#zoom-fit').addEventListener('click', fitEditor);
 applyEditsButton.addEventListener('click', applyPendingEdits);
+undoChangeButton.addEventListener('click', undoLastChange);
 discardEditsButton.addEventListener('click', discardPendingEdits);
+saveProjectButton.addEventListener('click', saveProject);
 document.addEventListener('keydown', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const isEditable = target?.matches('input, textarea, select, [contenteditable="true"]');
+    if (event.ctrlKey && !event.altKey && event.key.toLowerCase() === 'z' && !isEditable) {
+        event.preventDefault();
+        undoLastChange();
+        return;
+    }
     if (event.key !== 'Enter' || !pendingOperations.length || loader.hidden === false) return;
-    if (event.target.closest('#generation-form')) return;
+    if (target?.closest('#generation-form')) return;
     event.preventDefault();
     applyPendingEdits();
 });
@@ -287,6 +308,7 @@ canvas.addEventListener('pointerdown', (event) => {
         queueLabel(eventPoint(event));
         return;
     }
+    if (currentTool === 'unlabeled') return;
     pointerDown = true;
     canvas.setPointerCapture(event.pointerId);
     if (currentTool === 'pan') {
@@ -353,7 +375,7 @@ function queueStroke() {
 }
 
 async function applyPendingEdits() {
-    if (!pendingOperations.length || !currentResult) return;
+    if (!pendingOperations.length || !currentResult) return true;
     setEditorBusy(true, 'Перестраиваем контуры и номера…');
     try {
         const response = await fetch(currentResult.edit_url, {
@@ -366,10 +388,12 @@ async function applyPendingEdits() {
         pendingOperations = [];
         renderResult(payload, false);
         editorStatus.textContent = 'Все правки применены. SVG и PDF обновлены.';
+        return true;
     } catch (error) {
         editorStatus.textContent = error.message || 'Не удалось применить правку.';
         editorStatus.classList.add('failed');
         drawEditor();
+        return false;
     } finally {
         setEditorBusy(false);
         updatePendingUi();
@@ -385,8 +409,46 @@ function discardPendingEdits() {
     drawEditor();
 }
 
+async function undoLastChange() {
+    if (!currentResult || loader.hidden === false) return;
+    if (pendingOperations.length) {
+        pendingOperations.pop();
+        strokePoints = [];
+        updatePendingUi();
+        drawEditor();
+        editorStatus.textContent = 'Последняя неприменённая правка отменена.';
+        editorStatus.classList.remove('failed');
+        return;
+    }
+    if (!currentResult.can_undo) {
+        editorStatus.textContent = 'Нет сохранённого изменения для отмены.';
+        editorStatus.classList.remove('failed');
+        return;
+    }
+
+    setEditorBusy(true, 'Возвращаем предыдущую версию…');
+    try {
+        const response = await fetch(currentResult.undo_url, {
+            method: 'POST',
+            headers: requestHeaders(),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(responseMessage(payload, response.status));
+        renderResult(payload, false);
+        editorStatus.textContent = 'Последнее сохранённое изменение отменено.';
+    } catch (error) {
+        editorStatus.textContent = error.message || 'Не удалось отменить последнее изменение.';
+        editorStatus.classList.add('failed');
+    } finally {
+        setEditorBusy(false);
+        updatePendingUi();
+    }
+}
+
 function renderResult(payload, fitAfterLoad) {
     currentResult = payload;
+    unlabeledImage = null;
+    unlabeledLoading = false;
     pendingOperations = [];
     strokePoints = [];
     targetNumber = payload.palette.some((color) => color.number === targetNumber)
@@ -394,6 +456,8 @@ function renderResult(payload, fitAfterLoad) {
         : payload.palette[0]?.number ?? null;
     editorStatus.textContent = '';
     editorStatus.classList.remove('failed');
+    projectName.textContent = payload.original_name || 'Сохранённая картина';
+    projectSaveStatus.textContent = 'Применённые изменения сохраняются автоматически.';
     const diagnostics = payload.diagnostics;
     document.querySelector('#stats').innerHTML = [
         [diagnostics.actual_colors, 'цветов'],
@@ -411,6 +475,10 @@ function renderResult(payload, fitAfterLoad) {
     renderEditorPalette();
     loadSamplerImage();
     updatePendingUi();
+    rememberProject(payload);
+    if (window.location.href !== payload.resume_url) {
+        window.history.replaceState({}, '', payload.resume_url);
+    }
     resultSection.hidden = false;
     loadEditorImage(fitAfterLoad);
     if (fitAfterLoad) resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -437,6 +505,9 @@ function drawEditor() {
     if (!baseImage) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+    if (currentTool === 'unlabeled' && unlabeledImage) {
+        context.drawImage(unlabeledImage, 0, 0, canvas.width, canvas.height);
+    }
     pendingOperations.forEach((operation) => {
         if (operation.operation === 'add_label') {
             drawLabelOverlay(operation);
@@ -447,6 +518,7 @@ function drawEditor() {
             operation.radius,
             operation.operation,
             operation.target_number,
+            operation.erase_mode,
         );
     });
     if (strokePoints.length) {
@@ -456,11 +528,11 @@ function drawEditor() {
             smooth: 'smooth_stroke',
             magic: 'magic_stroke',
         }[currentTool];
-        drawStrokeOverlay(strokePoints, Number(brushSize.value), operation, targetNumber);
+        drawStrokeOverlay(strokePoints, Number(brushSize.value), operation, targetNumber, eraserMode);
     }
 }
 
-function drawStrokeOverlay(points, radius, operation, colorNumber) {
+function drawStrokeOverlay(points, radius, operation, colorNumber, operationEraserMode = null) {
     if (!points.length || !operation) return;
     const paletteColor = currentResult?.palette.find((color) => color.number === colorNumber)?.hex;
     context.save();
@@ -469,7 +541,9 @@ function drawStrokeOverlay(points, radius, operation, colorNumber) {
         : operation === 'magic_stroke'
             ? 'rgba(145, 74, 201, .68)'
         : operation === 'erase_stroke'
-            ? 'rgba(225, 61, 48, .60)'
+            ? operationEraserMode === 'local'
+                ? 'rgba(255, 255, 255, .96)'
+                : 'rgba(225, 61, 48, .60)'
             : hexToRgba(paletteColor ?? '#1f624b', .62);
     context.fillStyle = context.strokeStyle;
     context.lineCap = 'round';
@@ -512,6 +586,31 @@ function loadSamplerImage() {
         samplerReady = true;
     };
     image.src = currentResult.preview_data_url;
+}
+
+function loadUnlabeledOverlay() {
+    const url = currentResult?.unlabeled_data_url;
+    if (!url || unlabeledImage || unlabeledLoading) return;
+    unlabeledLoading = true;
+    updateToolOptions();
+    const image = new Image();
+    image.onload = () => {
+        if (currentResult?.unlabeled_data_url !== url) return;
+        unlabeledLoading = false;
+        unlabeledImage = image;
+        updateToolOptions();
+        if (currentTool === 'unlabeled') drawEditor();
+    };
+    image.onerror = () => {
+        if (currentResult?.unlabeled_data_url !== url) return;
+        unlabeledLoading = false;
+        unlabeledImage = null;
+        if (currentTool === 'unlabeled') {
+            editorStatus.textContent = 'Не удалось загрузить подсветку областей без номеров.';
+            editorStatus.classList.add('failed');
+        }
+    };
+    image.src = url;
 }
 
 function pickColor([x, y]) {
@@ -557,11 +656,141 @@ function updatePendingUi() {
     const count = pendingOperations.length;
     applyEditsButton.disabled = count === 0;
     discardEditsButton.disabled = count === 0;
+    undoChangeButton.disabled = count === 0 && !currentResult?.can_undo;
     applyEditsButton.firstChild.textContent = count ? `Применить изменения (${count}) ` : 'Применить изменения ';
     if (count) {
         const verb = count === 1 ? 'ожидает' : 'ожидают';
         editorStatus.textContent = `${count} ${pluralizeEdits(count)} ${verb} применения.`;
         editorStatus.classList.remove('failed');
+        projectSaveStatus.textContent = 'Есть неприменённые изменения.';
+    } else if (currentResult) {
+        projectSaveStatus.textContent = 'Все изменения сохранены.';
+    }
+}
+
+async function saveProject() {
+    if (!currentResult) return;
+    saveProjectButton.disabled = true;
+    saveProjectButton.textContent = pendingOperations.length ? 'Сохраняем…' : 'Копируем ссылку…';
+    try {
+        if (pendingOperations.length && !(await applyPendingEdits())) return;
+        rememberProject(currentResult);
+        await copyText(currentResult.resume_url);
+        projectSaveStatus.textContent = 'Проект сохранён. Ссылка скопирована.';
+    } catch (error) {
+        projectSaveStatus.textContent = 'Проект сохранён, но ссылку не удалось скопировать.';
+    } finally {
+        saveProjectButton.disabled = false;
+        saveProjectButton.textContent = 'Сохранить проект';
+    }
+}
+
+async function copyText(value) {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+        return;
+    }
+    const temporaryInput = document.createElement('textarea');
+    temporaryInput.value = value;
+    temporaryInput.style.position = 'fixed';
+    temporaryInput.style.opacity = '0';
+    document.body.appendChild(temporaryInput);
+    temporaryInput.select();
+    document.execCommand('copy');
+    temporaryInput.remove();
+}
+
+function rememberProject(payload) {
+    if (!payload?.resume_url) return;
+    const project = {
+        url: payload.resume_url,
+        name: payload.original_name || 'Картина без названия',
+        updatedAt: payload.updated_at || new Date().toISOString(),
+    };
+    const projects = readSavedProjects().filter((item) => item.url !== project.url);
+    projects.unshift(project);
+    try {
+        localStorage.setItem(SAVED_PROJECTS_KEY, JSON.stringify(projects.slice(0, MAX_SAVED_PROJECTS)));
+    } catch (error) {
+        return;
+    }
+    renderSavedProjects();
+}
+
+function readSavedProjects() {
+    try {
+        const projects = JSON.parse(localStorage.getItem(SAVED_PROJECTS_KEY) || '[]');
+        return Array.isArray(projects) ? projects.filter((item) => item?.url && item?.name) : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function renderSavedProjects() {
+    const storedProjects = readSavedProjects();
+    const projects = storedProjects.slice(0, MAX_SAVED_PROJECTS);
+    if (storedProjects.length !== projects.length) {
+        try {
+            localStorage.setItem(SAVED_PROJECTS_KEY, JSON.stringify(projects));
+        } catch (error) {
+            // The list can still be rendered when storage is unavailable.
+        }
+    }
+    savedProjectList.replaceChildren();
+    savedProjectsSection.hidden = projects.length === 0;
+    projects.forEach((project) => {
+        const card = document.createElement('div');
+        card.className = 'saved-project-card';
+        const link = document.createElement('a');
+        link.href = project.url;
+        const name = document.createElement('strong');
+        name.textContent = project.name;
+        const date = document.createElement('span');
+        date.textContent = `Изменено ${formatProjectDate(project.updatedAt)}`;
+        link.append(name, date);
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'saved-project-remove';
+        removeButton.setAttribute('aria-label', `Удалить ${project.name} из истории`);
+        removeButton.title = 'Удалить из истории';
+        removeButton.textContent = '×';
+        removeButton.addEventListener('click', () => removeSavedProject(project.url));
+        card.append(link, removeButton);
+        savedProjectList.append(card);
+    });
+}
+
+function removeSavedProject(url) {
+    const projects = readSavedProjects().filter((project) => project.url !== url).slice(0, MAX_SAVED_PROJECTS);
+    try {
+        localStorage.setItem(SAVED_PROJECTS_KEY, JSON.stringify(projects));
+    } catch (error) {
+        return;
+    }
+    renderSavedProjects();
+}
+
+function formatProjectDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? 'недавно'
+        : new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+async function loadResumedProject() {
+    const endpoint = document.body.dataset.resumeEndpoint;
+    if (!endpoint) return;
+    resumeLoading.hidden = false;
+    try {
+        const response = await fetch(endpoint, { headers: requestHeaders() });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(responseMessage(payload, response.status));
+        renderResult(payload, true);
+    } catch (error) {
+        errorBox.textContent = error.message || 'Не удалось загрузить сохранённую картину.';
+        errorBox.hidden = false;
+    } finally {
+        resumeLoading.hidden = true;
     }
 }
 
@@ -597,6 +826,8 @@ function selectTool(tool) {
     document.querySelectorAll('[data-tool]').forEach((button) => button.classList.toggle('selected', button.dataset.tool === tool));
     canvas.dataset.tool = tool;
     updateToolOptions();
+    if (tool === 'unlabeled') loadUnlabeledOverlay();
+    drawEditor();
 }
 
 function updateToolOptions() {
@@ -609,17 +840,22 @@ function updateToolOptions() {
     );
     eraserModeHelp.textContent = eraserMode === 'color'
         ? 'Удаляет весь пересечённый сегмент выбранного цвета.'
-        : 'Стирает только проведённый мазок и заполняет его ближайшими соседними областями.';
+        : 'Стирает проведённый мазок, продолжая через него преобладающую соседнюю область.';
     const help = {
         pan: 'Перетаскивайте увеличенный холст. Ctrl + колёсико меняет масштаб.',
         eyedropper: 'Щёлкните по цветному участку, чтобы выбрать его для кисти или ластика.',
         brush: 'Рисует выбранным цветом. Подходит для ручного исправления формы области.',
         eraser: eraserMode === 'color'
             ? 'Удаляет целиком пересечённый сегмент выбранного цвета и объединяет его с лучшим соседом.'
-            : 'Удаляет только область под мазком, заполняя её цветами ближайших областей.',
+            : 'Удаляет линию под мазком и заполняет это место преобладающей соседней областью.',
         smooth: 'Локально выравнивает границы. Перестроение произойдёт после применения правок.',
         magic: 'Убирает затронутые области без номера, присоединяя их к самому большому соседнему сегменту.',
         label: 'Щёлкните внутри области — номер её цвета и подходящий размер определятся автоматически.',
+        unlabeled: unlabeledLoading
+            ? 'Готовим подсветку областей без номеров…'
+            : Number.isInteger(currentResult?.diagnostics.unlabeled_segments)
+                ? `Красным выделены области без номеров: ${currentResult.diagnostics.unlabeled_segments}.`
+                : 'Красным выделены области, в которых нет номера.',
     };
     document.querySelector('#tool-help').textContent = help[currentTool];
 }
@@ -653,9 +889,19 @@ function applyZoom() {
 }
 
 function setEditorBusy(busy, message = '') {
+    if (editorBusyTimer) {
+        clearInterval(editorBusyTimer);
+        editorBusyTimer = null;
+    }
     loader.hidden = !busy;
     if (busy) {
-        loader.textContent = message;
+        const startedAt = Date.now();
+        const renderMessage = () => {
+            const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+            loader.textContent = elapsed > 0 ? `${message} ${elapsed} с` : message;
+        };
+        renderMessage();
+        editorBusyTimer = setInterval(renderMessage, 1000);
         editorStatus.textContent = '';
         editorStatus.classList.remove('failed');
     }
@@ -672,4 +918,12 @@ function responseMessage(payload, status) {
     return payload.errors ? Object.values(payload.errors).flat()[0] : payload.message ?? `Ошибка ${status}`;
 }
 
+window.addEventListener('beforeunload', (event) => {
+    if (!pendingOperations.length) return;
+    event.preventDefault();
+    event.returnValue = '';
+});
+
+renderSavedProjects();
+loadResumedProject();
 selectTool('pan');

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -16,6 +17,8 @@ from reportlab.pdfgen import canvas
 from scipy.ndimage import distance_transform_edt
 from skimage.color import deltaE_ciede2000
 
+logger = logging.getLogger("uvicorn.error")
+
 
 COMPLEXITY_PRESETS = {
     "detailed": {"area": 0.65, "width": 0.75, "separation": 0.5, "contour": 0.65, "curve": 0.45},
@@ -23,6 +26,12 @@ COMPLEXITY_PRESETS = {
     "simple": {"area": 1.8, "width": 1.4, "separation": 1.5, "contour": 1.5, "curve": 0.75},
     "minimal": {"area": 3.2, "width": 2.0, "separation": 2.2, "contour": 2.3, "curve": 0.85},
 }
+
+MAX_LABEL_FONT_SIZE = 13.0
+LARGE_LABEL_COLOR = "#707070"
+REGULAR_LABEL_COLOR = "#222222"
+LABEL_HALO_COLOR = "#FFFFFF"
+LABEL_HALO_WIDTH = 3.0
 
 
 @dataclass
@@ -417,6 +426,15 @@ def _path_for_polyline(points: np.ndarray, curve_strength: float) -> str:
     return " ".join(commands)
 
 
+def _label_font_size(region: Region) -> float:
+    area_per_label = region.area / max(1, len(region.label_points))
+    return max(5.0, min(MAX_LABEL_FONT_SIZE, (area_per_label ** 0.5) * 0.22))
+
+
+def _label_fill_color(font_size: float) -> str:
+    return LARGE_LABEL_COLOR if font_size >= MAX_LABEL_FONT_SIZE else REGULAR_LABEL_COLOR
+
+
 def _build_svg(
     width: int,
     height: int,
@@ -434,12 +452,22 @@ def _build_svg(
     ]
     for boundary in boundaries:
         parts.append(f'<path d="{escape(_path_for_polyline(boundary, curve_strength))}"/>')
-    parts.append('</g><g fill="#222" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif">')
+    parts.append('</g><g text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif">')
     for region in regions:
         for x, y in region.label_points:
-            area_per_label = region.area / max(1, len(region.label_points))
-            font_size = max(5.0, min(13.0, (area_per_label ** 0.5) * 0.22))
-            parts.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{font_size:.1f}">{palette_numbers[region.palette_index]}</text>')
+            value = str(palette_numbers[region.palette_index])
+            font_size = _label_font_size(region)
+            attributes = [
+                f'x="{x:.1f}"',
+                f'y="{y:.1f}"',
+                f'font-size="{font_size:.1f}"',
+                f'fill="{_label_fill_color(font_size)}"',
+                f'stroke="{LABEL_HALO_COLOR}"',
+                f'stroke-width="{LABEL_HALO_WIDTH:.1f}"',
+                'stroke-linejoin="round"',
+                'paint-order="stroke fill"',
+            ]
+            parts.append(f'<text {" ".join(attributes)}>{value}</text>')
     frame_inset = 0.325
     frame_width = max(0.0, width - frame_inset * 2)
     frame_height = max(0.0, height - frame_inset * 2)
@@ -517,8 +545,26 @@ def _build_pdf(
         for x, y in region.label_points:
             area_per_label = region.area / max(1, len(region.label_points))
             size = max(4.0, min(9.0, (area_per_label ** 0.5) * scale * 0.2))
+            value = str(palette_numbers[region.palette_index])
+            source_font_size = _label_font_size(region)
+            text_x = ox + x * scale
+            text_y = oy + (height - y) * scale - size / 3
             pdf.setFont("Helvetica", size)
-            pdf.drawCentredString(ox + x * scale, oy + (height - y) * scale - size / 3, str(palette_numbers[region.palette_index]))
+            pdf.saveState()
+            pdf.setStrokeColorRGB(1, 1, 1)
+            pdf.setLineWidth(LABEL_HALO_WIDTH * scale)
+            halo = pdf.beginText()
+            halo.setTextOrigin(text_x - pdf.stringWidth(value, "Helvetica", size) / 2, text_y)
+            halo.setFont("Helvetica", size)
+            halo.setTextRenderMode(1)
+            halo.textOut(value)
+            pdf.drawText(halo)
+            pdf.restoreState()
+            if _label_fill_color(source_font_size) == LARGE_LABEL_COLOR:
+                pdf.setFillColorRGB(0.44, 0.44, 0.44)
+            else:
+                pdf.setFillColorRGB(0.13, 0.13, 0.13)
+            pdf.drawCentredString(text_x, text_y, value)
     pdf.showPage()
     pdf.setFont("Helvetica-Bold", 16)
     pdf.drawString(36, page[1] - 40, "Palette")
@@ -545,22 +591,7 @@ def _palette_layout(labels: np.ndarray, rgb_centers: np.ndarray) -> tuple[list[i
     return used, {index: number for number, index in enumerate(used, 1)}
 
 
-def _render_editable_result(
-    labels: np.ndarray,
-    centers: np.ndarray,
-    settings: dict,
-    started: float,
-) -> ProcessingResult:
-    rgb_centers = _palette_rgb(centers)
-    used, palette_numbers = _palette_layout(labels, rgb_centers)
-    target_area_per_label = labels.size * (0.012 / settings["label_density"])
-    regions, small_after, thin_after = _extract_regions(
-        labels,
-        settings["effective_min_region_size"],
-        settings["effective_min_region_width"],
-        settings["effective_contour_smoothing"],
-        target_area_per_label,
-    )
+def _apply_manual_label_points(regions: list[Region], labels: np.ndarray, settings: dict) -> None:
     for raw_point in settings.get("manual_label_points", []):
         if len(raw_point) != 2:
             continue
@@ -572,6 +603,117 @@ def _render_editable_result(
                 region.label_points.append((float(x), float(y)))
                 break
 
+
+def _build_unlabeled_overlay(width: int, height: int, regions: list[Region]) -> bytes:
+    overlay = np.zeros((height, width, 4), dtype=np.uint8)
+    for region in regions:
+        if region.label_points:
+            continue
+        overlay[region.mask] = (244, 67, 54, 92)
+        contours, _ = cv2.findContours(
+            region.mask.astype(np.uint8),
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE,
+        )
+        cv2.drawContours(overlay, contours, -1, (215, 38, 28, 220), 2, lineType=cv2.LINE_AA)
+    return _encode_unlabeled_overlay(overlay)
+
+
+def _encode_unlabeled_overlay(overlay: np.ndarray) -> bytes:
+    buffer = io.BytesIO()
+    Image.fromarray(overlay, "RGBA").save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
+
+
+def build_unlabeled_overlay_from_state(state: EditorState) -> bytes:
+    labels = state.labels
+    settings = state.settings
+    height, width = labels.shape
+    overlay = np.zeros((height, width, 4), dtype=np.uint8)
+    target_area_per_label = labels.size * (0.012 / settings["label_density"])
+    manual_points = [
+        (int(round(float(point[0]))), int(round(float(point[1]))))
+        for point in settings.get("manual_label_points", [])
+        if len(point) == 2
+    ]
+    for palette_index in sorted(int(value) for value in np.unique(labels)):
+        binary = (labels == palette_index).astype(np.uint8)
+        count, components, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+        manual_component_ids = {
+            int(components[y, x])
+            for x, y in manual_points
+            if 0 <= x < width and 0 <= y < height and int(labels[y, x]) == palette_index
+        }
+        for component_id in range(1, count):
+            if component_id in manual_component_ids:
+                continue
+            area = int(stats[component_id, cv2.CC_STAT_AREA])
+            x = int(stats[component_id, cv2.CC_STAT_LEFT])
+            y = int(stats[component_id, cv2.CC_STAT_TOP])
+            component_width = int(stats[component_id, cv2.CC_STAT_WIDTH])
+            component_height = int(stats[component_id, cv2.CC_STAT_HEIGHT])
+            local_mask = (
+                components[y:y + component_height, x:x + component_width] == component_id
+            ).astype(np.uint8)
+            has_automatic_label = False
+            if area >= max(24, settings["effective_min_region_size"] // 2):
+                desired_count = min(
+                    12,
+                    max(1, int(np.ceil(np.sqrt(area / target_area_per_label)))),
+                )
+                estimated_font_size = max(
+                    5.0,
+                    min(13.0, np.sqrt(area / desired_count) * 0.22),
+                )
+                required_radius = max(3.5, estimated_font_size * 0.65 + 1.0)
+                padded = np.pad(local_mask, 1, mode="constant", constant_values=0)
+                radius = float(cv2.distanceTransform(padded, cv2.DIST_L2, 5).max())
+                has_automatic_label = radius >= required_radius
+            if has_automatic_label:
+                continue
+            overlay_crop = overlay[y:y + component_height, x:x + component_width]
+            overlay_crop[local_mask.astype(bool)] = (244, 67, 54, 92)
+            contours, _ = cv2.findContours(
+                local_mask,
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            cv2.drawContours(
+                overlay_crop,
+                contours,
+                -1,
+                (215, 38, 28, 220),
+                2,
+                lineType=cv2.LINE_AA,
+            )
+    return _encode_unlabeled_overlay(overlay)
+
+
+def _render_editable_result(
+    labels: np.ndarray,
+    centers: np.ndarray,
+    settings: dict,
+    started: float,
+) -> ProcessingResult:
+    stage_started = time.perf_counter()
+    logger.info("Рендер: ищем области и размещаем номера...")
+    rgb_centers = _palette_rgb(centers)
+    used, palette_numbers = _palette_layout(labels, rgb_centers)
+    target_area_per_label = labels.size * (0.012 / settings["label_density"])
+    regions, small_after, thin_after = _extract_regions(
+        labels,
+        settings["effective_min_region_size"],
+        settings["effective_min_region_width"],
+        settings["effective_contour_smoothing"],
+        target_area_per_label,
+    )
+    _apply_manual_label_points(regions, labels, settings)
+    logger.info(
+        "Рендер: найдено областей %d (%.1f с), строим превью...",
+        len(regions), time.perf_counter() - stage_started,
+    )
+
+    stage_started = time.perf_counter()
     preview = rgb_centers[labels]
     buffer = io.BytesIO()
     Image.fromarray(preview.astype(np.uint8), "RGB").save(buffer, format="PNG", optimize=True)
@@ -588,13 +730,24 @@ def _render_editable_result(
             "pixel_count": pixel_count,
             "percentage": round(pixel_count / total * 100, 2),
         })
+    logger.info("Рендер: превью готово (%.1f с), строим контуры...", time.perf_counter() - stage_started)
 
+    stage_started = time.perf_counter()
     height, width = labels.shape
+    unlabeled_segments = sum(not region.label_points for region in regions)
     boundaries = _extract_unique_boundaries(labels, settings["effective_contour_smoothing"])
+    logger.info(
+        "Рендер: контуры готовы, путей %d (%.1f с), строим SVG...",
+        len(boundaries), time.perf_counter() - stage_started,
+    )
+    stage_started = time.perf_counter()
     svg = _build_svg(width, height, regions, palette_numbers, boundaries, settings["curve_strength"])
+    logger.info("Рендер: SVG готов (%.1f с), строим PDF...", time.perf_counter() - stage_started)
+    stage_started = time.perf_counter()
     pdf = _build_pdf(
         width, height, regions, palette_numbers, palette, boundaries, settings["curve_strength"]
     )
+    logger.info("Рендер: PDF готов (%.1f с).", time.perf_counter() - stage_started)
     diagnostics = {
         "requested_colors": settings["requested_colors"],
         "actual_colors": len(used),
@@ -617,6 +770,7 @@ def _render_editable_result(
         "boundary_paths": len(boundaries),
         "label_density": settings["label_density"],
         "labels_placed": sum(len(region.label_points) for region in regions),
+        "unlabeled_segments": unlabeled_segments,
         "processing_width": width,
         "processing_height": height,
         "processing_ms": round((time.perf_counter() - started) * 1000),
@@ -705,14 +859,18 @@ def _erase_selected_components(
 def _erase_stroke_locally(labels: np.ndarray, stroke_mask: np.ndarray) -> np.ndarray:
     if np.all(stroke_mask):
         raise ValueError("The eraser stroke cannot cover the entire image")
-    nearest = distance_transform_edt(
-        stroke_mask,
-        return_distances=False,
-        return_indices=True,
-    )
+
     edited = labels.copy()
-    nearest_labels = labels[tuple(nearest)]
-    edited[stroke_mask] = nearest_labels[stroke_mask]
+    component_count, components = cv2.connectedComponents(stroke_mask.astype(np.uint8), 8)
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    for component_id in range(1, component_count):
+        component = components == component_id
+        border = cv2.dilate(component.astype(np.uint8), kernel, iterations=1).astype(bool) & ~component
+        neighboring_labels = labels[border]
+        if not neighboring_labels.size:
+            continue
+        candidates, counts = np.unique(neighboring_labels, return_counts=True)
+        edited[component] = int(candidates[int(np.argmax(counts))])
     return edited
 
 
@@ -863,7 +1021,12 @@ def edit_result_batch(state: EditorState, operations: list[dict]) -> ProcessingR
     rgb_centers = _palette_rgb(state.lab_centers)
     _, palette_numbers = _palette_layout(labels, rgb_centers)
     number_to_index = {number: index for index, number in palette_numbers.items()}
-    for operation in operations:
+    logger.info("Редактор: применяем %d операций...", len(operations))
+    for operation_index, operation in enumerate(operations, start=1):
+        logger.info(
+            "Редактор: операция %d/%d — %s",
+            operation_index, len(operations), operation["operation"],
+        )
         if operation["operation"] == "add_label":
             x = int(operation.get("x", 0))
             y = int(operation.get("y", 0))
@@ -884,6 +1047,7 @@ def edit_result_batch(state: EditorState, operations: list[dict]) -> ProcessingR
     settings["manual_label_points"] = manual_label_points
     settings["small_regions_before_merge"] = 0
     settings["thin_regions_before_merge"] = 0
+    logger.info("Редактор: операции применены, перестраиваем результат...")
     return _render_editable_result(labels, state.lab_centers, settings, started)
 
 

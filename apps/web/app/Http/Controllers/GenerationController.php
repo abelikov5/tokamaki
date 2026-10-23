@@ -9,13 +9,34 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Throwable;
 
 class GenerationController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        return view('generations.index');
+        return view('generations.index', ['resumeEndpoint' => null]);
+    }
+
+    public function resume(Generation $generation): View
+    {
+        abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+
+        return view('generations.index', [
+            'resumeEndpoint' => route('generations.show', $generation),
+        ]);
+    }
+
+    public function show(Generation $generation): JsonResponse
+    {
+        abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+
+        return response()->json($this->decoratePayload($generation, [
+            'result_id' => $generation->result_id,
+            'palette' => $generation->palette,
+            'diagnostics' => $generation->diagnostics,
+        ]));
     }
 
     public function store(Request $request): JsonResponse
@@ -142,6 +163,9 @@ class GenerationController extends Controller
 
             $payload = $response->json();
             $generation->update([
+                'previous_result_id' => $generation->result_id,
+                'previous_palette' => $generation->palette,
+                'previous_diagnostics' => $generation->diagnostics,
                 'result_id' => $payload['result_id'],
                 'palette' => $payload['palette'],
                 'diagnostics' => $payload['diagnostics'],
@@ -153,6 +177,32 @@ class GenerationController extends Controller
                 'message' => 'Python-генератор недоступен. Запустите его на порту 8001.',
             ], 503);
         }
+    }
+
+    public function undo(Generation $generation): JsonResponse
+    {
+        abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+
+        if (! $generation->previous_result_id) {
+            return response()->json([
+                'message' => 'Нет сохранённого изменения для отмены.',
+            ], 409);
+        }
+
+        $generation->update([
+            'result_id' => $generation->previous_result_id,
+            'palette' => $generation->previous_palette,
+            'diagnostics' => $generation->previous_diagnostics,
+            'previous_result_id' => null,
+            'previous_palette' => null,
+            'previous_diagnostics' => null,
+        ]);
+
+        return response()->json($this->decoratePayload($generation, [
+            'result_id' => $generation->result_id,
+            'palette' => $generation->palette,
+            'diagnostics' => $generation->diagnostics,
+        ]));
     }
 
     public function download(Generation $generation, string $filename): Response
@@ -167,20 +217,33 @@ class GenerationController extends Controller
         return response($response->body(), 200, [
             'Content-Type' => $response->header('Content-Type', 'application/octet-stream'),
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
         ]);
     }
 
     private function decoratePayload(Generation $generation, array $payload): array
     {
         $payload['generation_id'] = $generation->id;
+        $payload['original_name'] = $generation->original_name;
+        $payload['updated_at'] = $generation->updated_at?->toIso8601String();
+        $payload['resume_url'] = route('generations.resume', $generation);
         $payload['edit_url'] = route('generations.edit', $generation);
-        $payload['downloads'] = collect([
+        $payload['undo_url'] = route('generations.undo', $generation);
+        $payload['can_undo'] = (bool) $generation->previous_result_id;
+        $downloads = collect([
             'preview' => 'preview.png',
             'svg' => 'scheme.svg',
             'pdf' => 'scheme.pdf',
+            'unlabeled' => 'unlabeled.png',
             'palette' => 'palette.json',
             'diagnostics' => 'diagnostics.json',
-        ])->map(fn (string $filename) => route('generations.download', [$generation, $filename]));
+        ])->map(fn (string $filename) => route('generations.download', [$generation, $filename])
+            .'?v='.rawurlencode((string) $payload['result_id']));
+        $payload['downloads'] = $downloads;
+        $payload['preview_data_url'] = $downloads['preview'];
+        $payload['svg_data_url'] = $downloads['svg'];
+        $payload['unlabeled_data_url'] = $downloads['unlabeled'];
 
         return $payload;
     }

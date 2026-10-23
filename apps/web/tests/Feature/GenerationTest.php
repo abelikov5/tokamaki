@@ -24,6 +24,7 @@ class GenerationTest extends TestCase
             ->assertSee('data-tool="eyedropper"', false)
             ->assertSee('data-tool="magic"', false)
             ->assertSee('data-tool="label"', false)
+            ->assertSee('data-tool="unlabeled"', false)
             ->assertSee('data-eraser-mode="local"', false)
             ->assertSee('id="colors"', false)
             ->assertSee('id="auto-colors"', false)
@@ -31,7 +32,10 @@ class GenerationTest extends TestCase
             ->assertSee('Формат 40 × 50″')
             ->assertSee('data-fit-mode="crop"', false)
             ->assertSee('data-fit-mode="stretch"', false)
-            ->assertSee('id="apply-edits"', false);
+            ->assertSee('id="apply-edits"', false)
+            ->assertSee('id="undo-change"', false)
+            ->assertSee('id="saved-projects"', false)
+            ->assertSee('id="save-project"', false);
     }
 
     public function test_image_is_forwarded_to_generator_and_generation_is_saved(): void
@@ -45,11 +49,19 @@ class GenerationTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('result_id', '11111111-1111-4111-8111-111111111111')
             ->assertJsonPath('diagnostics.segments', 42)
-            ->assertJsonStructure(['downloads' => ['svg', 'pdf', 'palette', 'diagnostics']]);
+            ->assertJsonPath('original_name', 'photo.png')
+            ->assertJsonStructure(['resume_url', 'edit_url'])
+            ->assertJsonStructure(['unlabeled_data_url', 'downloads' => ['svg', 'pdf', 'unlabeled', 'palette', 'diagnostics']]);
+        $this->assertStringContainsString(
+            'v=11111111-1111-4111-8111-111111111111',
+            $response->json('svg_data_url'),
+        );
 
         $generation = Generation::firstOrFail();
         $this->assertSame('completed', $generation->status);
         $this->assertSame(42, $generation->diagnostics['segments']);
+        $this->assertNotNull($generation->resume_token);
+        $this->assertStringContainsString($generation->resume_token, $response->json('resume_url'));
         Http::assertSent(fn ($request) => $request->hasFile('file'));
         $this->assertSame(24, $generation->settings['colors']);
         $this->assertFalse($generation->settings['auto_colors']);
@@ -97,7 +109,7 @@ class GenerationTest extends TestCase
         $payload['diagnostics']['segments'] = 7;
         Http::fake(['*/api/v1/results/*/edit' => Http::response($payload)]);
 
-        $response = $this->postJson("/generations/{$generation->id}/edit", [
+        $response = $this->postJson("/generations/{$generation->resume_token}/edit", [
             'operations' => [
                 [
                     'operation' => 'smooth_stroke',
@@ -133,10 +145,16 @@ class GenerationTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('result_id', '22222222-2222-4222-8222-222222222222')
             ->assertJsonPath('diagnostics.segments', 7)
-            ->assertJsonStructure(['edit_url', 'downloads']);
+            ->assertJsonPath('can_undo', true)
+            ->assertJsonStructure(['edit_url', 'undo_url', 'downloads']);
+        $this->assertStringContainsString(
+            'v=22222222-2222-4222-8222-222222222222',
+            $response->json('svg_data_url'),
+        );
         $this->assertDatabaseHas('generations', [
             'id' => $generation->id,
             'result_id' => '22222222-2222-4222-8222-222222222222',
+            'previous_result_id' => '11111111-1111-4111-8111-111111111111',
         ]);
         Http::assertSent(fn ($request) => count($request->data()['operations'] ?? []) === 5
             && $request->data()['operations'][2]['erase_mode'] === 'local'
@@ -144,6 +162,47 @@ class GenerationTest extends TestCase
             && $request->data()['operations'][3]['operation'] === 'magic_stroke'
             && $request->data()['operations'][4]['operation'] === 'add_label'
             && $request->data()['operations'][4]['x'] === 90);
+
+        $undo = $this->postJson("/generations/{$generation->resume_token}/undo");
+
+        $undo->assertOk()
+            ->assertJsonPath('result_id', '11111111-1111-4111-8111-111111111111')
+            ->assertJsonPath('can_undo', false)
+            ->assertJsonPath('diagnostics', []);
+        $this->assertDatabaseHas('generations', [
+            'id' => $generation->id,
+            'result_id' => '11111111-1111-4111-8111-111111111111',
+            'previous_result_id' => null,
+        ]);
+        $this->postJson("/generations/{$generation->resume_token}/undo")
+            ->assertConflict()
+            ->assertJsonPath('message', 'Нет сохранённого изменения для отмены.');
+    }
+
+    public function test_completed_generation_can_be_reopened_with_its_secret_link(): void
+    {
+        $generation = Generation::create([
+            'status' => 'completed',
+            'original_name' => 'saved-photo.png',
+            'settings' => ['colors' => 24],
+            'result_id' => '11111111-1111-4111-8111-111111111111',
+            'palette' => $this->generatorPayload()['palette'],
+            'diagnostics' => $this->generatorPayload()['diagnostics'],
+        ]);
+
+        $this->get("/kartina-po-nomeram-po-foto/proekt/{$generation->resume_token}")
+            ->assertOk()
+            ->assertSee(route('generations.show', $generation), false);
+
+        $response = $this->getJson("/generations/{$generation->resume_token}");
+
+        $response->assertOk()
+            ->assertJsonPath('original_name', 'saved-photo.png')
+            ->assertJsonPath('result_id', $generation->result_id)
+            ->assertJsonPath('diagnostics.segments', 42);
+        $this->assertStringContainsString($generation->resume_token, $response->json('edit_url'));
+        $this->assertStringContainsString($generation->resume_token, $response->json('downloads.svg'));
+        $this->getJson("/generations/{$generation->id}")->assertNotFound();
     }
 
     private function validForm(): array
@@ -194,6 +253,7 @@ class GenerationTest extends TestCase
                 'boundary_paths' => 10,
                 'label_density' => 1,
                 'labels_placed' => 5,
+                'unlabeled_segments' => 3,
                 'processing_width' => 1,
                 'processing_height' => 1,
                 'processing_ms' => 100,

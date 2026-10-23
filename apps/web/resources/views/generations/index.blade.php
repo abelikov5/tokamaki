@@ -16,9 +16,9 @@
     <meta property="og:image" content="https://tokamaki.ru/images/logo_tokamaki.webp">
     <meta name="theme-color" content="#0b1f3a">
     <link rel="icon" type="image/webp" href="{{ asset('images/logo_tokamaki.webp') }}">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
-    <script src="{{ asset('js/app.js') }}" defer></script>
+    <script src="{{ asset('js/app.js') }}?v={{ filemtime(public_path('js/app.js')) }}" defer></script>
     <script type="application/ld+json">
         {
             "@@context": "https://schema.org",
@@ -32,7 +32,7 @@
         }
     </script>
 </head>
-<body class="generator-page">
+<body class="generator-page" data-resume-endpoint="{{ $resumeEndpoint }}">
 @include('partials.metrika')
 <header class="brand-header">
     <a class="brand-mark" href="{{ route('home') }}" aria-label="Токамаки — на главную">
@@ -52,6 +52,16 @@
         <h1>Картина по номерам<br><span>из вашей фотографии</span></h1>
         <p>Загрузите JPG или PNG, подберите палитру и детализацию. Сервис построит контуры, расставит номера и подготовит файлы для печати.</p>
     </header>
+
+    <section id="saved-projects" class="panel saved-projects" hidden>
+        <div>
+            <p class="eyebrow">Ваши проекты</p>
+            <h2>Продолжить работу</h2>
+            <p>Последние картины, сохранённые в этом браузере.</p>
+        </div>
+        <div id="saved-project-list" class="saved-project-list"></div>
+    </section>
+    <p id="resume-loading" class="resume-loading" hidden>Загружаем сохранённую картину…</p>
 
     <form id="generation-form" class="panel workspace" action="{{ route('generations.store') }}" method="post" enctype="multipart/form-data">
         @csrf
@@ -124,6 +134,13 @@
     </form>
 
     <section id="result" class="result" hidden>
+        <div class="panel project-save-bar">
+            <div>
+                <strong id="project-name">Сохранённая картина</strong>
+                <span id="project-save-status">Применённые изменения сохраняются автоматически.</span>
+            </div>
+            <button id="save-project" type="button">Сохранить проект</button>
+        </div>
         <div id="stats" class="stats"></div>
         <article class="panel editor-panel">
             <div class="editor-heading">
@@ -173,6 +190,10 @@
                                 <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V7a3 3 0 0 1 6 0v4l3 3v2H6v-2l3-3Z"/><path d="M5 20h14M8 16v4M16 16v4"/></svg>
                                 Номер
                             </button>
+                            <button type="button" data-tool="unlabeled">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><path d="M9.5 9.5a3.5 3.5 0 1 0 5 5"/><path d="M16 4v4M14 6h4"/></svg>
+                                Без номеров
+                            </button>
                         </div>
                     </div>
                     <div id="eraser-options" class="tool-group" hidden>
@@ -202,6 +223,7 @@
                     <p id="tool-help" class="tool-help">Перетаскивайте холст мышью. Масштаб также меняется колёсиком с Ctrl.</p>
                     <div class="edit-actions">
                         <button id="apply-edits" type="button" disabled>Применить изменения <kbd>Enter</kbd></button>
+                        <button id="undo-change" type="button" disabled>Отменить последнее <kbd>Ctrl+Z</kbd></button>
                         <button id="discard-edits" type="button" disabled>Отменить правки</button>
                     </div>
                     <span id="editor-status"></span>

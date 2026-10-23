@@ -31,6 +31,7 @@ class Diagnostics(BaseModel):
     boundary_paths: int
     label_density: float
     labels_placed: int
+    unlabeled_segments: int
     processing_width: int
     processing_height: int
     processing_ms: int

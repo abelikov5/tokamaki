@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+import logging
+import time
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from PIL import UnidentifiedImageError
 
 from app.config import MAX_PROCESSING_SIDE, MAX_UPLOAD_BYTES, RESULTS_DIR
 from app.models import EditRequest, ProcessResponse
-from app.services.processor import data_url, edit_result_batch, process_image
+from app.services.processor import (
+    build_unlabeled_overlay_from_state,
+    data_url,
+    edit_result_batch,
+    process_image,
+)
 from app.services.store import FileResultStore
 
 app = FastAPI(title="Paints by Numbers API", version="0.1.0")
@@ -21,6 +28,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 store = FileResultStore(RESULTS_DIR)
+logger = logging.getLogger("uvicorn.error")
 
 
 @app.get("/health")
@@ -41,6 +49,7 @@ async def process(
     line_separation: float = Form(2.0),
     label_density: float = Form(1.0),
 ) -> ProcessResponse:
+    started = time.perf_counter()
     if not 4 <= colors <= 48:
         raise HTTPException(422, "colors must be between 4 and 48")
     if not 10 <= min_region_size <= 5000:
@@ -63,6 +72,10 @@ async def process(
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, "Image is larger than 20 MB")
     try:
+        logger.info(
+            "Новая генерация: файл=%s, размер=%d байт, цвета=%s, сложность=%s",
+            file.filename or "без имени", len(content), "авто" if auto_colors else colors, complexity,
+        )
         result = process_image(
             content,
             colors,
@@ -80,6 +93,10 @@ async def process(
         raise HTTPException(422, f"Invalid image: {error}") from error
     result_id = str(uuid.uuid4())
     store.save(result_id, result)
+    logger.info(
+        "Генерация завершена за %.1f с: result_id=%s, областей=%s",
+        time.perf_counter() - started, result_id, result.diagnostics.get("segments"),
+    )
     return ProcessResponse(
         result_id=result_id,
         preview_data_url=data_url("image/png", result.preview_png),
@@ -92,6 +109,7 @@ async def process(
 
 @app.post("/api/v1/results/{result_id}/edit", response_model=ProcessResponse)
 def edit(result_id: str, request: EditRequest) -> ProcessResponse:
+    started = time.perf_counter()
     supported = {
         "recolor_region", "unify_background", "paint_stroke", "erase_stroke", "smooth_stroke",
         "magic_stroke", "add_label",
@@ -130,11 +148,19 @@ def edit(result_id: str, request: EditRequest) -> ProcessResponse:
     if state is None:
         raise HTTPException(404, "Editable result not found")
     try:
+        logger.info(
+            "Редактор: result_id=%s, операции=%s",
+            result_id, ", ".join(operation["operation"] for operation in operations),
+        )
         result = edit_result_batch(state, operations)
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
     edited_result_id = str(uuid.uuid4())
     store.save(edited_result_id, result)
+    logger.info(
+        "Редактор завершил перестроение за %.1f с: result_id=%s, областей=%s",
+        time.perf_counter() - started, edited_result_id, result.diagnostics.get("segments"),
+    )
     return ProcessResponse(
         result_id=edited_result_id,
         preview_data_url=data_url("image/png", result.preview_png),
@@ -146,17 +172,25 @@ def edit(result_id: str, request: EditRequest) -> ProcessResponse:
 
 
 @app.get("/api/v1/results/{result_id}/{filename}")
-def download_result(result_id: str, filename: str) -> FileResponse:
+def download_result(result_id: str, filename: str) -> Response:
     allowed = {
         "preview.png": "image/png",
         "scheme.svg": "image/svg+xml",
         "scheme.pdf": "application/pdf",
         "palette.json": "application/json",
         "diagnostics.json": "application/json",
+        "unlabeled.png": "image/png",
     }
     if filename not in allowed:
         raise HTTPException(404, "Result file not found")
     path = store.path(result_id, filename)
+    if path is None and filename == "unlabeled.png":
+        state = store.load_editor_state(result_id)
+        if state is not None:
+            return Response(
+                content=build_unlabeled_overlay_from_state(state),
+                media_type=allowed[filename],
+            )
     if path is None:
         raise HTTPException(404, "Result file not found")
     return FileResponse(path, media_type=allowed[filename], filename=filename)

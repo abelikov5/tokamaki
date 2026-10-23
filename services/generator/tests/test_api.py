@@ -7,6 +7,8 @@ from PIL import Image
 
 from app.main import app
 from app.services.processor import (
+    Region,
+    _build_svg,
     _estimate_color_count,
     _erase_selected_components,
     _erase_stroke_locally,
@@ -59,6 +61,7 @@ def test_process_full_flow():
     assert body["diagnostics"]["complexity"] == "balanced"
     assert body["diagnostics"]["boundary_paths"] > 0
     assert body["diagnostics"]["labels_placed"] > 0
+    assert body["diagnostics"]["unlabeled_segments"] >= 0
     pdf = client.get(body["pdf_url"])
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF")
@@ -67,6 +70,24 @@ def test_process_full_flow():
     assert b"<svg" in svg.content and b"<text" in svg.content
     assert b'id="scheme-clip"' in svg.content
     assert b'id="scheme-frame"' in svg.content
+    unlabeled = client.get(f'/api/v1/results/{body["result_id"]}/unlabeled.png')
+    assert unlabeled.status_code == 200
+    assert unlabeled.content.startswith(b"\x89PNG")
+
+
+def test_svg_uses_gray_for_only_the_largest_labels_and_halos_every_label():
+    mask = np.ones((120, 120), dtype=np.uint8)
+    regions = [
+        Region(0, mask, 10_000, np.empty((0, 1, 2)), [], [(50.0, 50.0)]),
+        Region(1, mask, 100, np.empty((0, 1, 2)), [], [(20.0, 20.0)]),
+    ]
+
+    svg = _build_svg(120, 120, regions, {0: 4, 1: 12}, [], 0.65)
+
+    assert b'font-size="13.0" fill="#707070"' in svg
+    assert b'font-size="5.0" fill="#222222"' in svg
+    assert svg.count(b'stroke="#FFFFFF" stroke-width="3.0"') == 2
+    assert svg.count(b'paint-order="stroke fill"') == 2
 
 
 def test_auto_color_mode_detects_flat_illustration_palette():
@@ -229,6 +250,18 @@ def test_local_eraser_only_replaces_pixels_under_the_stroke():
     edited = _erase_stroke_locally(labels, stroke_mask)
 
     assert not np.any(edited == 1)
+    assert np.array_equal(edited[~stroke_mask], labels[~stroke_mask])
+
+
+def test_local_eraser_removes_a_boundary_instead_of_recreating_it():
+    labels = np.zeros((14, 14), dtype=np.int32)
+    labels[:, 7:] = 1
+    stroke_mask = np.zeros_like(labels, dtype=bool)
+    stroke_mask[4:10, 5:9] = True
+
+    edited = _erase_stroke_locally(labels, stroke_mask)
+
+    assert np.unique(edited[stroke_mask]).size == 1
     assert np.array_equal(edited[~stroke_mask], labels[~stroke_mask])
 
 
