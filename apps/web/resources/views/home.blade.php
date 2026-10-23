@@ -29,6 +29,7 @@
     </script>
 </head>
 <body class="brand-page">
+@include('partials.metrika')
 <header class="brand-header">
     <a class="brand-mark" href="{{ route('home') }}" aria-label="Токамаки — на главную">
         <img class="brand-symbol" src="{{ asset('images/logo_tokamaki.webp') }}" alt="" width="268" height="212">

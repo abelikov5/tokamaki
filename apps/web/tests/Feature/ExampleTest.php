@@ -18,6 +18,8 @@ class ExampleTest extends TestCase
             ->assertSee('Токамаки')
             ->assertSee('Товары для творчества')
             ->assertSee(route('generator'), false)
+            ->assertSee('mc.yandex.ru/metrika/tag.js?id=113757543', false)
+            ->assertSee('mc.yandex.ru/watch/113757543', false)
             ->assertSee('application/ld+json', false);
     }
 }

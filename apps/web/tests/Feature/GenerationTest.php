@@ -19,6 +19,8 @@ class GenerationTest extends TestCase
             ->assertOk()
             ->assertSee('Картина по номерам')
             ->assertSee('canonical', false)
+            ->assertSee('mc.yandex.ru/metrika/tag.js?id=113757543', false)
+            ->assertSee('mc.yandex.ru/watch/113757543', false)
             ->assertSee('data-tool="eyedropper"', false)
             ->assertSee('data-tool="magic"', false)
             ->assertSee('data-tool="label"', false)
