@@ -4,6 +4,10 @@ const sourcePreview = document.querySelector('#source-preview');
 const placeholder = document.querySelector('#upload-placeholder');
 const submitButton = document.querySelector('#submit-button');
 const errorBox = document.querySelector('#error');
+const formatControls = document.querySelector('#format-controls');
+const imagePreparing = document.querySelector('#image-preparing');
+const fitDescription = document.querySelector('#fit-description');
+const fitModeButtons = document.querySelectorAll('[data-fit-mode]');
 const resultSection = document.querySelector('#result');
 const canvas = document.querySelector('#editor-canvas');
 const context = canvas.getContext('2d');
@@ -34,6 +38,14 @@ let panStart = null;
 let pendingOperations = [];
 let samplerReady = false;
 let eraserMode = 'color';
+let sourceImage = null;
+let preparedImageBlob = null;
+let preparedImageUrl = null;
+let fitMode = 'crop';
+let imagePreparationRevision = 0;
+
+const PREPARED_IMAGE_WIDTH = 1600;
+const PREPARED_IMAGE_HEIGHT = 2000;
 
 document.querySelectorAll('input[type="range"]').forEach((input) => {
     const key = input.name || input.id;
@@ -59,12 +71,50 @@ function syncColorMode() {
 autoColors.addEventListener('change', syncColorMode);
 syncColorMode();
 
-imageInput.addEventListener('change', () => {
+imageInput.addEventListener('change', async () => {
     const file = imageInput.files[0];
-    if (!file) return;
-    sourcePreview.src = URL.createObjectURL(file);
-    sourcePreview.hidden = false;
-    placeholder.hidden = true;
+    if (!file) {
+        resetPreparedImage();
+        return;
+    }
+
+    const revision = ++imagePreparationRevision;
+    selectFitMode('crop');
+    setImagePreparing(true);
+    errorBox.hidden = true;
+
+    try {
+        const decodedImage = await loadSourceImage(file);
+        if (revision !== imagePreparationRevision) return;
+        sourceImage = decodedImage;
+        formatControls.hidden = false;
+        await prepareImage(revision);
+    } catch (error) {
+        if (revision !== imagePreparationRevision) return;
+        resetPreparedImage();
+        errorBox.textContent = 'Не удалось прочитать фотографию. Выберите другой JPG или PNG.';
+        errorBox.hidden = false;
+    } finally {
+        if (revision === imagePreparationRevision) setImagePreparing(false);
+    }
+});
+
+fitModeButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+        if (!sourceImage || button.dataset.fitMode === fitMode) return;
+        selectFitMode(button.dataset.fitMode);
+        const revision = ++imagePreparationRevision;
+        setImagePreparing(true);
+        try {
+            await prepareImage(revision);
+        } catch (error) {
+            if (revision !== imagePreparationRevision) return;
+            errorBox.textContent = 'Не удалось подготовить фотографию.';
+            errorBox.hidden = false;
+        } finally {
+            if (revision === imagePreparationRevision) setImagePreparing(false);
+        }
+    });
 });
 
 form.addEventListener('submit', async (event) => {
@@ -74,10 +124,13 @@ form.addEventListener('submit', async (event) => {
     submitButton.disabled = true;
     submitButton.textContent = 'Строим схему…';
     try {
+        if (!preparedImageBlob) throw new Error('Дождитесь подготовки фотографии.');
+        const formData = new FormData(form);
+        formData.set('image', preparedImageBlob, preparedFileName(imageInput.files[0]?.name));
         const response = await fetch(form.action, {
             method: 'POST',
             headers: requestHeaders(),
-            body: new FormData(form),
+            body: formData,
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(responseMessage(payload, response.status));
@@ -91,6 +144,101 @@ form.addEventListener('submit', async (event) => {
         submitButton.textContent = 'Создать картину';
     }
 });
+
+function loadSourceImage(file) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        image.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(image);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Image decoding failed'));
+        };
+        image.src = objectUrl;
+    });
+}
+
+async function prepareImage(revision) {
+    const preparationCanvas = document.createElement('canvas');
+    preparationCanvas.width = PREPARED_IMAGE_WIDTH;
+    preparationCanvas.height = PREPARED_IMAGE_HEIGHT;
+    const preparationContext = preparationCanvas.getContext('2d');
+    preparationContext.imageSmoothingEnabled = true;
+    preparationContext.imageSmoothingQuality = 'high';
+    preparationContext.fillStyle = '#ffffff';
+    preparationContext.fillRect(0, 0, PREPARED_IMAGE_WIDTH, PREPARED_IMAGE_HEIGHT);
+
+    if (fitMode === 'stretch') {
+        preparationContext.drawImage(sourceImage, 0, 0, PREPARED_IMAGE_WIDTH, PREPARED_IMAGE_HEIGHT);
+    } else {
+        const scale = Math.max(
+            PREPARED_IMAGE_WIDTH / sourceImage.naturalWidth,
+            PREPARED_IMAGE_HEIGHT / sourceImage.naturalHeight,
+        );
+        const width = sourceImage.naturalWidth * scale;
+        const height = sourceImage.naturalHeight * scale;
+        preparationContext.drawImage(
+            sourceImage,
+            (PREPARED_IMAGE_WIDTH - width) / 2,
+            (PREPARED_IMAGE_HEIGHT - height) / 2,
+            width,
+            height,
+        );
+    }
+
+    const blob = await canvasToBlob(preparationCanvas);
+    if (revision !== imagePreparationRevision) return;
+    preparedImageBlob = blob;
+    if (preparedImageUrl) URL.revokeObjectURL(preparedImageUrl);
+    preparedImageUrl = URL.createObjectURL(blob);
+    sourcePreview.src = preparedImageUrl;
+    sourcePreview.hidden = false;
+    placeholder.hidden = true;
+}
+
+function canvasToBlob(canvas) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Canvas export failed')), 'image/jpeg', 0.92);
+    });
+}
+
+function preparedFileName(originalName = 'photo.jpg') {
+    const stem = originalName.replace(/\.[^.]+$/, '') || 'photo';
+    return `${stem}-40x50.jpg`;
+}
+
+function selectFitMode(mode) {
+    fitMode = mode;
+    fitModeButtons.forEach((item) => {
+        const selected = item.dataset.fitMode === mode;
+        item.classList.toggle('selected', selected);
+        item.setAttribute('aria-pressed', String(selected));
+    });
+    fitDescription.textContent = mode === 'crop'
+        ? 'Лишнее по краям обрезается автоматически, без искажения пропорций.'
+        : 'Вся фотография помещается в формат 40 × 50″ с изменением пропорций.';
+}
+
+function setImagePreparing(preparing) {
+    imagePreparing.hidden = !preparing;
+    submitButton.disabled = preparing;
+}
+
+function resetPreparedImage() {
+    ++imagePreparationRevision;
+    sourceImage = null;
+    preparedImageBlob = null;
+    if (preparedImageUrl) URL.revokeObjectURL(preparedImageUrl);
+    preparedImageUrl = null;
+    sourcePreview.removeAttribute('src');
+    sourcePreview.hidden = true;
+    placeholder.hidden = false;
+    formatControls.hidden = true;
+    setImagePreparing(false);
+}
 
 document.querySelectorAll('[data-tool]').forEach((button) => {
     button.addEventListener('click', () => selectTool(button.dataset.tool));
@@ -133,6 +281,10 @@ canvas.addEventListener('pointerdown', (event) => {
     if (!currentResult || loader.hidden === false) return;
     if (currentTool === 'eyedropper') {
         pickColor(eventPoint(event));
+        return;
+    }
+    if (currentTool === 'label') {
+        queueLabel(eventPoint(event));
         return;
     }
     pointerDown = true;
@@ -272,7 +424,11 @@ function loadEditorImage(fitAfterLoad) {
         canvas.width = currentResult.diagnostics.processing_width;
         canvas.height = currentResult.diagnostics.processing_height;
         drawEditor();
-        if (fitAfterLoad) fitEditor(); else applyZoom();
+        if (fitAfterLoad) {
+            requestAnimationFrame(() => requestAnimationFrame(fitEditor));
+        } else {
+            applyZoom();
+        }
     };
     image.src = currentView === 'scheme' ? currentResult.svg_data_url : currentResult.preview_data_url;
 }
@@ -281,12 +437,18 @@ function drawEditor() {
     if (!baseImage) return;
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
-    pendingOperations.forEach((operation) => drawStrokeOverlay(
-        operation.points,
-        operation.radius,
-        operation.operation,
-        operation.target_number,
-    ));
+    pendingOperations.forEach((operation) => {
+        if (operation.operation === 'add_label') {
+            drawLabelOverlay(operation);
+            return;
+        }
+        drawStrokeOverlay(
+            operation.points,
+            operation.radius,
+            operation.operation,
+            operation.target_number,
+        );
+    });
     if (strokePoints.length) {
         const operation = {
             brush: 'paint_stroke',
@@ -325,6 +487,20 @@ function drawStrokeOverlay(points, radius, operation, colorNumber) {
     context.restore();
 }
 
+function drawLabelOverlay(operation) {
+    const fontSize = Math.max(8, Math.min(18, canvas.width * 0.012));
+    context.save();
+    context.font = `700 ${fontSize}px Arial, sans-serif`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.lineWidth = Math.max(2, fontSize * 0.28);
+    context.strokeStyle = 'rgba(255,255,255,.96)';
+    context.fillStyle = '#111';
+    context.strokeText(String(operation.target_number), operation.x, operation.y);
+    context.fillText(String(operation.target_number), operation.x, operation.y);
+    context.restore();
+}
+
 function loadSamplerImage() {
     samplerReady = false;
     const image = new Image();
@@ -343,16 +519,38 @@ function pickColor([x, y]) {
         editorStatus.textContent = 'Цветное превью ещё загружается.';
         return;
     }
-    const [red, green, blue] = samplerContext.getImageData(Math.round(x), Math.round(y), 1, 1).data;
-    const selected = currentResult.palette.reduce((closest, color) => {
-        const distance = Math.hypot(red - color.rgb[0], green - color.rgb[1], blue - color.rgb[2]);
-        return !closest || distance < closest.distance ? { color, distance } : closest;
-    }, null)?.color;
+    const selected = paletteColorAt(x, y);
     if (!selected) return;
     targetNumber = selected.number;
     renderEditorPalette();
     editorStatus.textContent = `Пипетка выбрала цвет №${selected.number} (${selected.hex}).`;
     editorStatus.classList.remove('failed');
+}
+
+function paletteColorAt(x, y) {
+    if (!samplerReady) return null;
+    const [red, green, blue] = samplerContext.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+    return currentResult.palette.reduce((closest, color) => {
+        const distance = Math.hypot(red - color.rgb[0], green - color.rgb[1], blue - color.rgb[2]);
+        return !closest || distance < closest.distance ? { color, distance } : closest;
+    }, null)?.color;
+}
+
+function queueLabel([x, y]) {
+    if (!samplerReady) {
+        editorStatus.textContent = 'Цветное превью ещё загружается.';
+        return;
+    }
+    const selected = paletteColorAt(x, y);
+    if (!selected) return;
+    pendingOperations.push({
+        operation: 'add_label',
+        x: Math.round(x),
+        y: Math.round(y),
+        target_number: selected.number,
+    });
+    updatePendingUi();
+    drawEditor();
 }
 
 function updatePendingUi() {
@@ -421,6 +619,7 @@ function updateToolOptions() {
             : 'Удаляет только область под мазком, заполняя её цветами ближайших областей.',
         smooth: 'Локально выравнивает границы. Перестроение произойдёт после применения правок.',
         magic: 'Убирает затронутые области без номера, присоединяя их к самому большому соседнему сегменту.',
+        label: 'Щёлкните внутри области — номер её цвета и подходящий размер определятся автоматически.',
     };
     document.querySelector('#tool-help').textContent = help[currentTool];
 }
@@ -435,8 +634,10 @@ function eventPoint(event) {
 
 function fitEditor() {
     if (!canvas.width) return;
-    setZoom((stage.clientWidth - 36) / canvas.width);
-    stage.scrollLeft = 0;
+    const availableHeight = Math.max(1, stage.clientHeight - 36);
+    setZoom(availableHeight / canvas.height);
+    const overflowWidth = canvas.width * zoom - (stage.clientWidth - 36);
+    stage.scrollLeft = Math.max(0, overflowWidth / 2);
     stage.scrollTop = 0;
 }
 

@@ -13,9 +13,9 @@
     <meta property="og:title" content="Картина по номерам по фото — онлайн-генератор">
     <meta property="og:description" content="Загрузите фотографию, настройте палитру и получите готовую схему картины по номерам.">
     <meta property="og:url" content="https://tokamaki.ru/kartina-po-nomeram-po-foto">
-    <meta property="og:image" content="https://tokamaki.ru/images/tokamaki-logo.png">
+    <meta property="og:image" content="https://tokamaki.ru/images/logo_tokamaki.webp">
     <meta name="theme-color" content="#0b1f3a">
-    <link rel="icon" type="image/png" href="{{ asset('images/tokamaki-logo.png') }}">
+    <link rel="icon" type="image/webp" href="{{ asset('images/logo_tokamaki.webp') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <script src="{{ asset('js/app.js') }}" defer></script>
@@ -35,8 +35,8 @@
 <body class="generator-page">
 <header class="brand-header">
     <a class="brand-mark" href="{{ route('home') }}" aria-label="Токамаки — на главную">
-        <img src="{{ asset('images/tokamaki-logo.png') }}" alt="Токамаки" width="56" height="56">
-        <span>Токамаки<small>изо студио</small></span>
+        <img class="brand-symbol" src="{{ asset('images/logo_tokamaki.webp') }}" alt="" width="268" height="212">
+        <img class="brand-wordmark" src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="543" height="117">
     </a>
     <nav class="brand-nav" aria-label="Основная навигация">
         <a href="{{ route('home') }}#products">Продукция</a>
@@ -47,18 +47,33 @@
 </header>
 <main class="shell">
     <header class="hero generator-intro">
-        <p class="eyebrow">Онлайн-генератор Токамаки</p>
+        <p class="eyebrow">Бесплатный Онлайн-генератор</p>
         <h1>Картина по номерам<br><span>из вашей фотографии</span></h1>
         <p>Загрузите JPG или PNG, подберите палитру и детализацию. Сервис построит контуры, расставит номера и подготовит файлы для печати.</p>
     </header>
 
     <form id="generation-form" class="panel workspace" action="{{ route('generations.store') }}" method="post" enctype="multipart/form-data">
         @csrf
-        <label class="upload" for="image">
-            <input id="image" name="image" type="file" accept="image/jpeg,image/png" required>
-            <span id="upload-placeholder"><strong>Выберите фотографию</strong><small>JPG или PNG, до 20 МБ</small></span>
-            <img id="source-preview" alt="Исходная фотография" hidden>
-        </label>
+        <div class="source-column">
+            <label class="upload" for="image">
+                <input id="image" name="image" type="file" accept="image/jpeg,image/png" required>
+                <span id="upload-placeholder"><strong>Выберите фотографию</strong><small>JPG или PNG, до 20 МБ</small></span>
+                <img id="source-preview" alt="Фотография, подготовленная в формате 40 на 50 дюймов" hidden>
+                <span id="image-preparing" class="image-preparing" hidden>Подготавливаем фото…</span>
+            </label>
+
+            <section id="format-controls" class="format-controls" aria-label="Подготовка формата фотографии" hidden>
+                <div class="format-summary">
+                    <strong>Формат 40 × 50″</strong>
+                    <small>Вертикальный 4:5 · файл для обработки 1600 × 2000 px</small>
+                </div>
+                <div class="fit-switch" role="group" aria-label="Способ размещения фотографии">
+                    <button type="button" class="selected" data-fit-mode="crop" aria-pressed="true">Обрезать</button>
+                    <button type="button" data-fit-mode="stretch" aria-pressed="false">Растянуть</button>
+                </div>
+                <p id="fit-description">Лишнее по краям обрезается автоматически, без искажения пропорций.</p>
+            </section>
+        </div>
 
         <section class="controls">
             <div class="control-row">
@@ -67,7 +82,7 @@
                         <input id="colors" name="colors" type="range" min="4" max="48" step="1" value="24">
                     </label>
                     <label class="auto-colors" for="auto-colors">
-                        <input id="auto-colors" name="auto_colors" type="checkbox" value="1">
+                        <input id="auto-colors" name="auto_colors" type="checkbox" value="1" checked>
                         <span aria-hidden="true"></span>
                         <strong>Авто</strong>
                         <small>Определить число заметных цветов по изображению</small>
@@ -153,6 +168,10 @@
                                 <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 10-10"/><path d="m12 8 4 4"/><path d="M18 2v4M16 4h4M7 3v3M5.5 4.5h3M20 15v3M18.5 16.5h3"/></svg>
                                 Волшебная кисть
                             </button>
+                            <button type="button" data-tool="label">
+                                <svg class="tool-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V7a3 3 0 0 1 6 0v4l3 3v2H6v-2l3-3Z"/><path d="M5 20h14M8 16v4M16 16v4"/></svg>
+                                Номер
+                            </button>
                         </div>
                     </div>
                     <div id="eraser-options" class="tool-group" hidden>
@@ -169,7 +188,7 @@
                             <button id="zoom-out" type="button" title="Уменьшить">−</button>
                             <output id="zoom-value">100%</output>
                             <button id="zoom-in" type="button" title="Увеличить">+</button>
-                            <button id="zoom-fit" type="button">Вписать</button>
+                            <button id="zoom-fit" type="button" title="Разместить холст на всю высоту редактора">По высоте</button>
                         </div>
                     </div>
                     <label class="range tool-size">Размер инструмента <output data-for="brush-size">12 px</output>

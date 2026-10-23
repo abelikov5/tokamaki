@@ -330,13 +330,6 @@ def _extract_unique_boundaries(labels: np.ndarray, epsilon: float) -> list[np.nd
         add_edge((int(x) + 1, int(y)), (int(x) + 1, int(y) + 1))
     for y, x in np.argwhere(labels[:-1, :] != labels[1:, :]):
         add_edge((int(x), int(y) + 1), (int(x) + 1, int(y) + 1))
-    for x in range(width):
-        add_edge((x, 0), (x + 1, 0))
-        add_edge((x, height), (x + 1, height))
-    for y in range(height):
-        add_edge((0, y), (0, y + 1))
-        add_edge((width, y), (width, y + 1))
-
     visited: set[tuple[tuple[int, int], tuple[int, int]]] = set()
 
     def edge_key(left: tuple[int, int], right: tuple[int, int]):
@@ -436,7 +429,8 @@ def _build_svg(
         '<?xml version="1.0" encoding="UTF-8"?>',
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         '<rect width="100%" height="100%" fill="white"/>',
-        '<g fill="none" stroke="#606060" stroke-width="0.65" stroke-linejoin="round" stroke-linecap="round">',
+        f'<defs><clipPath id="scheme-clip"><rect width="{width}" height="{height}"/></clipPath></defs>',
+        '<g clip-path="url(#scheme-clip)" fill="none" stroke="#606060" stroke-width="0.65" stroke-linejoin="round" stroke-linecap="round">',
     ]
     for boundary in boundaries:
         parts.append(f'<path d="{escape(_path_for_polyline(boundary, curve_strength))}"/>')
@@ -446,7 +440,14 @@ def _build_svg(
             area_per_label = region.area / max(1, len(region.label_points))
             font_size = max(5.0, min(13.0, (area_per_label ** 0.5) * 0.22))
             parts.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{font_size:.1f}">{palette_numbers[region.palette_index]}</text>')
-    parts.append('</g></svg>')
+    frame_inset = 0.325
+    frame_width = max(0.0, width - frame_inset * 2)
+    frame_height = max(0.0, height - frame_inset * 2)
+    parts.append(
+        f'</g><rect id="scheme-frame" x="{frame_inset:.3f}" y="{frame_inset:.3f}" '
+        f'width="{frame_width:.3f}" height="{frame_height:.3f}" fill="none" stroke="#606060" '
+        'stroke-width="0.65" stroke-linejoin="miter" stroke-linecap="square"/></svg>'
+    )
     return "".join(parts).encode("utf-8")
 
 
@@ -499,10 +500,18 @@ def _build_pdf(
     pdf.setLineWidth(0.35)
     pdf.setStrokeColor(Color(0.35, 0.35, 0.35))
     pdf.setFillColorRGB(1, 1, 1)
+    pdf.saveState()
+    clip = pdf.beginPath()
+    clip.rect(ox, oy, draw_w, draw_h)
+    pdf.clipPath(clip, stroke=0, fill=0)
     for boundary in boundaries:
         path = _draw_pdf_path(pdf, boundary, scale, ox, oy, height, curve_strength)
         if path:
             pdf.drawPath(path, stroke=1, fill=0)
+    pdf.restoreState()
+    pdf.setLineJoin(0)
+    pdf.setLineCap(0)
+    pdf.rect(ox, oy, draw_w, draw_h, stroke=1, fill=0)
     pdf.setFillColorRGB(0.1, 0.1, 0.1)
     for region in regions:
         for x, y in region.label_points:
@@ -552,6 +561,16 @@ def _render_editable_result(
         settings["effective_contour_smoothing"],
         target_area_per_label,
     )
+    for raw_point in settings.get("manual_label_points", []):
+        if len(raw_point) != 2:
+            continue
+        x, y = (int(round(float(value))) for value in raw_point)
+        if not (0 <= x < labels.shape[1] and 0 <= y < labels.shape[0]):
+            continue
+        for region in regions:
+            if region.palette_index == int(labels[y, x]) and bool(region.mask[y, x]):
+                region.label_points.append((float(x), float(y)))
+                break
 
     preview = rgb_centers[labels]
     buffer = io.BytesIO()
@@ -839,19 +858,30 @@ def edit_result_batch(state: EditorState, operations: list[dict]) -> ProcessingR
         raise ValueError("At least one editor operation is required")
     started = time.perf_counter()
     labels = state.labels.copy()
+    settings = state.settings.copy()
+    manual_label_points = [list(point) for point in settings.get("manual_label_points", [])]
     rgb_centers = _palette_rgb(state.lab_centers)
     _, palette_numbers = _palette_layout(labels, rgb_centers)
     number_to_index = {number: index for index, number in palette_numbers.items()}
     for operation in operations:
+        if operation["operation"] == "add_label":
+            x = int(operation.get("x", 0))
+            y = int(operation.get("y", 0))
+            height, width = labels.shape
+            if not (0 <= x < width and 0 <= y < height):
+                raise ValueError("Selected point is outside the image")
+            if not any((x - point[0]) ** 2 + (y - point[1]) ** 2 < 4 for point in manual_label_points):
+                manual_label_points.append([x, y])
+            continue
         labels = _apply_edit_operation(
             labels,
             state.lab_centers,
             number_to_index,
-            state.settings,
+            settings,
             operation,
         )
 
-    settings = state.settings.copy()
+    settings["manual_label_points"] = manual_label_points
     settings["small_regions_before_merge"] = 0
     settings["thin_regions_before_merge"] = 0
     return _render_editable_result(labels, state.lab_centers, settings, started)

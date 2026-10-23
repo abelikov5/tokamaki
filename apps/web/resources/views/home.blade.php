@@ -12,10 +12,10 @@
     <meta property="og:title" content="Токамаки — идеи, которые хочется создавать">
     <meta property="og:description" content="Товары для творчества, персональные наборы по фото и производство под брендом заказчика.">
     <meta property="og:url" content="https://tokamaki.ru/">
-    <meta property="og:image" content="https://tokamaki.ru/images/tokamaki-logo.png">
+    <meta property="og:image" content="https://tokamaki.ru/images/logo_tokamaki.webp">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="theme-color" content="#0b1f3a">
-    <link rel="icon" type="image/png" href="{{ asset('images/tokamaki-logo.png') }}">
+    <link rel="icon" type="image/webp" href="{{ asset('images/logo_tokamaki.webp') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <script type="application/ld+json">
         {
@@ -23,7 +23,7 @@
             "@@type": "Organization",
             "name": "Токамаки",
             "url": "https://tokamaki.ru/",
-            "logo": "https://tokamaki.ru/images/tokamaki-logo.png",
+            "logo": "https://tokamaki.ru/images/logo_tokamaki.webp",
             "description": "Производство товаров для творчества, печать на холсте и персональная продукция по фото."
         }
     </script>
@@ -31,8 +31,8 @@
 <body class="brand-page">
 <header class="brand-header">
     <a class="brand-mark" href="{{ route('home') }}" aria-label="Токамаки — на главную">
-        <img src="{{ asset('images/tokamaki-logo.png') }}" alt="Токамаки" width="56" height="56">
-        <span>Токамаки<small>изо студио</small></span>
+        <img class="brand-symbol" src="{{ asset('images/logo_tokamaki.webp') }}" alt="" width="268" height="212">
+        <img class="brand-wordmark" src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="543" height="117">
     </a>
     <nav class="brand-nav" aria-label="Основная навигация">
         <a href="#products">Продукция</a>
@@ -165,7 +165,10 @@
 </main>
 
 <footer class="brand-footer">
-    <a class="footer-logo" href="{{ route('home') }}"><img src="{{ asset('images/tokamaki-logo.png') }}" alt="" width="72" height="72"><strong>Токамаки</strong></a>
+    <a class="footer-logo" href="{{ route('home') }}" aria-label="Токамаки — на главную">
+        <img class="footer-symbol" src="{{ asset('images/logo_tokamaki.webp') }}" alt="" width="268" height="212">
+        <img class="footer-wordmark" src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="543" height="117">
+    </a>
     <p>Товары для творчества,<br>которые становятся личными.</p>
     <nav><a href="#products">Продукция</a><a href="#personal">По фото</a><a href="#business">Для бизнеса</a><a href="{{ route('generator') }}">Генератор</a></nav>
     <small>© {{ date('Y') }} Токамаки. tokamaki.ru</small>

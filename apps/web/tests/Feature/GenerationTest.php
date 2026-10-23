@@ -21,9 +21,14 @@ class GenerationTest extends TestCase
             ->assertSee('canonical', false)
             ->assertSee('data-tool="eyedropper"', false)
             ->assertSee('data-tool="magic"', false)
+            ->assertSee('data-tool="label"', false)
             ->assertSee('data-eraser-mode="local"', false)
             ->assertSee('id="colors"', false)
             ->assertSee('id="auto-colors"', false)
+            ->assertSee('name="auto_colors" type="checkbox" value="1" checked', false)
+            ->assertSee('Формат 40 × 50″')
+            ->assertSee('data-fit-mode="crop"', false)
+            ->assertSee('data-fit-mode="stretch"', false)
             ->assertSee('id="apply-edits"', false);
     }
 
@@ -115,6 +120,11 @@ class GenerationTest extends TestCase
                     'points' => [[80, 90], [84, 94]],
                     'radius' => 10,
                 ],
+                [
+                    'operation' => 'add_label',
+                    'x' => 90,
+                    'y' => 100,
+                ],
             ],
         ]);
 
@@ -126,10 +136,12 @@ class GenerationTest extends TestCase
             'id' => $generation->id,
             'result_id' => '22222222-2222-4222-8222-222222222222',
         ]);
-        Http::assertSent(fn ($request) => count($request->data()['operations'] ?? []) === 4
+        Http::assertSent(fn ($request) => count($request->data()['operations'] ?? []) === 5
             && $request->data()['operations'][2]['erase_mode'] === 'local'
             && ! isset($request->data()['operations'][2]['target_number'])
-            && $request->data()['operations'][3]['operation'] === 'magic_stroke');
+            && $request->data()['operations'][3]['operation'] === 'magic_stroke'
+            && $request->data()['operations'][4]['operation'] === 'add_label'
+            && $request->data()['operations'][4]['x'] === 90);
     }
 
     private function validForm(): array

@@ -65,6 +65,8 @@ def test_process_full_flow():
     svg = client.get(f'/api/v1/results/{body["result_id"]}/scheme.svg')
     assert svg.status_code == 200
     assert b"<svg" in svg.content and b"<text" in svg.content
+    assert b'id="scheme-clip"' in svg.content
+    assert b'id="scheme-frame"' in svg.content
 
 
 def test_auto_color_mode_detects_flat_illustration_palette():
@@ -176,6 +178,35 @@ def test_editor_applies_queued_eraser_and_smoothing_strokes():
 
     assert response.status_code == 200, response.text
     assert response.json()["result_id"] != generated["result_id"]
+
+
+def test_editor_adds_and_persists_a_manual_label():
+    client = TestClient(app)
+    generated = client.post(
+        "/api/v1/process",
+        files={"file": ("sample.png", sample_png(), "image/png")},
+        data={"colors": "16", "min_region_size": "25"},
+    ).json()
+
+    first = client.post(
+        f'/api/v1/results/{generated["result_id"]}/edit',
+        json={"operations": [{"operation": "add_label", "x": 10, "y": 10}]},
+    )
+    assert first.status_code == 200, first.text
+    first_body = first.json()
+    assert first_body["diagnostics"]["labels_placed"] == generated["diagnostics"]["labels_placed"] + 1
+    first_svg = client.get(f'/api/v1/results/{first_body["result_id"]}/scheme.svg').content
+    assert b'x="10.0" y="10.0"' in first_svg
+
+    second = client.post(
+        f'/api/v1/results/{first_body["result_id"]}/edit',
+        json={"operations": [{"operation": "add_label", "x": 20, "y": 20}]},
+    )
+    assert second.status_code == 200, second.text
+    second_body = second.json()
+    second_svg = client.get(f'/api/v1/results/{second_body["result_id"]}/scheme.svg').content
+    assert b'x="10.0" y="10.0"' in second_svg
+    assert b'x="20.0" y="20.0"' in second_svg
 
 
 def test_eraser_merges_the_complete_selected_component_into_a_neighbor():

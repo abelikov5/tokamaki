@@ -88,21 +88,23 @@ class GenerationController extends Controller
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
         $supportedOperations = [
             'recolor_region', 'unify_background', 'paint_stroke', 'erase_stroke', 'smooth_stroke',
-            'magic_stroke',
+            'magic_stroke', 'add_label',
         ];
         $validated = $request->validate([
             'operation' => ['required_without:operations', Rule::in($supportedOperations)],
             'operations' => ['required_without:operation', 'array', 'min:1', 'max:100'],
             'operations.*.operation' => ['required', Rule::in([
-                'paint_stroke', 'erase_stroke', 'smooth_stroke', 'magic_stroke',
+                'paint_stroke', 'erase_stroke', 'smooth_stroke', 'magic_stroke', 'add_label',
             ])],
             'operations.*.target_number' => ['nullable', 'integer', 'min:1'],
             'operations.*.erase_mode' => ['nullable', Rule::in(['color', 'local'])],
-            'operations.*.points' => ['required', 'array', 'min:1', 'max:2000'],
+            'operations.*.x' => ['nullable', 'integer', 'min:0'],
+            'operations.*.y' => ['nullable', 'integer', 'min:0'],
+            'operations.*.points' => ['nullable', 'array', 'min:1', 'max:2000'],
             'operations.*.points.*' => ['array', 'size:2'],
             'operations.*.points.*.0' => ['numeric', 'min:0'],
             'operations.*.points.*.1' => ['numeric', 'min:0'],
-            'operations.*.radius' => ['required', 'integer', 'between:1,80'],
+            'operations.*.radius' => ['nullable', 'integer', 'between:1,80'],
             'x' => ['nullable', 'integer', 'min:0'],
             'y' => ['nullable', 'integer', 'min:0'],
             'target_number' => [

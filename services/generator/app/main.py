@@ -94,7 +94,7 @@ async def process(
 def edit(result_id: str, request: EditRequest) -> ProcessResponse:
     supported = {
         "recolor_region", "unify_background", "paint_stroke", "erase_stroke", "smooth_stroke",
-        "magic_stroke",
+        "magic_stroke", "add_label",
     }
     if request.operations and request.operation:
         raise HTTPException(422, "Use either operation or operations, not both")

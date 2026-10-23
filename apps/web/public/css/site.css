@@ -38,10 +38,9 @@ a { color: inherit; }
     border-bottom: 1px solid var(--line);
 }
 
-.brand-mark { display: flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; }
-.brand-mark img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; }
-.brand-mark > span { display: grid; font-size: 21px; font-weight: 950; line-height: .9; letter-spacing: -.04em; text-transform: uppercase; }
-.brand-mark small { margin-top: 7px; font-size: 8px; font-weight: 800; letter-spacing: .28em; }
+.brand-mark { display: flex; align-items: center; gap: 7px; color: var(--ink); text-decoration: none; }
+.brand-symbol { width: 74px; height: 59px; object-fit: contain; }
+.brand-wordmark { width: 170px; height: auto; object-fit: contain; }
 .brand-nav { display: flex; align-items: center; gap: clamp(18px, 3vw, 42px); font-size: 13px; font-weight: 750; }
 .brand-nav a { position: relative; text-decoration: none; }
 .brand-nav a:not(.nav-action)::after { position: absolute; right: 0; bottom: -6px; left: 0; height: 1px; background: currentColor; content: ""; transform: scaleX(0); transform-origin: right; transition: transform .25s ease; }
@@ -190,9 +189,9 @@ a { color: inherit; }
 .cta-art span:nth-child(3) { top: 28%; right: 17%; width: 36px; height: 110px; border-radius: 70% 30% 60% 40%; background: #fff4dd; transform: rotate(35deg); }
 
 .brand-footer { display: grid; padding: 60px max(24px, calc((100% - 1320px) / 2)); grid-template-columns: 1fr 1fr 1fr; gap: 38px; align-items: start; background: #07172b; color: white; }
-.footer-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; text-transform: uppercase; }
-.footer-logo img { width: 58px; height: 58px; border-radius: 50%; }
-.footer-logo strong { font-size: 20px; letter-spacing: -.04em; }
+.footer-logo { display: flex; width: fit-content; padding: 9px 15px 9px 10px; align-items: center; gap: 5px; border-radius: 18px; background: var(--cream); text-decoration: none; }
+.footer-symbol { width: 66px; height: 52px; object-fit: contain; }
+.footer-wordmark { width: 158px; height: auto; object-fit: contain; }
 .brand-footer > p { margin: 7px 0 0; color: rgba(255,255,255,.54); font: 500 18px/1.45 Georgia, serif; }
 .brand-footer nav { display: grid; justify-self: end; gap: 9px; font-size: 12px; font-weight: 750; }
 .brand-footer nav a { text-decoration: none; }
@@ -225,8 +224,8 @@ a { color: inherit; }
 }
 
 @media (max-width: 640px) {
-    .brand-header { min-height: 76px; }
-    .brand-mark img { width: 45px; height: 45px; }.brand-mark > span { font-size: 17px; }.brand-nav .nav-action { padding: 10px 13px; font-size: 11px; }
+    .brand-header { min-height: 76px; gap: 12px; }
+    .brand-mark { gap: 4px; }.brand-symbol { width: 48px; height: 38px; }.brand-wordmark { width: 116px; }.brand-nav .nav-action { padding: 10px 13px; font-size: 11px; }
     .home-hero { padding: 48px 0 60px; }.hero-copy h1 { font-size: clamp(47px, 15vw, 70px); }.hero-lead { font-size: 16px; }.hero-actions .button { width: 100%; }
     .hero-notes { grid-template-columns: 1fr; }.hero-notes li { grid-template-columns: 34px 1fr; }
     .hero-gallery { min-height: 420px; }.gallery-main { right: 10%; width: 55%; height: 390px; }.gallery-top { width: 35%; height: 210px; }.gallery-bottom { width: 38%; height: 180px; }.gallery-stamp { width: 100px; height: 100px; }.paint-orbit { display: none; }
@@ -238,7 +237,7 @@ a { color: inherit; }
     .faq-list summary { font-size: 18px; }
     .final-cta { min-height: 500px; }.final-cta h2 { font-size: 49px; }
     .brand-footer { grid-template-columns: 1fr; }.brand-footer nav { justify-self: start; }.brand-footer small { grid-column: 1; }
-    .generator-page .brand-mark > span { display: none; }.generator-page .seo-content { grid-template-columns: 1fr; }
+    .generator-page .seo-content { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
