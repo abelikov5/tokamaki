@@ -14,6 +14,7 @@ WORKDIR /var/www/html
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 RUN php artisan package:discover --ansi \
+    && php artisan filament:assets --ansi \
     && chown -R www-data:www-data storage bootstrap/cache
 EXPOSE 9000
 CMD ["php-fpm"]
