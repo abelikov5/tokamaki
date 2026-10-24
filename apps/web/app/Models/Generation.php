@@ -45,6 +45,18 @@ class Generation extends Model
         return $this->belongsTo(Visitor::class);
     }
 
+    public function adminPreviewUrl(): ?string
+    {
+        if ($this->status !== 'completed' || blank($this->result_id)) {
+            return null;
+        }
+
+        return route('admin.generations.preview', [
+            'generation' => $this,
+            'v' => $this->result_id,
+        ]);
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Generation $generation): void {

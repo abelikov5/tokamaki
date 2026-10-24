@@ -15,3 +15,5 @@ Route::post('/generations/{generation:resume_token}/undo', [GenerationController
 Route::get('/generations/{generation:resume_token}/files/{filename}', [GenerationController::class, 'download'])
     ->where('filename', 'preview\.png|scheme\.svg|scheme\.pdf|unlabeled\.png|palette\.json|diagnostics\.json')
     ->name('generations.download');
+Route::get('/admin/generation-previews/{generation}', [GenerationController::class, 'adminPreview'])
+    ->name('admin.generations.preview');

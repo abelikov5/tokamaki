@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Generation;
+use App\Models\User;
 use App\Models\Visitor;
+use Filament\Facades\Filament;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -233,6 +235,29 @@ class GenerationController extends Controller
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',
+        ]);
+    }
+
+    public function adminPreview(Request $request, Generation $generation): Response
+    {
+        $user = $request->user();
+
+        abort_unless(
+            $user instanceof User && $user->canAccessPanel(Filament::getPanel('admin')),
+            403,
+        );
+        abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+
+        $response = Http::timeout(config('services.generator.timeout'))
+            ->get(config('services.generator.url')."/api/v1/results/{$generation->result_id}/preview.png");
+
+        abort_if($response->failed(), $response->status());
+
+        return response($response->body(), 200, [
+            'Content-Type' => $response->header('Content-Type', 'image/png'),
+            'Content-Disposition' => 'inline; filename="preview.png"',
+            'Cache-Control' => 'private, max-age=86400',
+            'Vary' => 'Cookie',
         ]);
     }
 

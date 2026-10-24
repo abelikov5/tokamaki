@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Generations\Schemas;
 
+use App\Models\Generation;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -34,6 +36,15 @@ class GenerationInfolist
                     ]),
                 Section::make('Результат')
                     ->schema([
+                        ImageEntry::make('preview')
+                            ->label('Цветной preview')
+                            ->state(fn (Generation $record): ?string => $record->adminPreviewUrl())
+                            ->imageWidth('100%')
+                            ->imageHeight(520)
+                            ->alt('Цветной preview генерации')
+                            ->extraImgAttributes([
+                                'style' => 'object-fit: contain; border-radius: 0.75rem; background: #f3f4f6;',
+                            ]),
                         KeyValueEntry::make('diagnostics')->label('Диагностика')->placeholder('Нет данных'),
                     ]),
             ]);

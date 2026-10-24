@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Generations\Tables;
 
+use App\Models\Generation;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -16,6 +18,16 @@ class GenerationsTable
         return $table
             ->columns([
                 TextColumn::make('id')->label('ID')->sortable(),
+                ImageColumn::make('preview')
+                    ->label('Превью')
+                    ->state(fn (Generation $record): ?string => $record->adminPreviewUrl())
+                    ->imageWidth(96)
+                    ->imageHeight(72)
+                    ->alt('Цветной preview генерации')
+                    ->extraImgAttributes([
+                        'loading' => 'lazy',
+                        'style' => 'object-fit: contain; border-radius: 0.5rem; background: #f3f4f6;',
+                    ]),
                 TextColumn::make('visitor.browser_id')
                     ->label('Посетитель')
                     ->formatStateUsing(fn (?string $state): string => $state ? Str::limit($state, 13, '…') : 'Старые данные')
