@@ -4,14 +4,191 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b95aef2242bb3dce2389c238b7ec69bf",
+    "content-hash": "44f9b3e7fa18776006ecba57a77ca843",
     "packages": [
+        {
+            "name": "anourvalar/eloquent-serialize",
+            "version": "1.3.12",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/anourvalar/eloquent-serialize/1.3.12/anourvalar-eloquent-serialize-1.3.12.zip",
+                "reference": "eb46e698efe7e20c311f1f93830111fcdcdabd96",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/framework": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.26",
+                "laravel/legacy-factories": "^1.1",
+                "orchestra/testbench": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^9.5|^10.5|^11.0",
+                "squizlabs/php_codesniffer": "^3.7"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "EloquentSerialize": "AnourValar\\EloquentSerialize\\Facades\\EloquentSerializeFacade"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AnourValar\\EloquentSerialize\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Laravel Query Builder (Eloquent) serialization",
+            "homepage": "https://github.com/AnourValar/eloquent-serialize",
+            "keywords": [
+                "anourvalar",
+                "builder",
+                "copy",
+                "eloquent",
+                "job",
+                "laravel",
+                "query",
+                "querybuilder",
+                "queue",
+                "serializable",
+                "serialization",
+                "serialize"
+            ],
+            "support": {
+                "issues": "https://github.com/AnourValar/eloquent-serialize/issues",
+                "source": "https://github.com/AnourValar/eloquent-serialize/tree/1.3.12"
+            },
+            "time": "2026-09-13T06:25:37+00:00"
+        },
+        {
+            "name": "blade-ui-kit/blade-heroicons",
+            "version": "2.7.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/blade-ui-kit/blade-heroicons/2.7.0/blade-ui-kit-blade-heroicons-2.7.0.zip",
+                "reference": "66fa8ba09dba12e0cdb410b8cb94f3b890eca440",
+                "shasum": ""
+            },
+            "require": {
+                "blade-ui-kit/blade-icons": "^1.6",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.0|^10.5|^11.0|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "BladeUI\\Heroicons\\BladeHeroiconsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "BladeUI\\Heroicons\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dries Vints",
+                    "homepage": "https://driesvints.com"
+                }
+            ],
+            "description": "A package to easily make use of Heroicons in your Laravel Blade views.",
+            "homepage": "https://github.com/driesvints/blade-heroicons",
+            "keywords": [
+                "Heroicons",
+                "blade",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/driesvints/blade-heroicons/issues",
+                "source": "https://github.com/driesvints/blade-heroicons/tree/2.7.0"
+            },
+            "time": "2026-03-16T13:00:23+00:00"
+        },
+        {
+            "name": "blade-ui-kit/blade-icons",
+            "version": "1.10.1",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/blade-ui-kit/blade-icons/1.10.1/blade-ui-kit-blade-icons-1.10.1.zip",
+                "reference": "6e072d021ea6249986c330b93293c33d0c4f0e34",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/filesystem": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/view": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^7.4|^8.0",
+                "symfony/console": "^5.3|^6.0|^7.0|^8.0",
+                "symfony/finder": "^5.3|^6.0|^7.0|^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.5.1",
+                "orchestra/testbench": "^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.0|^10.5|^11.0"
+            },
+            "bin": [
+                "bin/blade-icons-generate"
+            ],
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "BladeUI\\Icons\\BladeIconsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "BladeUI\\Icons\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dries Vints",
+                    "homepage": "https://driesvints.com"
+                }
+            ],
+            "description": "A package to easily make use of icons in your Laravel Blade views.",
+            "homepage": "https://github.com/driesvints/blade-icons",
+            "keywords": [
+                "blade",
+                "icons",
+                "laravel",
+                "svg"
+            ],
+            "support": {
+                "issues": "https://github.com/driesvints/blade-icons/issues",
+                "source": "https://github.com/driesvints/blade-icons"
+            },
+            "time": "2026-06-30T09:44:12+00:00"
+        },
         {
             "name": "brick/math",
             "version": "1.0.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/brick/math/legacy.zip/2effe05d2177c451b86c6a073196a4034c02f211",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/brick/math/1.0.0/brick-math-1.0.0.zip",
                 "reference": "2effe05d2177c451b86c6a073196a4034c02f211",
                 "shasum": ""
             },
@@ -59,7 +236,7 @@
             "version": "3.2.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/CarbonPHP/carbon-doctrine-types/legacy.zip/5fa5eacafd9ef47c8c6ab9143fc901ba0194d3dc",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/carbonphp/carbon-doctrine-types/3.2.1/carbonphp-carbon-doctrine-types-3.2.1.zip",
                 "reference": "5fa5eacafd9ef47c8c6ab9143fc901ba0194d3dc",
                 "shasum": ""
             },
@@ -109,11 +286,339 @@
             "time": "2026-09-06T14:11:38+00:00"
         },
         {
+            "name": "chillerlan/php-qrcode",
+            "version": "5.0.5",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/chillerlan/php-qrcode/5.0.5/chillerlan-php-qrcode-5.0.5.zip",
+                "reference": "7b66282572fc14075c0507d74d9837dab25b38d6",
+                "shasum": ""
+            },
+            "require": {
+                "chillerlan/php-settings-container": "^2.1.6 || ^3.2.1",
+                "ext-mbstring": "*",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "chillerlan/php-authenticator": "^4.3.1 || ^5.2.1",
+                "ext-fileinfo": "*",
+                "phan/phan": "^5.5.2",
+                "phpcompatibility/php-compatibility": "10.x-dev",
+                "phpmd/phpmd": "^2.15",
+                "phpunit/phpunit": "^9.6",
+                "setasign/fpdf": "^1.8.2",
+                "slevomat/coding-standard": "^8.23.0",
+                "squizlabs/php_codesniffer": "^4.0.0"
+            },
+            "suggest": {
+                "chillerlan/php-authenticator": "Yet another Google authenticator! Also creates URIs for mobile apps.",
+                "setasign/fpdf": "Required to use the QR FPDF output.",
+                "simple-icons/simple-icons": "SVG icons that you can use to embed as logos in the QR Code"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "chillerlan\\QRCode\\": "src"
+                }
+            },
+            "license": [
+                "MIT",
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Kazuhiko Arase",
+                    "homepage": "https://github.com/kazuhikoarase/qrcode-generator"
+                },
+                {
+                    "name": "ZXing Authors",
+                    "homepage": "https://github.com/zxing/zxing"
+                },
+                {
+                    "name": "Ashot Khanamiryan",
+                    "homepage": "https://github.com/khanamiryan/php-qrcode-detector-decoder"
+                },
+                {
+                    "name": "Smiley",
+                    "email": "smiley@chillerlan.net",
+                    "homepage": "https://github.com/codemasher"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.com/chillerlan/php-qrcode/graphs/contributors"
+                }
+            ],
+            "description": "A QR Code generator and reader with a user-friendly API. PHP 7.4+",
+            "homepage": "https://github.com/chillerlan/php-qrcode",
+            "keywords": [
+                "phpqrcode",
+                "qr",
+                "qr code",
+                "qr-reader",
+                "qrcode",
+                "qrcode-generator",
+                "qrcode-reader"
+            ],
+            "support": {
+                "docs": "https://php-qrcode.readthedocs.io",
+                "issues": "https://github.com/chillerlan/php-qrcode/issues",
+                "source": "https://github.com/chillerlan/php-qrcode"
+            },
+            "time": "2025-11-23T23:51:44+00:00"
+        },
+        {
+            "name": "chillerlan/php-settings-container",
+            "version": "3.3.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/chillerlan/php-settings-container/3.3.0/chillerlan-php-settings-container-3.3.0.zip",
+                "reference": "a0a487cbf5344f721eb504bf0f59bada40c381b7",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "phan/phan": "^5.5.2",
+                "phpmd/phpmd": "^2.15",
+                "phpstan/phpstan": "^2.1.31",
+                "phpstan/phpstan-deprecation-rules": "^2.0.3",
+                "phpunit/phpunit": "^10.5",
+                "slevomat/coding-standard": "^8.22",
+                "squizlabs/php_codesniffer": "^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "chillerlan\\Settings\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Smiley",
+                    "email": "smiley@chillerlan.net",
+                    "homepage": "https://github.com/codemasher"
+                }
+            ],
+            "description": "A container class for immutable settings objects. Not a DI container.",
+            "homepage": "https://github.com/chillerlan/php-settings-container",
+            "keywords": [
+                "Settings",
+                "configuration",
+                "container",
+                "helper",
+                "property hook"
+            ],
+            "support": {
+                "issues": "https://github.com/chillerlan/php-settings-container/issues",
+                "source": "https://github.com/chillerlan/php-settings-container"
+            },
+            "time": "2026-03-20T21:10:52+00:00"
+        },
+        {
+            "name": "composer/class-map-generator",
+            "version": "1.8.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/composer/class-map-generator/1.8.0/composer-class-map-generator-1.8.0.zip",
+                "reference": "c0efbeb2f3fd7e23c7f180a59765c0b48a31fbc4",
+                "shasum": ""
+            },
+            "require": {
+                "composer/pcre": "^2.1 || ^3.1",
+                "php": "^7.2 || ^8.0",
+                "symfony/finder": "^4.4 || ^5.3 || ^6 || ^7 || ^8"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.12 || ^2",
+                "phpstan/phpstan-deprecation-rules": "^1 || ^2",
+                "phpstan/phpstan-phpunit": "^1 || ^2",
+                "phpstan/phpstan-strict-rules": "^1.1 || ^2",
+                "phpunit/phpunit": "^8",
+                "symfony/filesystem": "^5.4 || ^6 || ^7 || ^8"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\ClassMapGenerator\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "https://seld.be"
+                }
+            ],
+            "description": "Utilities to scan PHP code and generate class maps.",
+            "keywords": [
+                "classmap"
+            ],
+            "support": {
+                "issues": "https://github.com/composer/class-map-generator/issues",
+                "source": "https://github.com/composer/class-map-generator/tree/1.8.0"
+            },
+            "time": "2026-09-25T15:24:19+00:00"
+        },
+        {
+            "name": "composer/pcre",
+            "version": "3.4.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/composer/pcre/3.4.0/composer-pcre-3.4.0.zip",
+                "reference": "d5a341b3fb61f3001970940afb1d332968a183ed",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4 || ^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan": "<2.2.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2",
+                "phpstan/phpstan-deprecation-rules": "^2",
+                "phpstan/phpstan-strict-rules": "^2",
+                "phpunit/phpunit": "^9"
+            },
+            "type": "library",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\Pcre\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "http://seld.be"
+                }
+            ],
+            "description": "PCRE wrapping library that offers type-safe preg_* replacements.",
+            "keywords": [
+                "PCRE",
+                "preg",
+                "regex",
+                "regular expression"
+            ],
+            "support": {
+                "issues": "https://github.com/composer/pcre/issues",
+                "source": "https://github.com/composer/pcre/tree/3.4.0"
+            },
+            "time": "2026-06-07T11:47:49+00:00"
+        },
+        {
+            "name": "danharrin/date-format-converter",
+            "version": "v0.3.1",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/danharrin/date-format-converter/v0.3.1/danharrin-date-format-converter-v0.3.1.zip",
+                "reference": "7c31171bc981e48726729a5f3a05a2d2b63f0b1e",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2|^8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/helpers.php",
+                    "src/standards.php"
+                ],
+                "psr-4": {
+                    "DanHarrin\\DateFormatConverter\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dan Harrin",
+                    "email": "dan@danharrin.com"
+                }
+            ],
+            "description": "Convert token-based date formats between standards.",
+            "homepage": "https://github.com/danharrin/date-format-converter",
+            "support": {
+                "issues": "https://github.com/danharrin/date-format-converter/issues",
+                "source": "https://github.com/danharrin/date-format-converter"
+            },
+            "time": "2024-06-13T09:38:44+00:00"
+        },
+        {
+            "name": "danharrin/livewire-rate-limiting",
+            "version": "v2.3.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/danharrin/livewire-rate-limiting/v2.3.0/danharrin-livewire-rate-limiting-v2.3.0.zip",
+                "reference": "46c4ceaf7997c713c79afe7c507a39649f6c9d6f",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "livewire/livewire": "^3.0|^4.0",
+                "livewire/volt": "^1.3",
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^9.0|^10.0|^11.5.3|^12.5.12"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DanHarrin\\LivewireRateLimiting\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dan Harrin",
+                    "email": "dan@danharrin.com"
+                }
+            ],
+            "description": "Apply rate limiters to Laravel Livewire actions.",
+            "homepage": "https://github.com/danharrin/livewire-rate-limiting",
+            "support": {
+                "issues": "https://github.com/danharrin/livewire-rate-limiting/issues",
+                "source": "https://github.com/danharrin/livewire-rate-limiting"
+            },
+            "time": "2026-09-18T07:38:01+00:00"
+        },
+        {
             "name": "dflydev/dot-access-data",
             "version": "v3.0.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/dflydev/dflydev-dot-access-data/legacy.zip/a23a2bf4f31d3518f3ecb38660c95715dfead60f",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/dflydev/dot-access-data/v3.0.3/dflydev-dot-access-data-v3.0.3.zip",
                 "reference": "a23a2bf4f31d3518f3ecb38660c95715dfead60f",
                 "shasum": ""
             },
@@ -182,7 +687,7 @@
             "version": "2.1.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/doctrine/inflector/legacy.zip/6d6c96277ea252fc1304627204c3d5e6e15faa3b",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/doctrine/inflector/2.1.0/doctrine-inflector-2.1.0.zip",
                 "reference": "6d6c96277ea252fc1304627204c3d5e6e15faa3b",
                 "shasum": ""
             },
@@ -252,7 +757,7 @@
             "version": "3.0.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/doctrine/lexer/legacy.zip/71d305eaa6480d3d3460c7d053d1da7749fa9cca",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/doctrine/lexer/3.0.3/doctrine-lexer-3.0.3.zip",
                 "reference": "71d305eaa6480d3d3460c7d053d1da7749fa9cca",
                 "shasum": ""
             },
@@ -307,7 +812,7 @@
             "version": "v3.6.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/dragonmantank/cron-expression/legacy.zip/4189372ffeff09bf14f731f67a9de90c7b413ebe",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/dragonmantank/cron-expression/v3.6.1/dragonmantank-cron-expression-v3.6.1.zip",
                 "reference": "4189372ffeff09bf14f731f67a9de90c7b413ebe",
                 "shasum": ""
             },
@@ -359,7 +864,7 @@
             "version": "4.0.4",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/egulias/EmailValidator/legacy.zip/d42c8731f0624ad6bdc8d3e5e9a4524f68801cfa",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/egulias/email-validator/4.0.4/egulias-email-validator-4.0.4.zip",
                 "reference": "d42c8731f0624ad6bdc8d3e5e9a4524f68801cfa",
                 "shasum": ""
             },
@@ -410,11 +915,444 @@
             "time": "2025-03-06T22:45:56+00:00"
         },
         {
+            "name": "filament/actions",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/actions/v5.10.3/filament-actions-v5.10.3.zip",
+                "reference": "99f2f89311d34fe0f3d54ef01ff7dd86e996a318",
+                "shasum": ""
+            },
+            "require": {
+                "anourvalar/eloquent-serialize": "^1.3.6",
+                "filament/forms": "self.version",
+                "filament/infolists": "self.version",
+                "filament/notifications": "self.version",
+                "filament/support": "self.version",
+                "league/csv": "^9.27",
+                "openspout/openspout": "^4.23",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Actions\\ActionsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\Actions\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful action modals to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:26:39+00:00"
+        },
+        {
+            "name": "filament/filament",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/filament/v5.10.3/filament-filament-v5.10.3.zip",
+                "reference": "4869a1592c0ef037abc429cb9d1db62059e2d455",
+                "shasum": ""
+            },
+            "require": {
+                "chillerlan/php-qrcode": "^5.0",
+                "composer-runtime-api": "^2.1",
+                "filament/actions": "self.version",
+                "filament/forms": "self.version",
+                "filament/infolists": "self.version",
+                "filament/notifications": "self.version",
+                "filament/schemas": "self.version",
+                "filament/support": "self.version",
+                "filament/tables": "self.version",
+                "filament/widgets": "self.version",
+                "php": "^8.2",
+                "pragmarx/google2fa": "^8.0|^9.0",
+                "pragmarx/google2fa-qrcode": "^3.0|^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\FilamentServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/global_helpers.php",
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Filament\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "A collection of full-stack components for accelerated Laravel app development.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:30:51+00:00"
+        },
+        {
+            "name": "filament/forms",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/forms/v5.10.3/filament-forms-v5.10.3.zip",
+                "reference": "7a36480602b26ee950ea8f0ce7e844aa076a7a73",
+                "shasum": ""
+            },
+            "require": {
+                "danharrin/date-format-converter": "^0.3",
+                "filament/actions": "self.version",
+                "filament/schemas": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2",
+                "ueberdosis/tiptap-php": "^2.0"
+            },
+            "suggest": {
+                "fakerphp/faker": "Required to generate fake rich content and Markdown."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Forms\\FormsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Filament\\Forms\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful forms to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:31:40+00:00"
+        },
+        {
+            "name": "filament/infolists",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/infolists/v5.10.3/filament-infolists-v5.10.3.zip",
+                "reference": "9a506030fa0f80e09e9de43ae099137cee741d66",
+                "shasum": ""
+            },
+            "require": {
+                "filament/actions": "self.version",
+                "filament/schemas": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Infolists\\InfolistsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\Infolists\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful read-only infolists to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:27:56+00:00"
+        },
+        {
+            "name": "filament/notifications",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/notifications/v5.10.3/filament-notifications-v5.10.3.zip",
+                "reference": "940afa444265f99ecee0d54acef0cf22076f25f3",
+                "shasum": ""
+            },
+            "require": {
+                "filament/actions": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Notifications\\NotificationsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/Testing/helpers.php"
+                ],
+                "psr-4": {
+                    "Filament\\Notifications\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful notifications to any Livewire app.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:26:24+00:00"
+        },
+        {
+            "name": "filament/query-builder",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/query-builder/v5.10.3/filament-query-builder-v5.10.3.zip",
+                "reference": "f6b34ae663109a01198f316971ac20102b5762f5",
+                "shasum": ""
+            },
+            "require": {
+                "filament/actions": "self.version",
+                "filament/forms": "self.version",
+                "filament/schemas": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\QueryBuilder\\QueryBuilderServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\QueryBuilder\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "A powerful query builder component for Filament.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:27:08+00:00"
+        },
+        {
+            "name": "filament/schemas",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/schemas/v5.10.3/filament-schemas-v5.10.3.zip",
+                "reference": "957caf8f0e373566046aff90249c6d8e3fe7e4d2",
+                "shasum": ""
+            },
+            "require": {
+                "danharrin/date-format-converter": "^0.3",
+                "filament/actions": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Schemas\\SchemasServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\Schemas\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful UI to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:28:40+00:00"
+        },
+        {
+            "name": "filament/support",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/support/v5.10.3/filament-support-v5.10.3.zip",
+                "reference": "ac059bb5443d923702c93e360f2114387ebc0813",
+                "shasum": ""
+            },
+            "require": {
+                "blade-ui-kit/blade-heroicons": "^2.5",
+                "composer-runtime-api": "^2.1",
+                "composer/class-map-generator": "^1.6",
+                "danharrin/livewire-rate-limiting": "^2.0",
+                "ext-intl": "*",
+                "illuminate/contracts": "^11.28|^12.0|^13.0",
+                "kirschbaum-development/eloquent-power-joins": "^4.0",
+                "league/uri-components": "^7.0",
+                "livewire/livewire": "^4.4.7",
+                "nette/php-generator": "^4.0",
+                "php": "^8.2",
+                "ryangjchandler/blade-capture-directive": "^1.0",
+                "spatie/invade": "^2.0",
+                "spatie/laravel-package-tools": "^1.9",
+                "symfony/console": "^7.0|^8.0",
+                "symfony/html-sanitizer": "^7.0|^8.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Support\\SupportServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Filament\\Support\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Core helper methods and foundation code for all Filament packages.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:30:41+00:00"
+        },
+        {
+            "name": "filament/tables",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/tables/v5.10.3/filament-tables-v5.10.3.zip",
+                "reference": "229f4ab851519ee22a964ab9ebfda892709750f2",
+                "shasum": ""
+            },
+            "require": {
+                "filament/actions": "self.version",
+                "filament/forms": "self.version",
+                "filament/query-builder": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Tables\\TablesServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\Tables\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful tables to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:25:22+00:00"
+        },
+        {
+            "name": "filament/widgets",
+            "version": "v5.10.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/filament/widgets/v5.10.3/filament-widgets-v5.10.3.zip",
+                "reference": "4abd9b613824311496d86709a257747a30c30fd0",
+                "shasum": ""
+            },
+            "require": {
+                "filament/schemas": "self.version",
+                "filament/support": "self.version",
+                "php": "^8.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Filament\\Widgets\\WidgetsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Filament\\Widgets\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Easily add beautiful dashboard widgets to any Livewire component.",
+            "homepage": "https://github.com/filamentphp/filament",
+            "support": {
+                "issues": "https://github.com/filamentphp/filament/issues",
+                "source": "https://github.com/filamentphp/filament"
+            },
+            "time": "2026-10-20T18:33:06+00:00"
+        },
+        {
             "name": "fruitcake/php-cors",
             "version": "v1.4.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/fruitcake/php-cors/legacy.zip/38aaa6c3fd4c157ffe2a4d10aa8b9b16ba8de379",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/fruitcake/php-cors/v1.4.0/fruitcake-php-cors-v1.4.0.zip",
                 "reference": "38aaa6c3fd4c157ffe2a4d10aa8b9b16ba8de379",
                 "shasum": ""
             },
@@ -469,7 +1407,7 @@
             "version": "v1.2.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/GrahamCampbell/Result-Type/legacy.zip/adccca3324eece92ca35463648c12b9e6293c05b",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/graham-campbell/result-type/v1.2.0/graham-campbell-result-type-v1.2.0.zip",
                 "reference": "adccca3324eece92ca35463648c12b9e6293c05b",
                 "shasum": ""
             },
@@ -515,7 +1453,7 @@
             "version": "8.3.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/guzzle/guzzle/legacy.zip/b920e5fcaf81d761b8fabe600ca90999beaefdb7",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/guzzlehttp/guzzle/8.3.0/guzzlehttp-guzzle-8.3.0.zip",
                 "reference": "b920e5fcaf81d761b8fabe600ca90999beaefdb7",
                 "shasum": ""
             },
@@ -621,7 +1559,7 @@
             "version": "3.1.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/guzzle/promises/legacy.zip/094d0ec418eb3b1411ea271a180ec95cae6ae933",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/guzzlehttp/promises/3.1.0/guzzlehttp-promises-3.1.0.zip",
                 "reference": "094d0ec418eb3b1411ea271a180ec95cae6ae933",
                 "shasum": ""
             },
@@ -685,7 +1623,7 @@
             "version": "3.2.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/guzzle/psr7/legacy.zip/cdc139396207a5eba10c242d241fb014cb098390",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/guzzlehttp/psr7/3.2.0/guzzlehttp-psr7-3.2.0.zip",
                 "reference": "cdc139396207a5eba10c242d241fb014cb098390",
                 "shasum": ""
             },
@@ -784,7 +1722,7 @@
             "version": "v2.0.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/guzzle/uri-template/legacy.zip/7a466ad606491eb6528c717482f7cca77f1851f3",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/guzzlehttp/uri-template/v2.0.1/guzzlehttp-uri-template-v2.0.1.zip",
                 "reference": "7a466ad606491eb6528c717482f7cca77f1851f3",
                 "shasum": ""
             },
@@ -846,11 +1784,68 @@
             "time": "2026-08-24T17:13:02+00:00"
         },
         {
+            "name": "kirschbaum-development/eloquent-power-joins",
+            "version": "4.3.5",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/kirschbaum-development/eloquent-power-joins/4.3.5/kirschbaum-development-eloquent-power-joins-4.3.5.zip",
+                "reference": "679582af39ca8caefd142046804a8e25f07aa155",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^11.42|^12.0|^13.0",
+                "illuminate/support": "^11.42|^12.0|^13.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "dev-master",
+                "laravel/legacy-factories": "^1.0@dev|dev-master",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpunit/phpunit": "^10.0|^11.0|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Kirschbaum\\PowerJoins\\PowerJoinsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Kirschbaum\\PowerJoins\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Luis Dalmolin",
+                    "email": "luis.nh@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "The Laravel magic applied to joins.",
+            "homepage": "https://github.com/kirschbaum-development/eloquent-power-joins",
+            "keywords": [
+                "eloquent",
+                "join",
+                "laravel",
+                "mysql"
+            ],
+            "support": {
+                "issues": "https://github.com/kirschbaum-development/eloquent-power-joins/issues",
+                "source": "https://github.com/kirschbaum-development/eloquent-power-joins/tree/4.3.5"
+            },
+            "time": "2026-10-14T12:55:07+00:00"
+        },
+        {
             "name": "laravel/framework",
             "version": "v13.38.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/laravel/framework/legacy.zip/c42f9abd4a3d2f9a3cd6be109255ddce8092ceb8",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/laravel/framework/v13.38.0/laravel-framework-v13.38.0.zip",
                 "reference": "c42f9abd4a3d2f9a3cd6be109255ddce8092ceb8",
                 "shasum": ""
             },
@@ -1075,7 +2070,7 @@
             "version": "v0.3.26",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/laravel/prompts/legacy.zip/2d1e9bf6bab8d3f383c254db7f2b4ea8816d55e0",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/laravel/prompts/v0.3.26/laravel-prompts-v0.3.26.zip",
                 "reference": "2d1e9bf6bab8d3f383c254db7f2b4ea8816d55e0",
                 "shasum": ""
             },
@@ -1127,7 +2122,7 @@
             "version": "v2.1.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/laravel/serializable-closure/legacy.zip/2d5869a838bbcf37e0d8b0568fc41914e81374b5",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/laravel/serializable-closure/v2.1.0/laravel-serializable-closure-v2.1.0.zip",
                 "reference": "2d5869a838bbcf37e0d8b0568fc41914e81374b5",
                 "shasum": ""
             },
@@ -1245,7 +2240,7 @@
             "version": "2.10.4",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/commonmark/legacy.zip/40821b7606d8d946bac57dbd2290076c722e3a65",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/commonmark/2.10.4/league-commonmark-2.10.4.zip",
                 "reference": "40821b7606d8d946bac57dbd2290076c722e3a65",
                 "shasum": ""
             },
@@ -1328,7 +2323,7 @@
             "version": "v1.2.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/config/legacy.zip/754b3604fb2984c71f4af4a9cbe7b57f346ec1f3",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/config/v1.2.0/league-config-v1.2.0.zip",
                 "reference": "754b3604fb2984c71f4af4a9cbe7b57f346ec1f3",
                 "shasum": ""
             },
@@ -1386,11 +2381,90 @@
             "time": "2022-12-11T20:36:23+00:00"
         },
         {
+            "name": "league/csv",
+            "version": "9.28.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/csv/9.28.0/league-csv-9.28.0.zip",
+                "reference": "6582ace29ae09ba5b07049d40ea13eb19c8b5073",
+                "shasum": ""
+            },
+            "require": {
+                "ext-filter": "*",
+                "php": "^8.1.2"
+            },
+            "require-dev": {
+                "ext-dom": "*",
+                "ext-xdebug": "*",
+                "friendsofphp/php-cs-fixer": "^3.92.3",
+                "phpbench/phpbench": "^1.4.3",
+                "phpstan/phpstan": "^1.12.32",
+                "phpstan/phpstan-deprecation-rules": "^1.2.1",
+                "phpstan/phpstan-phpunit": "^1.4.2",
+                "phpstan/phpstan-strict-rules": "^1.6.2",
+                "phpunit/phpunit": "^10.5.16 || ^11.5.22 || ^12.5.4",
+                "symfony/var-dumper": "^6.4.8 || ^7.4.0 || ^8.0"
+            },
+            "suggest": {
+                "ext-dom": "Required to use the XMLConverter and the HTMLConverter classes",
+                "ext-iconv": "Needed to ease transcoding CSV using iconv stream filters",
+                "ext-mbstring": "Needed to ease transcoding CSV using mb stream filters",
+                "ext-mysqli": "Requiered to use the package with the MySQLi extension",
+                "ext-pdo": "Required to use the package with the PDO extension",
+                "ext-pgsql": "Requiered to use the package with the PgSQL extension",
+                "ext-sqlite3": "Required to use the package with the SQLite3 extension"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "9.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/functions_include.php"
+                ],
+                "psr-4": {
+                    "League\\Csv\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ignace Nyamagana Butera",
+                    "email": "nyamsprod@gmail.com",
+                    "homepage": "https://github.com/nyamsprod/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "CSV data manipulation made easy in PHP",
+            "homepage": "https://csv.thephpleague.com",
+            "keywords": [
+                "convert",
+                "csv",
+                "export",
+                "filter",
+                "import",
+                "read",
+                "transform",
+                "write"
+            ],
+            "support": {
+                "docs": "https://csv.thephpleague.com",
+                "issues": "https://github.com/thephpleague/csv/issues",
+                "rss": "https://github.com/thephpleague/csv/releases.atom",
+                "source": "https://github.com/thephpleague/csv"
+            },
+            "time": "2025-12-27T15:18:42+00:00"
+        },
+        {
             "name": "league/flysystem",
             "version": "3.36.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/flysystem/legacy.zip/f7fb152932f30072d573510cbd4dd657d6475b25",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/flysystem/3.36.0/league-flysystem-3.36.0.zip",
                 "reference": "f7fb152932f30072d573510cbd4dd657d6475b25",
                 "shasum": ""
             },
@@ -1467,7 +2541,7 @@
             "version": "3.35.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/flysystem-local/legacy.zip/a099b24dce160f3b2239043d13d47c4a1a214ea4",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/flysystem-local/3.35.3/league-flysystem-local-3.35.3.zip",
                 "reference": "a099b24dce160f3b2239043d13d47c4a1a214ea4",
                 "shasum": ""
             },
@@ -1510,7 +2584,7 @@
             "version": "1.17.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/mime-type-detection/legacy.zip/f5f47eff7c48ed1003069a2ca67f316fb4021c76",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/mime-type-detection/1.17.0/league-mime-type-detection-1.17.0.zip",
                 "reference": "f5f47eff7c48ed1003069a2ca67f316fb4021c76",
                 "shasum": ""
             },
@@ -1550,7 +2624,7 @@
             "version": "7.9.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/uri/legacy.zip/fcc872a3d872aa13f935e0cd1887b9abb06da07f",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/uri/7.9.0/league-uri-7.9.0.zip",
                 "reference": "fcc872a3d872aa13f935e0cd1887b9abb06da07f",
                 "shasum": ""
             },
@@ -1633,11 +2707,83 @@
             "time": "2026-10-16T15:19:33+00:00"
         },
         {
+            "name": "league/uri-components",
+            "version": "7.9.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/uri-components/7.9.0/league-uri-components-7.9.0.zip",
+                "reference": "4e37c1663f7d0daebbab6b3d947631b0835b3943",
+                "shasum": ""
+            },
+            "require": {
+                "league/uri": "^7.9.0",
+                "php": "^8.1"
+            },
+            "suggest": {
+                "ext-bcmath": "to improve IPV4 host parsing",
+                "ext-fileinfo": "to create Data URI from file contennts",
+                "ext-gmp": "to improve IPV4 host parsing",
+                "ext-intl": "to handle IDN host with the best performance",
+                "ext-mbstring": "to use the sorting algorithm of URLSearchParams",
+                "jeremykendall/php-domain-parser": "to further parse the URI host and resolve its Public Suffix and Top Level Domain",
+                "league/uri-polyfill": "to backport the PHP URI extension for older versions of PHP",
+                "php-64bit": "to improve IPV4 host parsing",
+                "rowbot/url": "to handle URLs using the WHATWG URL Living Standard specification",
+                "symfony/polyfill-intl-idn": "to handle IDN host via the Symfony polyfill if ext-intl is not present"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "7.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "League\\Uri\\": ""
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ignace Nyamagana Butera",
+                    "email": "nyamsprod@gmail.com",
+                    "homepage": "https://nyamsprod.com"
+                }
+            ],
+            "description": "URI components manipulation library",
+            "homepage": "http://uri.thephpleague.com",
+            "keywords": [
+                "authority",
+                "components",
+                "fragment",
+                "host",
+                "middleware",
+                "modifier",
+                "path",
+                "port",
+                "query",
+                "rfc3986",
+                "scheme",
+                "uri",
+                "url",
+                "userinfo"
+            ],
+            "support": {
+                "docs": "https://uri.thephpleague.com",
+                "forum": "https://thephpleague.slack.com",
+                "issues": "https://github.com/thephpleague/uri-src/issues",
+                "source": "https://github.com/thephpleague/uri-components/tree/7.9.0"
+            },
+            "time": "2026-10-16T15:19:33+00:00"
+        },
+        {
             "name": "league/uri-interfaces",
             "version": "7.9.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/thephpleague/uri-interfaces/legacy.zip/eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/league/uri-interfaces/7.9.0/league-uri-interfaces-7.9.0.zip",
                 "reference": "eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58",
                 "shasum": ""
             },
@@ -1705,11 +2851,75 @@
             "time": "2026-10-16T15:19:33+00:00"
         },
         {
+            "name": "livewire/livewire",
+            "version": "v4.4.8",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/livewire/livewire/v4.4.8/livewire-livewire-v4.4.8.zip",
+                "reference": "8d7f8fc6138274a2f3384c9db354ca012215a259",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/routing": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/validation": "^10.0|^11.0|^12.0|^13.0",
+                "laravel/prompts": "^0.1.24|^0.2|^0.3",
+                "league/mime-type-detection": "^1.9",
+                "php": "^8.1",
+                "symfony/console": "^6.0|^7.0|^8.0",
+                "symfony/http-kernel": "^6.2|^7.0|^8.0"
+            },
+            "require-dev": {
+                "calebporzio/sushi": "^2.1",
+                "laravel/framework": "^10.15.0|^11.0|^12.0|^13.0",
+                "mockery/mockery": "^1.3.1",
+                "orchestra/testbench": "^8.21.0|^9.0|^10.0|^11.0",
+                "orchestra/testbench-dusk": "^8.24|^9.1|^10.0|^11.0",
+                "phpunit/phpunit": "^10.4|^11.5|^12.5",
+                "psy/psysh": "^0.11.22|^0.12"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Livewire": "Livewire\\Livewire"
+                    },
+                    "providers": [
+                        "Livewire\\LivewireServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Livewire\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Caleb Porzio",
+                    "email": "calebporzio@gmail.com"
+                }
+            ],
+            "description": "A front-end framework for Laravel.",
+            "support": {
+                "issues": "https://github.com/livewire/livewire/issues",
+                "source": "https://github.com/livewire/livewire/tree/v4.4.8"
+            },
+            "time": "2026-10-21T12:53:46+00:00"
+        },
+        {
             "name": "monolog/monolog",
             "version": "3.12.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/Seldaek/monolog/legacy.zip/d7059e4c691d05ea1222b5124bed0f961be46e15",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/monolog/monolog/3.12.1/monolog-monolog-3.12.1.zip",
                 "reference": "d7059e4c691d05ea1222b5124bed0f961be46e15",
                 "shasum": ""
             },
@@ -1798,7 +3008,7 @@
             "version": "3.15.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/CarbonPHP/carbon/legacy.zip/217d38553209bdb44e01590d9e9a2e4df8354cce",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/nesbot/carbon/3.15.0/nesbot-carbon-3.15.0.zip",
                 "reference": "217d38553209bdb44e01590d9e9a2e4df8354cce",
                 "shasum": ""
             },
@@ -1880,29 +3090,34 @@
             "time": "2026-10-18T18:27:53+00:00"
         },
         {
-            "name": "nette/schema",
-            "version": "v1.3.7",
+            "name": "nette/php-generator",
+            "version": "v4.2.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/nette/schema/legacy.zip/c1162897273bf9499ca57924c4688a19d82c9310",
-                "reference": "c1162897273bf9499ca57924c4688a19d82c9310",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/nette/php-generator/v4.2.3/nette-php-generator-v4.2.3.zip",
+                "reference": "abdfd4c22f9077af10daa7391d14e83fc36ba809",
                 "shasum": ""
             },
             "require": {
-                "nette/utils": "^4.0",
+                "nette/utils": "^4.0.6",
                 "php": "8.1 - 8.6"
             },
             "require-dev": {
+                "jetbrains/phpstorm-attributes": "^1.2",
                 "nette/phpstan-rules": "^1.0",
                 "nette/tester": "^2.6",
+                "nikic/php-parser": "^5.0",
                 "phpstan/extension-installer": "^1.4@stable",
-                "phpstan/phpstan": "^2.1.39@stable",
+                "phpstan/phpstan": "^2.1.40@stable",
                 "tracy/tracy": "^2.8"
+            },
+            "suggest": {
+                "nikic/php-parser": "to use ClassType::from(withBodies: true) & ClassType::fromCode()"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.3-dev"
+                    "dev-master": "4.2-dev"
                 }
             },
             "autoload": {
@@ -1922,30 +3137,90 @@
                 {
                     "name": "David Grudl",
                     "homepage": "https://davidgrudl.com"
-                },
-                {
-                    "name": "Nette Community",
-                    "homepage": "https://nette.org/contributors"
                 }
             ],
-            "description": "📐 Nette Schema: validating data structures against a given Schema.",
-            "homepage": "https://nette.org",
+            "description": "🐘 Nette PHP Generator: generates PHP code from objects. Classes, enums, functions and whole files, with namespaces resolved for you, and always up to date with the latest PHP.",
+            "homepage": "https://doc.nette.org/php-generator",
             "keywords": [
-                "config",
-                "nette"
+                "code generation",
+                "code generator",
+                "codegen",
+                "nette",
+                "scaffolding"
+            ],
+            "support": {
+                "issues": "https://github.com/nette/php-generator/issues",
+                "source": "https://github.com/nette/php-generator/tree/v4.2.3"
+            },
+            "time": "2026-10-22T01:12:52+00:00"
+        },
+        {
+            "name": "nette/schema",
+            "version": "v1.4.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/nette/schema/v1.4.0/nette-schema-v1.4.0.zip",
+                "reference": "af9fa8a86bfca9b02b10346220db26e62ef942ec",
+                "shasum": ""
+            },
+            "require": {
+                "nette/utils": "^4.0",
+                "php": "8.1 - 8.6"
+            },
+            "require-dev": {
+                "nette/phpstan-rules": "^1.0.7",
+                "nette/tester": "^2.6",
+                "phpstan/extension-installer": "^1.4@stable",
+                "phpstan/phpstan": "^2.3@stable",
+                "tracy/tracy": "^2.8"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Nette\\": "src"
+                },
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "license": [
+                "BSD-3-Clause",
+                "GPL-2.0-only",
+                "GPL-3.0-only"
+            ],
+            "authors": [
+                {
+                    "name": "David Grudl",
+                    "homepage": "https://davidgrudl.com"
+                }
+            ],
+            "description": "📐 Nette Schema: validates and normalizes data such as configuration or API input against a schema described in a few readable lines of PHP, with precise error messages.",
+            "homepage": "https://doc.nette.org/schema",
+            "keywords": [
+                "configuration",
+                "data validation",
+                "nette",
+                "normalization",
+                "schema",
+                "validation"
             ],
             "support": {
                 "issues": "https://github.com/nette/schema/issues",
-                "source": "https://github.com/nette/schema/tree/v1.3.7"
+                "source": "https://github.com/nette/schema/tree/v1.4.0"
             },
-            "time": "2026-10-20T15:46:50+00:00"
+            "time": "2026-10-22T02:12:50+00:00"
         },
         {
             "name": "nette/utils",
             "version": "v4.1.6",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/nette/utils/legacy.zip/6bf24518accf32cf845bca305e0b92078700fd01",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/nette/utils/v4.1.6/nette-utils-v4.1.6.zip",
                 "reference": "6bf24518accf32cf845bca305e0b92078700fd01",
                 "shasum": ""
             },
@@ -2081,7 +3356,7 @@
             "version": "v2.4.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/nunomaduro/termwind/legacy.zip/712a31b768f5daea284c2169a7d227031001b9a8",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/nunomaduro/termwind/v2.4.0/nunomaduro-termwind-v2.4.0.zip",
                 "reference": "712a31b768f5daea284c2169a7d227031001b9a8",
                 "shasum": ""
             },
@@ -2144,11 +3419,151 @@
             "time": "2026-02-16T23:10:27+00:00"
         },
         {
+            "name": "openspout/openspout",
+            "version": "v4.32.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/openspout/openspout/v4.32.0/openspout-openspout-v4.32.0.zip",
+                "reference": "41f045c1f632e1474e15d4c7bc3abcb4a153563d",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "ext-fileinfo": "*",
+                "ext-filter": "*",
+                "ext-libxml": "*",
+                "ext-xmlreader": "*",
+                "ext-zip": "*",
+                "php": "~8.3.0 || ~8.4.0 || ~8.5.0"
+            },
+            "require-dev": {
+                "ext-zlib": "*",
+                "friendsofphp/php-cs-fixer": "^3.86.0",
+                "infection/infection": "^0.31.2",
+                "phpbench/phpbench": "^1.4.1",
+                "phpstan/phpstan": "^2.1.22",
+                "phpstan/phpstan-phpunit": "^2.0.7",
+                "phpstan/phpstan-strict-rules": "^2.0.6",
+                "phpunit/phpunit": "^12.3.7"
+            },
+            "suggest": {
+                "ext-iconv": "To handle non UTF-8 CSV files (if \"php-mbstring\" is not already installed or is too limited)",
+                "ext-mbstring": "To handle non UTF-8 CSV files (if \"iconv\" is not already installed)"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "OpenSpout\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Adrien Loison",
+                    "email": "adrien@box.com"
+                }
+            ],
+            "description": "PHP Library to read and write spreadsheet files (CSV, XLSX and ODS), in a fast and scalable way",
+            "homepage": "https://github.com/openspout/openspout",
+            "keywords": [
+                "OOXML",
+                "csv",
+                "excel",
+                "memory",
+                "odf",
+                "ods",
+                "office",
+                "open",
+                "php",
+                "read",
+                "scale",
+                "spreadsheet",
+                "stream",
+                "write",
+                "xlsx"
+            ],
+            "support": {
+                "issues": "https://github.com/openspout/openspout/issues",
+                "source": "https://github.com/openspout/openspout/tree/v4.32.0"
+            },
+            "time": "2025-09-03T16:03:54+00:00"
+        },
+        {
+            "name": "paragonie/constant_time_encoding",
+            "version": "v3.1.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/paragonie/constant_time_encoding/v3.1.3/paragonie-constant_time_encoding-v3.1.3.zip",
+                "reference": "d5b01a39b3415c2cd581d3bd3a3575c1ebbd8e77",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8"
+            },
+            "require-dev": {
+                "infection/infection": "^0",
+                "nikic/php-fuzzer": "^0",
+                "phpunit/phpunit": "^9|^10|^11",
+                "vimeo/psalm": "^4|^5|^6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ParagonIE\\ConstantTime\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Paragon Initiative Enterprises",
+                    "email": "security@paragonie.com",
+                    "homepage": "https://paragonie.com",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "Steve 'Sc00bz' Thomas",
+                    "email": "steve@tobtu.com",
+                    "homepage": "https://www.tobtu.com",
+                    "role": "Original Developer"
+                }
+            ],
+            "description": "Constant-time Implementations of RFC 4648 Encoding (Base-64, Base-32, Base-16)",
+            "keywords": [
+                "base16",
+                "base32",
+                "base32_decode",
+                "base32_encode",
+                "base64",
+                "base64_decode",
+                "base64_encode",
+                "bin2hex",
+                "encoding",
+                "hex",
+                "hex2bin",
+                "rfc4648"
+            ],
+            "support": {
+                "email": "info@paragonie.com",
+                "issues": "https://github.com/paragonie/constant_time_encoding/issues",
+                "source": "https://github.com/paragonie/constant_time_encoding"
+            },
+            "time": "2025-09-24T15:06:41+00:00"
+        },
+        {
             "name": "phpoption/phpoption",
             "version": "1.10.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/schmittjoh/php-option/legacy.zip/67b192b6a42ec03944b972d6e633ddec78ad2c6d",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/phpoption/phpoption/1.10.0/phpoption-phpoption-1.10.0.zip",
                 "reference": "67b192b6a42ec03944b972d6e633ddec78ad2c6d",
                 "shasum": ""
             },
@@ -2203,11 +3618,131 @@
             "time": "2026-08-24T00:54:40+00:00"
         },
         {
+            "name": "pragmarx/google2fa",
+            "version": "v9.1.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/pragmarx/google2fa/v9.1.0/pragmarx-google2fa-v9.1.0.zip",
+                "reference": "f00bc788c555adfb6765c437ff3538e59cd88af1",
+                "shasum": ""
+            },
+            "require": {
+                "paragonie/constant_time_encoding": "^1.0|^2.0|^3.0",
+                "php": "^7.1|^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.0|^2.0",
+                "phpstan/phpstan-phpunit": "^1.0|^2.0",
+                "phpunit/phpunit": "~9|~10|~11|~12|~13",
+                "psalm/plugin-phpunit": "^0.19|^0.20",
+                "vimeo/psalm": "^5.26|^6.13"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PragmaRX\\Google2FA\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Antonio Carlos Ribeiro",
+                    "email": "acr@antoniocarlosribeiro.com",
+                    "role": "Creator & Designer"
+                }
+            ],
+            "description": "A One Time Password Authentication package, compatible with Google Authenticator.",
+            "keywords": [
+                "2fa",
+                "Authentication",
+                "MFA",
+                "Two Factor Authentication",
+                "google-authenticator",
+                "google2fa",
+                "hotp",
+                "otp",
+                "rfc4226",
+                "rfc6238",
+                "totp"
+            ],
+            "support": {
+                "docs": "https://github.com/antonioribeiro/google2fa#readme",
+                "issues": "https://github.com/antonioribeiro/google2fa/issues",
+                "security": "https://github.com/antonioribeiro/google2fa/security/policy",
+                "source": "https://github.com/antonioribeiro/google2fa"
+            },
+            "time": "2026-08-15T13:22:01+00:00"
+        },
+        {
+            "name": "pragmarx/google2fa-qrcode",
+            "version": "v4.0.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/pragmarx/google2fa-qrcode/v4.0.0/pragmarx-google2fa-qrcode-v4.0.0.zip",
+                "reference": "16159f84fa0838c276f35d46de57fd90dfbb385c",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1",
+                "pragmarx/google2fa": "^8.0|^9.0"
+            },
+            "require-dev": {
+                "bacon/bacon-qr-code": "^2.0|^3.0",
+                "chillerlan/php-qrcode": "^5.0|^6.0",
+                "khanamiryan/qrcode-detector-decoder": "^1.0",
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "~9|~10|~11|~12|~13"
+            },
+            "suggest": {
+                "bacon/bacon-qr-code": "For QR Code generation, requires imagick",
+                "chillerlan/php-qrcode": "For QR Code generation"
+            },
+            "type": "library",
+            "extra": {
+                "component": "package",
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "PragmaRX\\Google2FAQRCode\\": "src/",
+                    "PragmaRX\\Google2FAQRCode\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Antonio Carlos Ribeiro",
+                    "email": "acr@antoniocarlosribeiro.com",
+                    "role": "Creator & Designer"
+                }
+            ],
+            "description": "QR Code package for Google2FA",
+            "keywords": [
+                "2fa",
+                "Authentication",
+                "Two Factor Authentication",
+                "google2fa",
+                "qr code",
+                "qrcode"
+            ],
+            "support": {
+                "issues": "https://github.com/antonioribeiro/google2fa-qrcode/issues",
+                "source": "https://github.com/antonioribeiro/google2fa-qrcode/tree/v4.0.0"
+            },
+            "time": "2026-05-08T19:24:44+00:00"
+        },
+        {
             "name": "psr/clock",
             "version": "1.0.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/clock/legacy.zip/e41a24703d4560fd0acb709162f73b8adfc3aa0d",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/clock/1.0.0/psr-clock-1.0.0.zip",
                 "reference": "e41a24703d4560fd0acb709162f73b8adfc3aa0d",
                 "shasum": ""
             },
@@ -2249,7 +3784,7 @@
             "version": "2.0.2",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/container/legacy.zip/c71ecc56dfe541dbd90c5360474fbc405f8d5963",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/container/2.0.2/psr-container-2.0.2.zip",
                 "reference": "c71ecc56dfe541dbd90c5360474fbc405f8d5963",
                 "shasum": ""
             },
@@ -2296,7 +3831,7 @@
             "version": "1.0.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/event-dispatcher/legacy.zip/dbefd12671e8a14ec7f180cab83036ed26714bb0",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/event-dispatcher/1.0.0/psr-event-dispatcher-1.0.0.zip",
                 "reference": "dbefd12671e8a14ec7f180cab83036ed26714bb0",
                 "shasum": ""
             },
@@ -2340,7 +3875,7 @@
             "version": "1.0.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/http-client/legacy.zip/bb5906edc1c324c9a05aa0873d40117941e5fa90",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/http-client/1.0.3/psr-http-client-1.0.3.zip",
                 "reference": "bb5906edc1c324c9a05aa0873d40117941e5fa90",
                 "shasum": ""
             },
@@ -2386,7 +3921,7 @@
             "version": "1.1.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/http-factory/legacy.zip/2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/http-factory/1.1.0/psr-http-factory-1.1.0.zip",
                 "reference": "2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
                 "shasum": ""
             },
@@ -2435,7 +3970,7 @@
             "version": "2.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/http-message/legacy.zip/402d35bcb92c70c026d1a6a9883f06b2ead23d71",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/http-message/2.0/psr-http-message-2.0.zip",
                 "reference": "402d35bcb92c70c026d1a6a9883f06b2ead23d71",
                 "shasum": ""
             },
@@ -2482,7 +4017,7 @@
             "version": "3.0.2",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/log/legacy.zip/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/log/3.0.2/psr-log-3.0.2.zip",
                 "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
                 "shasum": ""
             },
@@ -2526,7 +4061,7 @@
             "version": "3.0.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/php-fig/simple-cache/legacy.zip/764e0b3939f5ca87cb904f570ef9be2d78a07865",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/psr/simple-cache/3.0.0/psr-simple-cache-3.0.0.zip",
                 "reference": "764e0b3939f5ca87cb904f570ef9be2d78a07865",
                 "shasum": ""
             },
@@ -2644,7 +4179,7 @@
             "version": "2.1.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/ramsey/collection/legacy.zip/344572933ad0181accbf4ba763e85a0306a8c5e2",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/ramsey/collection/2.1.1/ramsey-collection-2.1.1.zip",
                 "reference": "344572933ad0181accbf4ba763e85a0306a8c5e2",
                 "shasum": ""
             },
@@ -2714,7 +4249,7 @@
             "version": "4.9.4",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/ramsey/uuid/legacy.zip/75d73f48d02797c2c285a7e9f348fadc0102ffe2",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/ramsey/uuid/4.9.4/ramsey-uuid-4.9.4.zip",
                 "reference": "75d73f48d02797c2c285a7e9f348fadc0102ffe2",
                 "shasum": ""
             },
@@ -2782,11 +4317,300 @@
             "time": "2026-09-16T11:39:30+00:00"
         },
         {
+            "name": "ryangjchandler/blade-capture-directive",
+            "version": "v1.1.1",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/ryangjchandler/blade-capture-directive/v1.1.1/ryangjchandler-blade-capture-directive-v1.1.1.zip",
+                "reference": "3f9e80b56ff60b78755ef320e3e16d88850101d6",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1",
+                "spatie/laravel-package-tools": "^1.9.2"
+            },
+            "require-dev": {
+                "nunomaduro/collision": "^7.0|^8.0",
+                "nunomaduro/larastan": "^2.0|^3.0",
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "pestphp/pest": "^2.0|^3.7|^4.1",
+                "pestphp/pest-plugin-laravel": "^2.0|^3.1|^v4.1.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^1.0|^2.0",
+                "phpstan/phpstan-phpunit": "^1.0|^2.0",
+                "phpunit/phpunit": "^10.0|^11.5.3|^12.0",
+                "spatie/laravel-ray": "^1.26"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "BladeCaptureDirective": "RyanChandler\\BladeCaptureDirective\\Facades\\BladeCaptureDirective"
+                    },
+                    "providers": [
+                        "RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "RyanChandler\\BladeCaptureDirective\\": "src",
+                    "RyanChandler\\BladeCaptureDirective\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ryan Chandler",
+                    "email": "support@ryangjchandler.co.uk",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Create inline partials in your Blade templates with ease.",
+            "homepage": "https://github.com/ryangjchandler/blade-capture-directive",
+            "keywords": [
+                "blade-capture-directive",
+                "laravel",
+                "ryangjchandler"
+            ],
+            "support": {
+                "issues": "https://github.com/ryangjchandler/blade-capture-directive/issues",
+                "source": "https://github.com/ryangjchandler/blade-capture-directive/tree/v1.1.1"
+            },
+            "time": "2026-03-19T10:36:26+00:00"
+        },
+        {
+            "name": "scrivo/highlight.php",
+            "version": "v9.18.1.10",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/scrivo/highlight.php/v9.18.1.10/scrivo-highlight.php-v9.18.1.10.zip",
+                "reference": "850f4b44697a2552e892ffe71490ba2733c2fc6e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=5.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^4.8|^5.7",
+                "sabberworm/php-css-parser": "^8.3",
+                "symfony/finder": "^2.8|^3.4|^5.4",
+                "symfony/var-dumper": "^2.8|^3.4|^5.4"
+            },
+            "suggest": {
+                "ext-mbstring": "Allows highlighting code with unicode characters and supports language with unicode keywords"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "HighlightUtilities/functions.php"
+                ],
+                "psr-0": {
+                    "Highlight\\": "",
+                    "HighlightUtilities\\": ""
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Geert Bergman",
+                    "homepage": "http://www.scrivo.org/",
+                    "role": "Project Author"
+                },
+                {
+                    "name": "Vladimir Jimenez",
+                    "homepage": "https://allejo.io",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "Martin Folkers",
+                    "homepage": "https://twobrain.io",
+                    "role": "Contributor"
+                }
+            ],
+            "description": "Server side syntax highlighter that supports 185 languages. It's a PHP port of highlight.js",
+            "keywords": [
+                "code",
+                "highlight",
+                "highlight.js",
+                "highlight.php",
+                "syntax"
+            ],
+            "support": {
+                "issues": "https://github.com/scrivo/highlight.php/issues",
+                "source": "https://github.com/scrivo/highlight.php"
+            },
+            "time": "2022-12-17T21:53:22+00:00"
+        },
+        {
+            "name": "spatie/invade",
+            "version": "2.2.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/spatie/invade/2.2.0/spatie-invade-2.2.0.zip",
+                "reference": "10eb682c480bc5f677a6f9f5c5a64da12590dd97",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "pestphp/pest": "^3.8 || ^4.0",
+                "phpstan/phpstan": "^1.12 || ^2.0",
+                "spatie/ray": "^1.28"
+            },
+            "type": "library",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "phpstan-extension.neon"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Spatie\\Invade\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A PHP function to work with private properties and methods",
+            "homepage": "https://github.com/spatie/invade",
+            "keywords": [
+                "invade",
+                "spatie"
+            ],
+            "support": {
+                "source": "https://github.com/spatie/invade/tree/2.2.0"
+            },
+            "time": "2026-10-19T16:16:47+00:00"
+        },
+        {
+            "name": "spatie/laravel-package-tools",
+            "version": "1.93.3",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/spatie/laravel-package-tools/1.93.3/spatie-laravel-package-tools-1.93.3.zip",
+                "reference": "7aeef26bd8d4909bec744dbf47aee7d1395588c1",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^8.0|^9.2|^10.0|^11.0",
+                "pestphp/pest": "^2.1|^3.1|^4.0",
+                "phpunit/php-code-coverage": "^10.0|^11.0|^12.0",
+                "phpunit/phpunit": "^10.5|^11.5|^12.5",
+                "spatie/pest-plugin-test-time": "^2.2|^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\LaravelPackageTools\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Tools for creating Laravel packages",
+            "homepage": "https://github.com/spatie/laravel-package-tools",
+            "keywords": [
+                "laravel-package-tools",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-package-tools/issues",
+                "source": "https://github.com/spatie/laravel-package-tools/tree/1.93.3"
+            },
+            "time": "2026-09-28T07:16:50+00:00"
+        },
+        {
+            "name": "spatie/shiki-php",
+            "version": "2.4.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/spatie/shiki-php/2.4.0/spatie-shiki-php-2.4.0.zip",
+                "reference": "b8b0ca32d3a82bc5c533e68ffab96c5d4ec1b9ba",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^8.0",
+                "symfony/process": "^5.4|^6.4|^7.1|^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^v3.0",
+                "pestphp/pest": "^1.8",
+                "phpunit/phpunit": "^9.5",
+                "spatie/pest-plugin-snapshots": "^1.1",
+                "spatie/ray": "^1.10"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\ShikiPhp\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rias Van der Veken",
+                    "email": "rias@spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Highlight code using Shiki in PHP",
+            "homepage": "https://github.com/spatie/shiki-php",
+            "keywords": [
+                "shiki",
+                "spatie"
+            ],
+            "support": {
+                "source": "https://github.com/spatie/shiki-php/tree/2.4.0"
+            },
+            "time": "2026-04-27T14:27:52+00:00"
+        },
+        {
             "name": "symfony/clock",
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/clock/legacy.zip/945ea3b64d6da9c1c2c354fe5c07b27455df6442",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/clock/v8.1.9/symfony-clock-v8.1.9.zip",
                 "reference": "945ea3b64d6da9c1c2c354fe5c07b27455df6442",
                 "shasum": ""
             },
@@ -2839,7 +4663,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/console/legacy.zip/630e74196a2635ec0f06c12bd3fb47cfedf85157",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/console/v8.1.9/symfony-console-v8.1.9.zip",
                 "reference": "630e74196a2635ec0f06c12bd3fb47cfedf85157",
                 "shasum": ""
             },
@@ -2915,7 +4739,7 @@
             "version": "v8.1.6",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/css-selector/legacy.zip/08e2905152a39cf3fd1745d83f8c483e258887d9",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/css-selector/v8.1.6/symfony-css-selector-v8.1.6.zip",
                 "reference": "08e2905152a39cf3fd1745d83f8c483e258887d9",
                 "shasum": ""
             },
@@ -2960,7 +4784,7 @@
             "version": "v3.7.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/deprecation-contracts/legacy.zip/f3202fa1b5097b0af062dc978b32ecf63404e31d",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/deprecation-contracts/v3.7.1/symfony-deprecation-contracts-v3.7.1.zip",
                 "reference": "f3202fa1b5097b0af062dc978b32ecf63404e31d",
                 "shasum": ""
             },
@@ -3007,7 +4831,7 @@
             "version": "v8.1.8",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/error-handler/legacy.zip/c146daceccd5d4f864c051b233c276641cec527b",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/error-handler/v8.1.8/symfony-error-handler-v8.1.8.zip",
                 "reference": "c146daceccd5d4f864c051b233c276641cec527b",
                 "shasum": ""
             },
@@ -3064,7 +4888,7 @@
             "version": "v8.1.5",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/event-dispatcher/legacy.zip/7458da64220376b2e0dc2d8451bf43382c1ad297",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/event-dispatcher/v8.1.5/symfony-event-dispatcher-v8.1.5.zip",
                 "reference": "7458da64220376b2e0dc2d8451bf43382c1ad297",
                 "shasum": ""
             },
@@ -3126,7 +4950,7 @@
             "version": "v3.7.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/event-dispatcher-contracts/legacy.zip/c7de7a00ffb67842132da02ea92988a39ccd9f4e",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/event-dispatcher-contracts/v3.7.1/symfony-event-dispatcher-contracts-v3.7.1.zip",
                 "reference": "c7de7a00ffb67842132da02ea92988a39ccd9f4e",
                 "shasum": ""
             },
@@ -3182,7 +5006,7 @@
             "version": "v8.1.8",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/finder/legacy.zip/bd4fed193a3132c91c5c93595cbfc78988915822",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/finder/v8.1.8/symfony-finder-v8.1.8.zip",
                 "reference": "bd4fed193a3132c91c5c93595cbfc78988915822",
                 "shasum": ""
             },
@@ -3222,11 +5046,59 @@
             "time": "2026-09-26T06:33:49+00:00"
         },
         {
+            "name": "symfony/html-sanitizer",
+            "version": "v8.1.8",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/html-sanitizer/v8.1.8/symfony-html-sanitizer-v8.1.8.zip",
+                "reference": "c67061a71d3f8b55f899faee3167422efa4db027",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "league/uri": "^6.5|^7.0",
+                "php": ">=8.4.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\HtmlSanitizer\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Titouan Galopin",
+                    "email": "galopintitouan@gmail.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides an object-oriented API to sanitize untrusted HTML input for safe insertion into a document's DOM.",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "Purifier",
+                "html",
+                "sanitizer"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/html-sanitizer/tree/v8.1.8"
+            },
+            "time": "2026-09-28T08:00:04+00:00"
+        },
+        {
             "name": "symfony/http-foundation",
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/http-foundation/legacy.zip/7850897fb8659f98491b03be79ac48600bdaf9ab",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/http-foundation/v8.1.9/symfony-http-foundation-v8.1.9.zip",
                 "reference": "7850897fb8659f98491b03be79ac48600bdaf9ab",
                 "shasum": ""
             },
@@ -3283,7 +5155,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/http-kernel/legacy.zip/55c6935bb4c004a72b55f723e79d5404881dcad3",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/http-kernel/v8.1.9/symfony-http-kernel-v8.1.9.zip",
                 "reference": "55c6935bb4c004a72b55f723e79d5404881dcad3",
                 "shasum": ""
             },
@@ -3369,7 +5241,7 @@
             "version": "v8.1.7",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/mailer/legacy.zip/8783380ecdafa23d36fc90c5873fd44b635c6e10",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/mailer/v8.1.7/symfony-mailer-v8.1.7.zip",
                 "reference": "8783380ecdafa23d36fc90c5873fd44b635c6e10",
                 "shasum": ""
             },
@@ -3425,7 +5297,7 @@
             "version": "v8.1.7",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/mime/legacy.zip/773ac57f20e2795bdadb65b5b1b5f4850d498283",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/mime/v8.1.7/symfony-mime-v8.1.7.zip",
                 "reference": "773ac57f20e2795bdadb65b5b1b5f4850d498283",
                 "shasum": ""
             },
@@ -3487,7 +5359,7 @@
             "version": "v1.37.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-ctype/legacy.zip/141046a8f9477948ff284fa65be2095baafb94f2",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-ctype/v1.37.0/symfony-polyfill-ctype-v1.37.0.zip",
                 "reference": "141046a8f9477948ff284fa65be2095baafb94f2",
                 "shasum": ""
             },
@@ -3546,7 +5418,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-intl-grapheme/legacy.zip/5cac8f4db97208823aa353f59a01faad2da52c75",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-intl-grapheme/v1.43.0/symfony-polyfill-intl-grapheme-v1.43.0.zip",
                 "reference": "5cac8f4db97208823aa353f59a01faad2da52c75",
                 "shasum": ""
             },
@@ -3604,7 +5476,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-intl-idn/legacy.zip/533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-intl-idn/v1.43.0/symfony-polyfill-intl-idn-v1.43.0.zip",
                 "reference": "533d68cf99c8f8ee2e8893c59ed59192e92cfd74",
                 "shasum": ""
             },
@@ -3667,7 +5539,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-intl-normalizer/legacy.zip/ebd57ccc7edb93d632e184efbe7693d2517bab3b",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-intl-normalizer/v1.43.0/symfony-polyfill-intl-normalizer-v1.43.0.zip",
                 "reference": "ebd57ccc7edb93d632e184efbe7693d2517bab3b",
                 "shasum": ""
             },
@@ -3728,7 +5600,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-mbstring/legacy.zip/4d5d331bf731e0aedbc6b2f5e61135b7b7996a72",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-mbstring/v1.43.0/symfony-polyfill-mbstring-v1.43.0.zip",
                 "reference": "4d5d331bf731e0aedbc6b2f5e61135b7b7996a72",
                 "shasum": ""
             },
@@ -3789,7 +5661,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-php80/legacy.zip/9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-php80/v1.43.0/symfony-polyfill-php80-v1.43.0.zip",
                 "reference": "9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74",
                 "shasum": ""
             },
@@ -3849,7 +5721,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-php82/legacy.zip/843bbe8b2a7934307b749751eede0f111f5d1cfc",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-php82/v1.43.0/symfony-polyfill-php82-v1.43.0.zip",
                 "reference": "843bbe8b2a7934307b749751eede0f111f5d1cfc",
                 "shasum": ""
             },
@@ -3905,7 +5777,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-php84/legacy.zip/22c6548499cbe5c5bb072fc0c42312dff062a015",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-php84/v1.43.0/symfony-polyfill-php84-v1.43.0.zip",
                 "reference": "22c6548499cbe5c5bb072fc0c42312dff062a015",
                 "shasum": ""
             },
@@ -3961,7 +5833,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-php85/legacy.zip/86a42cbcc07adc331481a5ab310a4024bfc227f6",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-php85/v1.43.0/symfony-polyfill-php85-v1.43.0.zip",
                 "reference": "86a42cbcc07adc331481a5ab310a4024bfc227f6",
                 "shasum": ""
             },
@@ -4017,7 +5889,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-php86/legacy.zip/8840df45b24f33a49dc419fa18dc0057231ae1d8",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-php86/v1.43.0/symfony-polyfill-php86-v1.43.0.zip",
                 "reference": "8840df45b24f33a49dc419fa18dc0057231ae1d8",
                 "shasum": ""
             },
@@ -4073,7 +5945,7 @@
             "version": "v1.42.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-time/legacy.zip/ac9f1ed802dd58f37e720388130c088434aa09fc",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-time/v1.42.0/symfony-polyfill-time-v1.42.0.zip",
                 "reference": "ac9f1ed802dd58f37e720388130c088434aa09fc",
                 "shasum": ""
             },
@@ -4132,7 +6004,7 @@
             "version": "v1.43.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/polyfill-uuid/legacy.zip/b23ff8245cc5c4479ea2be3d0132d2e6dd433993",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/polyfill-uuid/v1.43.0/symfony-polyfill-uuid-v1.43.0.zip",
                 "reference": "b23ff8245cc5c4479ea2be3d0132d2e6dd433993",
                 "shasum": ""
             },
@@ -4191,7 +6063,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/process/legacy.zip/59a682fd049b2d4d37c444f5ac21b7d01b8c7189",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/process/v8.1.9/symfony-process-v8.1.9.zip",
                 "reference": "59a682fd049b2d4d37c444f5ac21b7d01b8c7189",
                 "shasum": ""
             },
@@ -4232,7 +6104,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/routing/legacy.zip/edb06fb6ced3c1faaaed74c1c6c0f176a614c330",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/routing/v8.1.9/symfony-routing-v8.1.9.zip",
                 "reference": "edb06fb6ced3c1faaaed74c1c6c0f176a614c330",
                 "shasum": ""
             },
@@ -4288,7 +6160,7 @@
             "version": "v3.7.3",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/service-contracts/legacy.zip/15e6a07ec2a2c75ceb1b21dd98105ee8456d2257",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/service-contracts/v3.7.3/symfony-service-contracts-v3.7.3.zip",
                 "reference": "15e6a07ec2a2c75ceb1b21dd98105ee8456d2257",
                 "shasum": ""
             },
@@ -4351,7 +6223,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/string/legacy.zip/07fb208558f941eab50ec49c89c2a6a93fb11f01",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/string/v8.1.9/symfony-string-v8.1.9.zip",
                 "reference": "07fb208558f941eab50ec49c89c2a6a93fb11f01",
                 "shasum": ""
             },
@@ -4417,7 +6289,7 @@
             "version": "v8.1.5",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/translation/legacy.zip/d9e1caba0d6b6f9a26710af8a2f88d37f001215a",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/translation/v8.1.5/symfony-translation-v8.1.5.zip",
                 "reference": "d9e1caba0d6b6f9a26710af8a2f88d37f001215a",
                 "shasum": ""
             },
@@ -4486,7 +6358,7 @@
             "version": "v3.7.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/translation-contracts/legacy.zip/ccb206b98faccc511ebae8e5fad50f2dc0b30621",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/translation-contracts/v3.7.1/symfony-translation-contracts-v3.7.1.zip",
                 "reference": "ccb206b98faccc511ebae8e5fad50f2dc0b30621",
                 "shasum": ""
             },
@@ -4544,7 +6416,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/uid/legacy.zip/cb487cf30380f0b0b090973bb9c0588193c06685",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/uid/v8.1.9/symfony-uid-v8.1.9.zip",
                 "reference": "cb487cf30380f0b0b090973bb9c0588193c06685",
                 "shasum": ""
             },
@@ -4598,7 +6470,7 @@
             "version": "v8.1.9",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/symfony/var-dumper/legacy.zip/b8c168c764c09f5d931f290c9dbdd13f1bf142f3",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/var-dumper/v8.1.9/symfony-var-dumper-v8.1.9.zip",
                 "reference": "b8c168c764c09f5d931f290c9dbdd13f1bf142f3",
                 "shasum": ""
             },
@@ -4661,7 +6533,7 @@
             "version": "v2.4.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/tijsverkoyen/CssToInlineStyles/legacy.zip/f0292ccf0ec75843d65027214426b6b163b48b41",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/tijsverkoyen/css-to-inline-styles/v2.4.0/tijsverkoyen-css-to-inline-styles-v2.4.0.zip",
                 "reference": "f0292ccf0ec75843d65027214426b6b163b48b41",
                 "shasum": ""
             },
@@ -4706,11 +6578,60 @@
             "time": "2025-12-02T11:56:42+00:00"
         },
         {
+            "name": "ueberdosis/tiptap-php",
+            "version": "2.2.1",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/ueberdosis/tiptap-php/2.2.1/ueberdosis-tiptap-php-2.2.1.zip",
+                "reference": "242a7a150c1233a01622e050152699382fb20bea",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.0",
+                "scrivo/highlight.php": "^9.18",
+                "spatie/shiki-php": "^2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.5",
+                "pestphp/pest": "^1.21",
+                "phpunit/phpunit": "^9.5",
+                "vimeo/psalm": "^4.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tiptap\\": "src"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Hans Pagel",
+                    "email": "humans@tiptap.dev",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A PHP package to work with Tiptap output",
+            "homepage": "https://github.com/ueberdosis/tiptap-php",
+            "keywords": [
+                "prosemirror",
+                "tiptap",
+                "ueberdosis"
+            ],
+            "support": {
+                "issues": "https://github.com/ueberdosis/tiptap-php/issues",
+                "source": "https://github.com/ueberdosis/tiptap-php/tree/2.2.1"
+            },
+            "time": "2026-10-19T10:48:00+00:00"
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.7.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/vlucas/phpdotenv/legacy.zip/301c07936b16d88628b126b01d082ba153cf4c40",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/vlucas/phpdotenv/v5.7.0/vlucas-phpdotenv-v5.7.0.zip",
                 "reference": "301c07936b16d88628b126b01d082ba153cf4c40",
                 "shasum": ""
             },
@@ -4778,7 +6699,7 @@
             "version": "2.1.1",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/voku/portable-ascii/legacy.zip/8e1051fe39379367aecf014f41744ce7539a856f",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/voku/portable-ascii/2.1.1/voku-portable-ascii-2.1.1.zip",
                 "reference": "8e1051fe39379367aecf014f41744ce7539a856f",
                 "shasum": ""
             },
@@ -5003,7 +6924,7 @@
             "version": "v3.0.0",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/hamcrest/hamcrest-php/legacy.zip/b61cd040da1a4925bc90a51c074f5297e7c0fa52",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/hamcrest/hamcrest-php/v3.0.0/hamcrest-hamcrest-php-v3.0.0.zip",
                 "reference": "b61cd040da1a4925bc90a51c074f5297e7c0fa52",
                 "shasum": ""
             },
@@ -5511,7 +7432,7 @@
             "version": "1.6.15",
             "dist": {
                 "type": "zip",
-                "url": "https://codeload.github.com/mockery/mockery/legacy.zip/967a801bd188989a5669bd280f252d51c0fdc9ee",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/mockery/mockery/1.6.15/mockery-mockery-1.6.15.zip",
                 "reference": "967a801bd188989a5669bd280f252d51c0fdc9ee",
                 "shasum": ""
             },

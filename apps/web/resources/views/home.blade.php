@@ -171,7 +171,7 @@
         <img class="footer-wordmark" src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="543" height="117">
     </a>
     <p>Товары для творчества,<br>которые становятся личными.</p>
-    <nav><a href="#products">Продукция</a><a href="#personal">По фото</a><a href="#business">Для бизнеса</a><a href="{{ route('generator') }}">Генератор</a></nav>
+    <nav><a href="#products">Продукция</a><a href="#personal">По фото</a><a href="#business">Для бизнеса</a><a href="{{ route('generator') }}">Генератор</a><a href="{{ route('privacy') }}">Конфиденциальность</a></nav>
     <small>© {{ date('Y') }} Токамаки. tokamaki.ru</small>
 </footer>
 </body>

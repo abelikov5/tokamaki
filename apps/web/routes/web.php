@@ -4,6 +4,7 @@ use App\Http\Controllers\GenerationController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+Route::view('/privacy', 'privacy')->name('privacy');
 Route::get('/kartina-po-nomeram-po-foto', [GenerationController::class, 'index'])->name('generator');
 Route::get('/kartina-po-nomeram-po-foto/proekt/{generation:resume_token}', [GenerationController::class, 'resume'])
     ->name('generations.resume');

@@ -2,6 +2,11 @@
 
 return [
 
+    'filament_admin' => [
+        'email' => env('FILAMENT_ADMIN_EMAIL', 'abelikov@inbox.ru'),
+        'password' => env('FILAMENT_ADMIN_PASSWORD'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

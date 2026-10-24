@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Generation;
+use App\Models\Visitor;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
@@ -19,18 +22,20 @@ class GenerationController extends Controller
         return view('generations.index', ['resumeEndpoint' => null]);
     }
 
-    public function resume(Generation $generation): View
+    public function resume(Request $request, Generation $generation): View
     {
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+        $this->recordActivity($request, $generation);
 
         return view('generations.index', [
             'resumeEndpoint' => route('generations.show', $generation),
         ]);
     }
 
-    public function show(Generation $generation): JsonResponse
+    public function show(Request $request, Generation $generation): JsonResponse
     {
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+        $this->recordActivity($request, $generation);
 
         return response()->json($this->decoratePayload($generation, [
             'result_id' => $generation->result_id,
@@ -58,10 +63,15 @@ class GenerationController extends Controller
         $settings = collect($validated)->except('image')->all();
         $settings['auto_colors'] = $request->boolean('auto_colors');
         $settings['colors'] ??= 24;
+        $visitor = $this->resolveVisitor($request);
         $generation = Generation::create([
             'status' => 'processing',
+            'visitor_id' => $visitor->id,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
             'original_name' => $image->getClientOriginalName(),
             'settings' => $settings,
+            'last_activity_at' => now(),
         ]);
 
         try {
@@ -107,6 +117,7 @@ class GenerationController extends Controller
     public function edit(Request $request, Generation $generation): JsonResponse
     {
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+        $this->recordActivity($request, $generation);
         $supportedOperations = [
             'recolor_region', 'unify_background', 'paint_stroke', 'erase_stroke', 'smooth_stroke',
             'magic_stroke', 'add_label',
@@ -170,6 +181,7 @@ class GenerationController extends Controller
                 'palette' => $payload['palette'],
                 'diagnostics' => $payload['diagnostics'],
             ]);
+            $generation->increment('edits_count');
 
             return response()->json($this->decoratePayload($generation, $payload));
         } catch (ConnectionException) {
@@ -179,9 +191,10 @@ class GenerationController extends Controller
         }
     }
 
-    public function undo(Generation $generation): JsonResponse
+    public function undo(Request $request, Generation $generation): JsonResponse
     {
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+        $this->recordActivity($request, $generation);
 
         if (! $generation->previous_result_id) {
             return response()->json([
@@ -205,9 +218,10 @@ class GenerationController extends Controller
         ]));
     }
 
-    public function download(Generation $generation, string $filename): Response
+    public function download(Request $request, Generation $generation, string $filename): Response
     {
         abort_unless($generation->status === 'completed' && $generation->result_id, 404);
+        $this->recordActivity($request, $generation);
 
         $response = Http::timeout(config('services.generator.timeout'))
             ->get(config('services.generator.url')."/api/v1/results/{$generation->result_id}/{$filename}");
@@ -246,5 +260,58 @@ class GenerationController extends Controller
         $payload['unlabeled_data_url'] = $downloads['unlabeled'];
 
         return $payload;
+    }
+
+    private function resolveVisitor(Request $request): Visitor
+    {
+        $browserId = $request->cookie('tokamaki_visitor');
+
+        if (! is_string($browserId) || ! Str::isUuid($browserId)) {
+            $browserId = (string) Str::uuid();
+        }
+
+        $visitor = Visitor::firstOrCreate(
+            ['browser_id' => $browserId],
+            [
+                'first_ip_address' => $request->ip(),
+                'first_user_agent' => $request->userAgent(),
+            ],
+        );
+
+        $visitor->update([
+            'last_ip_address' => $request->ip(),
+            'last_user_agent' => $request->userAgent(),
+            'last_seen_at' => now(),
+        ]);
+
+        Cookie::queue(
+            'tokamaki_visitor',
+            $browserId,
+            60 * 24 * 365 * 5,
+            '/',
+            null,
+            $request->isSecure(),
+            true,
+            false,
+            'lax',
+        );
+
+        return $visitor;
+    }
+
+    private function recordActivity(Request $request, Generation $generation): void
+    {
+        $generation->update(['last_activity_at' => now()]);
+        $visitor = $generation->visitor;
+
+        if (! $visitor || $visitor->browser_id !== $request->cookie('tokamaki_visitor')) {
+            return;
+        }
+
+        $visitor->update([
+            'last_ip_address' => $request->ip(),
+            'last_user_agent' => $request->userAgent(),
+            'last_seen_at' => now(),
+        ]);
     }
 }

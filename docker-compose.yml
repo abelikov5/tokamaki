@@ -31,7 +31,9 @@ services:
       QUEUE_CONNECTION: database
       GENERATOR_URL: http://generator:8000
       GENERATOR_TIMEOUT: 360
-    command: sh -c "php artisan migrate --force && php-fpm"
+      FILAMENT_ADMIN_EMAIL: ${FILAMENT_ADMIN_EMAIL:-}
+      FILAMENT_ADMIN_PASSWORD: ${FILAMENT_ADMIN_PASSWORD:-}
+    command: sh -c "php artisan migrate --force && php artisan db:seed --class=AdminUserSeeder --force && php-fpm"
     restart: unless-stopped
     depends_on:
       postgres:

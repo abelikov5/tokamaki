@@ -155,6 +155,7 @@ class GenerationTest extends TestCase
             'id' => $generation->id,
             'result_id' => '22222222-2222-4222-8222-222222222222',
             'previous_result_id' => '11111111-1111-4111-8111-111111111111',
+            'edits_count' => 1,
         ]);
         Http::assertSent(fn ($request) => count($request->data()['operations'] ?? []) === 5
             && $request->data()['operations'][2]['erase_mode'] === 'local'

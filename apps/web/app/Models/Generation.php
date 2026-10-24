@@ -3,12 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class Generation extends Model
 {
     protected $fillable = [
         'status',
+        'visitor_id',
+        'ip_address',
+        'user_agent',
         'original_name',
         'settings',
         'result_id',
@@ -19,6 +23,8 @@ class Generation extends Model
         'previous_diagnostics',
         'error',
         'completed_at',
+        'edits_count',
+        'last_activity_at',
     ];
 
     protected function casts(): array
@@ -30,7 +36,13 @@ class Generation extends Model
             'diagnostics' => 'array',
             'previous_diagnostics' => 'array',
             'completed_at' => 'datetime',
+            'last_activity_at' => 'datetime',
         ];
+    }
+
+    public function visitor(): BelongsTo
+    {
+        return $this->belongsTo(Visitor::class);
     }
 
     protected static function booted(): void

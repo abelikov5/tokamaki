@@ -261,6 +261,6 @@
         </article>
     </section>
 </main>
-<footer class="generator-footer"><span>© {{ date('Y') }} Токамаки</span><a href="{{ route('home') }}">Товары для творчества →</a></footer>
+<footer class="generator-footer"><span>© {{ date('Y') }} Токамаки</span><nav><a href="{{ route('privacy') }}">Конфиденциальность</a><a href="{{ route('home') }}">Товары для творчества →</a></nav></footer>
 </body>
 </html>
