@@ -52,6 +52,7 @@ class ProcessingResult:
     palette: list[dict]
     diagnostics: dict
     editor_state: "EditorState"
+    original_png: bytes | None = None
 
 
 @dataclass
@@ -76,11 +77,32 @@ def _decode_image(data: bytes, max_side: int) -> np.ndarray:
     return _resize_for_processing(image, max_side)
 
 
-def _quantize_lab(rgb: np.ndarray, color_count: int) -> tuple[np.ndarray, np.ndarray]:
+def _quantize_lab(
+    rgb: np.ndarray,
+    color_count: int,
+    focus_mask: np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
     pixels = lab.reshape(-1, 3).astype(np.float32)
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 35, 0.35)
     cv2.setRNGSeed(42)
+    if focus_mask is not None and np.any(focus_mask):
+        focus_pixels = pixels[focus_mask.reshape(-1)]
+        maximum_focus_samples = max(1, len(pixels))
+        indices = np.linspace(0, len(focus_pixels) - 1, maximum_focus_samples, dtype=np.int32)
+        focus_pixels = focus_pixels[indices]
+        training_pixels = np.concatenate([pixels, focus_pixels, focus_pixels], axis=0)
+        _, _, centers = cv2.kmeans(
+            training_pixels, color_count, None, criteria, 4, cv2.KMEANS_PP_CENTERS
+        )
+        labels = np.empty(len(pixels), dtype=np.int32)
+        for start in range(0, len(pixels), 100_000):
+            chunk = pixels[start:start + 100_000]
+            distances = np.sum((chunk[:, None, :] - centers[None, :, :]) ** 2, axis=2)
+            labels[start:start + len(chunk)] = np.argmin(distances, axis=1)
+        labels = labels.reshape(lab.shape[:2])
+        centers = np.clip(np.rint(centers), 0, 255).astype(np.uint8)
+        return labels, centers
     _, labels, centers = cv2.kmeans(
         pixels, color_count, None, criteria, 4, cv2.KMEANS_PP_CENTERS
     )
@@ -97,14 +119,30 @@ def _lab_distance(a: np.ndarray, b: np.ndarray) -> float:
     return float(deltaE_ciede2000(standard(a), standard(b)))
 
 
-def _estimate_color_count(rgb: np.ndarray, max_colors: int = 48) -> int:
+def _estimate_color_count(
+    rgb: np.ndarray,
+    max_colors: int = 32,
+    focus_mask: np.ndarray | None = None,
+) -> int:
     """Estimate a useful palette size while ignoring JPEG noise and edge blends."""
     preview = _resize_for_processing(rgb, 220)
     lab = cv2.cvtColor(preview, cv2.COLOR_RGB2LAB)
-    pixels = lab.reshape(-1, 3).astype(np.float32)
+    all_pixels = lab.reshape(-1, 3).astype(np.float32)
+    pixels = all_pixels
     if len(pixels) > 20_000:
         indices = np.linspace(0, len(pixels) - 1, 20_000, dtype=np.int32)
         pixels = pixels[indices]
+    if focus_mask is not None and np.any(focus_mask):
+        preview_mask = cv2.resize(
+            focus_mask.astype(np.uint8),
+            (preview.shape[1], preview.shape[0]),
+            interpolation=cv2.INTER_NEAREST,
+        ).astype(bool)
+        focus_pixels = all_pixels[preview_mask.reshape(-1)]
+        focus_sample_count = min(10_000, max(1, len(pixels) // 2))
+        indices = np.linspace(0, len(focus_pixels) - 1, focus_sample_count, dtype=np.int32)
+        focus_pixels = focus_pixels[indices]
+        pixels = np.concatenate([pixels, focus_pixels, focus_pixels], axis=0)
 
     unique_colors = np.unique(pixels, axis=0)
     candidate_count = min(32, max_colors, len(unique_colors))
@@ -160,6 +198,36 @@ def _smooth_image(rgb: np.ndarray, strength: float) -> np.ndarray:
     )
 
 
+def _focus_region_mask(
+    shape: tuple[int, int],
+    focus_regions: list[dict] | None,
+) -> np.ndarray:
+    height, width = shape
+    mask = np.zeros((height, width), dtype=bool)
+    for region in focus_regions or []:
+        x0 = max(0, min(width - 1, round(float(region["x"]) * width)))
+        y0 = max(0, min(height - 1, round(float(region["y"]) * height)))
+        x1 = max(x0 + 1, min(width, round((float(region["x"]) + float(region["width"])) * width)))
+        y1 = max(y0 + 1, min(height, round((float(region["y"]) + float(region["height"])) * height)))
+        mask[y0:y1, x0:x1] = True
+    return mask
+
+
+def _smooth_with_focus(rgb: np.ndarray, strength: float, focus_mask: np.ndarray) -> np.ndarray:
+    smoothed = _smooth_image(rgb, strength)
+    if strength <= 0 or not np.any(focus_mask):
+        return smoothed
+    detailed = _smooth_image(rgb, strength * 0.25)
+    feather_radius = max(2.0, min(rgb.shape[:2]) * 0.006)
+    blend = cv2.GaussianBlur(focus_mask.astype(np.float32), (0, 0), feather_radius)
+    blend = np.clip(blend, 0, 1)[..., None]
+    return np.clip(
+        smoothed.astype(np.float32) * (1 - blend) + detailed.astype(np.float32) * blend,
+        0,
+        255,
+    ).astype(np.uint8)
+
+
 def _separate_close_lines(labels: np.ndarray, width: float) -> np.ndarray:
     """Remove narrow ridges/corridors, then assign removed pixels to the nearest region core."""
     kernel_size = int(round(width))
@@ -186,6 +254,7 @@ def _merge_small_regions(
     centers: np.ndarray,
     min_size: int,
     min_width: float,
+    focus_mask: np.ndarray | None = None,
 ) -> tuple[np.ndarray, int, int]:
     labels = labels.copy()
     small_before = 0
@@ -215,11 +284,17 @@ def _merge_small_regions(
                 x1, y1 = min(labels.shape[1], x + width + 1), min(labels.shape[0], y + height + 1)
                 component_crop = components[y0:y1, x0:x1]
                 region = component_crop == component_id
-                is_small = area < min_size
+                is_focused = False
+                if focus_mask is not None:
+                    focused_pixels = np.count_nonzero(focus_mask[y0:y1, x0:x1] & region)
+                    is_focused = focused_pixels / max(1, area) >= 0.25
+                local_min_size = max(2, round(min_size * 0.25)) if is_focused else min_size
+                local_min_width = min_width * 0.5 if is_focused else min_width
+                is_small = area < local_min_size
                 is_thin = False
-                if min_width > 0:
+                if local_min_width > 0:
                     distance = cv2.distanceTransform(region.astype(np.uint8), cv2.DIST_L2, 3)
-                    is_thin = float(distance.max()) * 2.0 < min_width
+                    is_thin = float(distance.max()) * 2.0 < local_min_width
                 if not is_small and not is_thin:
                     continue
                 if pass_index == 0:
@@ -284,6 +359,7 @@ def _extract_regions(
     min_width: float,
     contour_smoothing: float,
     target_area_per_label: float,
+    focus_mask: np.ndarray | None = None,
 ) -> tuple[list[Region], int, int]:
     regions: list[Region] = []
     small_after = 0
@@ -300,10 +376,19 @@ def _extract_regions(
             outer_indices = [i for i in range(len(contours)) if hierarchy[0][i][3] == -1]
             if not outer_indices:
                 continue
+            focus_coverage = (
+                np.count_nonzero(focus_mask & mask.astype(bool)) / max(1, area)
+                if focus_mask is not None
+                else 0
+            )
+            is_focused = focus_coverage >= 0.25
+            local_min_size = max(2, round(min_size * 0.25)) if is_focused else min_size
+            local_min_width = min_width * 0.5 if is_focused else min_width
+            local_contour_smoothing = contour_smoothing * 0.35 if is_focused else contour_smoothing
             outer_index = max(outer_indices, key=lambda i: cv2.contourArea(contours[i]))
-            outer = cv2.approxPolyDP(contours[outer_index], contour_smoothing, True)
+            outer = cv2.approxPolyDP(contours[outer_index], local_contour_smoothing, True)
             holes = [
-                cv2.approxPolyDP(contours[i], contour_smoothing, True)
+                cv2.approxPolyDP(contours[i], local_contour_smoothing, True)
                 for i in range(len(contours))
                 if hierarchy[0][i][3] == outer_index
             ]
@@ -311,11 +396,11 @@ def _extract_regions(
             padded = np.pad(mask, 1, mode="constant", constant_values=0)
             distance = cv2.distanceTransform(padded, cv2.DIST_L2, 5)[1:-1, 1:-1]
             radius = float(distance.max())
-            if area >= max(24, min_size // 2) and radius >= 2.2:
+            if area >= max(12 if is_focused else 24, local_min_size // 2) and radius >= 2.2:
                 label_points = _place_label_points(mask, area, target_area_per_label)
-            if area < min_size:
+            if area < local_min_size:
                 small_after += 1
-            if min_width > 0 and radius * 2.0 < min_width:
+            if local_min_width > 0 and radius * 2.0 < local_min_width:
                 thin_after += 1
             regions.append(Region(palette_index, mask, area, outer, holes, label_points))
     return regions, small_after, thin_after
@@ -698,6 +783,7 @@ def _render_editable_result(
     stage_started = time.perf_counter()
     logger.info("Рендер: ищем области и размещаем номера...")
     rgb_centers = _palette_rgb(centers)
+    focus_mask = _focus_region_mask(labels.shape, settings.get("focus_regions"))
     used, palette_numbers = _palette_layout(labels, rgb_centers)
     target_area_per_label = labels.size * (0.012 / settings["label_density"])
     regions, small_after, thin_after = _extract_regions(
@@ -706,6 +792,7 @@ def _render_editable_result(
         settings["effective_min_region_width"],
         settings["effective_contour_smoothing"],
         target_area_per_label,
+        focus_mask,
     )
     _apply_manual_label_points(regions, labels, settings)
     logger.info(
@@ -771,6 +858,7 @@ def _render_editable_result(
         "label_density": settings["label_density"],
         "labels_placed": sum(len(region.label_points) for region in regions),
         "unlabeled_segments": unlabeled_segments,
+        "focus_regions": len(settings.get("focus_regions", [])),
         "processing_width": width,
         "processing_height": height,
         "processing_ms": round((time.perf_counter() - started) * 1000),
@@ -1086,6 +1174,7 @@ def process_image(
     line_separation: float = 2.0,
     label_density: float = 1.0,
     auto_colors: bool = False,
+    focus_regions: list[dict] | None = None,
 ) -> ProcessingResult:
     started = time.perf_counter()
     if complexity not in COMPLEXITY_PRESETS:
@@ -1098,12 +1187,14 @@ def process_image(
     effective_contour_smoothing = contour_smoothing * preset["contour"]
     effective_line_separation = line_separation * preset["separation"]
     rgb = _decode_image(data, max_side)
-    smoothed_rgb = _smooth_image(rgb, smoothing)
-    resolved_color_count = _estimate_color_count(smoothed_rgb) if auto_colors else color_count
-    labels, centers = _quantize_lab(smoothed_rgb, resolved_color_count)
-    labels = _separate_close_lines(labels, effective_line_separation)
+    focus_mask = _focus_region_mask(rgb.shape[:2], focus_regions)
+    smoothed_rgb = _smooth_with_focus(rgb, smoothing, focus_mask)
+    resolved_color_count = _estimate_color_count(smoothed_rgb, focus_mask=focus_mask) if auto_colors else color_count
+    labels, centers = _quantize_lab(smoothed_rgb, resolved_color_count, focus_mask)
+    separated_labels = _separate_close_lines(labels, effective_line_separation)
+    labels = np.where(focus_mask, labels, separated_labels) if np.any(focus_mask) else separated_labels
     labels, small_before, thin_before = _merge_small_regions(
-        labels, centers, effective_min_size, effective_min_width
+        labels, centers, effective_min_size, effective_min_width, focus_mask
     )
 
     settings = {
@@ -1123,8 +1214,14 @@ def process_image(
         "effective_line_separation": round(effective_line_separation, 2),
         "label_density": label_density,
         "curve_strength": preset["curve"],
+        "focus_regions": focus_regions or [],
     }
-    return _render_editable_result(labels, centers, settings, started)
+    result = _render_editable_result(labels, centers, settings, started)
+    original_output = io.BytesIO()
+    Image.fromarray(rgb.astype(np.uint8), "RGB").save(original_output, format="PNG", optimize=True)
+    result.original_png = original_output.getvalue()
+
+    return result
 
 
 def data_url(mime: str, content: bytes) -> str:

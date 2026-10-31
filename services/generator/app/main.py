@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import time
 import uuid
@@ -39,7 +40,7 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/process", response_model=ProcessResponse)
 async def process(
     file: UploadFile = File(...),
-    colors: int = Form(24),
+    colors: int = Form(22),
     auto_colors: bool = Form(False),
     min_region_size: int = Form(80),
     smoothing: float = Form(2.0),
@@ -48,10 +49,11 @@ async def process(
     complexity: str = Form("balanced"),
     line_separation: float = Form(2.0),
     label_density: float = Form(1.0),
+    focus_regions: str = Form("[]"),
 ) -> ProcessResponse:
     started = time.perf_counter()
-    if not 4 <= colors <= 48:
-        raise HTTPException(422, "colors must be between 4 and 48")
+    if not 4 <= colors <= 32:
+        raise HTTPException(422, "colors must be between 4 and 32")
     if not 10 <= min_region_size <= 5000:
         raise HTTPException(422, "min_region_size must be between 10 and 5000")
     if not 0 <= smoothing <= 5:
@@ -66,6 +68,23 @@ async def process(
         raise HTTPException(422, "line_separation must be between 0 and 10")
     if not 0.25 <= label_density <= 3:
         raise HTTPException(422, "label_density must be between 0.25 and 3")
+    try:
+        parsed_focus_regions = json.loads(focus_regions)
+    except json.JSONDecodeError as error:
+        raise HTTPException(422, "focus_regions must be valid JSON") from error
+    if not isinstance(parsed_focus_regions, list) or len(parsed_focus_regions) > 8:
+        raise HTTPException(422, "focus_regions must contain no more than 8 regions")
+    for region in parsed_focus_regions:
+        if not isinstance(region, dict) or set(region) != {"x", "y", "width", "height"}:
+            raise HTTPException(422, "Each focus region must contain x, y, width and height")
+        try:
+            x, y, width, height = (float(region[key]) for key in ("x", "y", "width", "height"))
+        except (TypeError, ValueError) as error:
+            raise HTTPException(422, "Focus region coordinates must be numbers") from error
+        if not (0 <= x <= 1 and 0 <= y <= 1 and 0.015 <= width <= 1 and 0.015 <= height <= 1):
+            raise HTTPException(422, "Focus region coordinates are outside the allowed range")
+        if x + width > 1 or y + height > 1:
+            raise HTTPException(422, "Focus region must stay inside the image")
     if file.content_type not in {"image/jpeg", "image/png"}:
         raise HTTPException(415, "Only JPG and PNG images are supported")
     content = await file.read(MAX_UPLOAD_BYTES + 1)
@@ -88,6 +107,7 @@ async def process(
             line_separation,
             label_density,
             auto_colors,
+            parsed_focus_regions,
         )
     except (UnidentifiedImageError, OSError, ValueError) as error:
         raise HTTPException(422, f"Invalid image: {error}") from error
@@ -157,6 +177,7 @@ def edit(result_id: str, request: EditRequest) -> ProcessResponse:
         raise HTTPException(422, str(error)) from error
     edited_result_id = str(uuid.uuid4())
     store.save(edited_result_id, result)
+    store.copy_file(result_id, edited_result_id, "original.png")
     logger.info(
         "Редактор завершил перестроение за %.1f с: result_id=%s, областей=%s",
         time.perf_counter() - started, edited_result_id, result.diagnostics.get("segments"),
@@ -175,6 +196,7 @@ def edit(result_id: str, request: EditRequest) -> ProcessResponse:
 def download_result(result_id: str, filename: str) -> Response:
     allowed = {
         "preview.png": "image/png",
+        "original.png": "image/png",
         "scheme.svg": "image/svg+xml",
         "scheme.pdf": "application/pdf",
         "palette.json": "application/json",

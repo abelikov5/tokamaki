@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 
 import numpy as np
 from fastapi.testclient import TestClient
@@ -8,12 +9,16 @@ from PIL import Image
 from app.main import app
 from app.services.processor import (
     Region,
+    _apply_edit_operation,
     _build_svg,
     _estimate_color_count,
     _erase_selected_components,
     _erase_stroke_locally,
     _merge_unlabeled_components,
+    _merge_small_regions,
+    _palette_rgb,
     _place_label_points,
+    _quantize_lab,
     _separate_close_lines,
 )
 
@@ -46,6 +51,9 @@ def test_process_full_flow():
             "smoothing": "2",
             "min_region_width": "4",
             "contour_smoothing": "2",
+            "focus_regions": json.dumps([
+                {"x": 0.3, "y": 0.2, "width": 0.2, "height": 0.2},
+            ]),
         },
     )
     assert response.status_code == 200, response.text
@@ -62,6 +70,7 @@ def test_process_full_flow():
     assert body["diagnostics"]["boundary_paths"] > 0
     assert body["diagnostics"]["labels_placed"] > 0
     assert body["diagnostics"]["unlabeled_segments"] >= 0
+    assert body["diagnostics"]["focus_regions"] == 1
     pdf = client.get(body["pdf_url"])
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF")
@@ -73,6 +82,9 @@ def test_process_full_flow():
     unlabeled = client.get(f'/api/v1/results/{body["result_id"]}/unlabeled.png')
     assert unlabeled.status_code == 200
     assert unlabeled.content.startswith(b"\x89PNG")
+    original = client.get(f'/api/v1/results/{body["result_id"]}/original.png')
+    assert original.status_code == 200
+    assert original.content.startswith(b"\x89PNG")
 
 
 def test_svg_uses_gray_for_only_the_largest_labels_and_halos_every_label():
@@ -104,6 +116,46 @@ def test_auto_color_mode_detects_flat_illustration_palette():
     assert diagnostics["estimated_colors"] == 4
     assert diagnostics["requested_colors"] == 4
     assert diagnostics["actual_colors"] <= 4
+
+
+def test_focus_region_gives_its_small_color_more_weight_in_the_palette():
+    image = np.zeros((100, 100, 3), dtype=np.uint8)
+    image[:, :50] = (205, 165, 135)
+    image[:, 50:] = (70, 45, 35)
+    image[46:54, 42:58] = (185, 45, 75)
+    focus_mask = np.zeros((100, 100), dtype=bool)
+    focus_mask[46:54, 42:58] = True
+
+    _, regular_centers = _quantize_lab(image, 2)
+    _, focused_centers = _quantize_lab(image, 2, focus_mask)
+    regular_palette = _palette_rgb(regular_centers).astype(np.int16)
+    focused_palette = _palette_rgb(focused_centers).astype(np.int16)
+    lip_color = np.asarray([185, 45, 75], dtype=np.int16)
+    regular_distance = np.min(np.linalg.norm(regular_palette - lip_color, axis=1))
+    focused_distance = np.min(np.linalg.norm(focused_palette - lip_color, axis=1))
+
+    assert focused_distance < regular_distance
+    assert focused_distance < 35
+
+
+def test_focus_region_preserves_a_small_color_component():
+    labels = np.zeros((20, 20), dtype=np.int32)
+    labels[8:12, 8:12] = 1
+    centers = np.asarray([[128, 128, 128], [180, 128, 128]], dtype=np.uint8)
+    focus_mask = np.zeros_like(labels, dtype=bool)
+    focus_mask[8:12, 8:12] = True
+
+    regular, _, _ = _merge_small_regions(labels, centers, min_size=30, min_width=0)
+    focused, _, _ = _merge_small_regions(
+        labels,
+        centers,
+        min_size=30,
+        min_width=0,
+        focus_mask=focus_mask,
+    )
+
+    assert not np.any(regular == 1)
+    assert np.all(focused[8:12, 8:12] == 1)
 
 
 def test_color_estimator_ignores_jpeg_edge_noise():
@@ -151,6 +203,7 @@ def test_editor_can_unify_connected_background_and_rebuild_files():
     assert body["diagnostics"]["actual_colors"] == 1
     assert body["diagnostics"]["segments"] == 1
     assert client.get(body["pdf_url"]).content.startswith(b"%PDF")
+    assert client.get(f'/api/v1/results/{body["result_id"]}/original.png').content.startswith(b"\x89PNG")
 
 
 def test_editor_applies_queued_eraser_and_smoothing_strokes():
@@ -230,6 +283,27 @@ def test_editor_adds_and_persists_a_manual_label():
     assert b'x="20.0" y="20.0"' in second_svg
 
 
+def test_recolor_region_changes_only_the_selected_connected_component():
+    labels = np.asarray([
+        [0, 0, 1, 0],
+        [0, 0, 1, 1],
+        [1, 1, 1, 0],
+    ], dtype=np.int32)
+    centers = np.asarray([[128, 128, 128], [180, 128, 128]], dtype=np.uint8)
+
+    edited = _apply_edit_operation(
+        labels,
+        centers,
+        {1: 0, 2: 1},
+        {},
+        {"operation": "recolor_region", "x": 0, "y": 0, "target_number": 2},
+    )
+
+    assert np.all(edited[:2, :2] == 1)
+    assert edited[0, 3] == 0
+    assert edited[2, 3] == 0
+
+
 def test_eraser_merges_the_complete_selected_component_into_a_neighbor():
     labels = np.zeros((12, 12), dtype=np.int32)
     labels[3:9, 4:8] = 1
@@ -286,6 +360,17 @@ def test_rejects_wrong_file_type():
         data={"colors": "24", "min_region_size": "80"},
     )
     assert response.status_code == 415
+
+
+def test_rejects_more_than_32_colors():
+    response = TestClient(app).post(
+        "/api/v1/process",
+        files={"file": ("sample.png", sample_png(), "image/png")},
+        data={"colors": "33"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "colors must be between 4 and 32"
 
 
 def test_rejects_invalid_smoothing():

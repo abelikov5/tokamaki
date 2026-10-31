@@ -35,6 +35,7 @@ class Diagnostics(BaseModel):
     processing_width: int
     processing_height: int
     processing_ms: int
+    focus_regions: int = 0
 
 
 class ProcessResponse(BaseModel):

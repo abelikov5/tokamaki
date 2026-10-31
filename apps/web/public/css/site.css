@@ -202,6 +202,19 @@ a { color: inherit; }
 .generator-page .generator-intro { padding-top: 64px; }
 .generator-page .generator-intro .eyebrow { color: #087ccc; }
 .generator-page .generator-intro h1 span { color: #087ccc; }
+.generator-page .customer-reviews { margin-top: 78px; }
+.generator-page .customer-reviews-heading { display: grid; margin-bottom: 30px; grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr); gap: 42px; align-items: end; }
+.generator-page .customer-reviews-heading .eyebrow { margin: 0 0 12px; color: #087ccc; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.generator-page .customer-reviews-heading h2 { max-width: 780px; margin: 0; color: #0b1f3a; font: 500 clamp(36px, 4.2vw, 55px)/1.02 Georgia, "Times New Roman", serif; letter-spacing: -.035em; }
+.generator-page .customer-reviews-heading > p { margin: 0 0 4px; color: #63706b; font-size: 16px; line-height: 1.65; }
+.generator-page .customer-reviews-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.generator-page .customer-review-card { overflow: hidden; border: 1px solid rgba(31,60,49,.13); border-radius: 22px; background: rgba(255,255,255,.88); box-shadow: 0 16px 42px rgba(31,60,49,.08); }
+.generator-page .customer-review-card img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+.generator-page .customer-review-copy { display: grid; padding: 23px; gap: 12px; }
+.generator-page .review-theme { width: fit-content; margin: 0; padding: 6px 9px; border-radius: 999px; background: #e6f2ff; color: #0872bd; font-size: 10px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+.generator-page .customer-review-copy h3 { margin: 0; color: #17382c; font: 500 25px/1.1 Georgia, "Times New Roman", serif; }
+.generator-page .customer-review-copy blockquote { margin: 0; color: #5d6964; font-size: 14px; line-height: 1.65; }
+.generator-page .review-author { margin: 2px 0 0; color: #274b3e; font-size: 12px; font-weight: 850; }
 .generator-page .seo-content { display: grid; margin-top: 70px; grid-template-columns: 1fr 1fr; gap: 22px; }
 .generator-page .seo-card { padding: 30px; border: 1px solid rgba(31,60,49,.13); border-radius: 22px; background: rgba(255,255,255,.8); }
 .generator-page .seo-card h2 { margin: 0 0 15px; font: 500 29px/1.05 Georgia, serif; }
@@ -235,6 +248,10 @@ a { color: inherit; }
     .business-section { grid-template-columns: 1fr; }.business-panel { max-width: 650px; }
     .process-grid { grid-template-columns: 1fr 1fr; }.process-grid article:nth-child(2) { border-right: 0; }.process-grid article:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,.16); }
     .faq-section { grid-template-columns: 1fr; gap: 45px; }
+    .generator-page .customer-reviews-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .generator-page .customer-review-card:last-child { grid-column: 1 / -1; }
+    .generator-page .customer-review-card:last-child { display: grid; grid-template-columns: 1fr 1fr; }
+    .generator-page .customer-review-card:last-child img { height: 100%; aspect-ratio: auto; }
 }
 
 @media (max-width: 640px) {
@@ -251,6 +268,12 @@ a { color: inherit; }
     .faq-list summary { font-size: 18px; }
     .final-cta { min-height: 500px; }.final-cta h2 { font-size: 49px; }
     .brand-footer { grid-template-columns: 1fr; }.brand-footer nav { justify-self: start; }.brand-footer small { grid-column: 1; }
+    .generator-page .customer-reviews { margin-top: 60px; }
+    .generator-page .customer-reviews-heading { grid-template-columns: 1fr; gap: 18px; }
+    .generator-page .customer-reviews-heading h2 { font-size: 39px; }
+    .generator-page .customer-reviews-grid { grid-template-columns: 1fr; }
+    .generator-page .customer-review-card:last-child { display: block; grid-column: auto; }
+    .generator-page .customer-review-card:last-child img { height: auto; aspect-ratio: 3 / 2; }
     .generator-page .seo-content { grid-template-columns: 1fr; }
     .generator-page .generator-footer { align-items: flex-start; }
     .generator-page .generator-footer nav { justify-content: flex-end; }

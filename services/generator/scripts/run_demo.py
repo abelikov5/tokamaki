@@ -13,7 +13,7 @@ from app.services.processor import process_image
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("image", type=Path)
-    parser.add_argument("--colors", type=int, default=24, choices=[16, 24, 36, 48])
+    parser.add_argument("--colors", type=int, default=24, choices=[16, 24, 32])
     parser.add_argument("--min-region-size", type=int, default=100)
     parser.add_argument("--smoothing", type=float, default=2.0, help="Edge-preserving input smoothing, 0..5")
     parser.add_argument("--min-region-width", type=float, default=4.0, help="Merge regions thinner than this many pixels")

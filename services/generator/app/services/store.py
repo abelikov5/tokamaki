@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +18,8 @@ class FileResultStore:
         directory = self.root / result_id
         directory.mkdir(parents=True, exist_ok=False)
         (directory / "preview.png").write_bytes(result.preview_png)
+        if result.original_png is not None:
+            (directory / "original.png").write_bytes(result.original_png)
         (directory / "scheme.svg").write_bytes(result.svg)
         (directory / "scheme.pdf").write_bytes(result.pdf)
         (directory / "palette.json").write_text(
@@ -43,6 +46,12 @@ class FileResultStore:
                 lab_centers=archive["lab_centers"].copy(),
                 settings=json.loads(archive["settings"].tobytes().decode("utf-8")),
             )
+
+    def copy_file(self, source_result_id: str, target_result_id: str, filename: str) -> None:
+        source = self.path(source_result_id, filename)
+        target_directory = self.root / target_result_id
+        if source is not None and target_directory.is_dir():
+            shutil.copyfile(source, target_directory / filename)
 
     def path(self, result_id: str, filename: str) -> Path | None:
         if not result_id.replace("-", "").isalnum():
