@@ -7,12 +7,16 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from html import escape
+from pathlib import Path
 
 import cv2
 import numpy as np
 from PIL import Image, ImageOps
 from reportlab.lib.colors import Color
 from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from scipy.ndimage import distance_transform_edt
 from skimage.color import deltaE_ciede2000
@@ -32,6 +36,14 @@ LARGE_LABEL_COLOR = "#707070"
 REGULAR_LABEL_COLOR = "#222222"
 LABEL_HALO_COLOR = "#FFFFFF"
 LABEL_HALO_WIDTH = 3.0
+PDF_ASSET_DIR = Path(__file__).resolve().parent.parent / "assets"
+PDF_BRAND_FONT = "TokamakiDejaVuSans"
+PDF_BRAND_URL = "https://tokamaki.ru"
+PDF_BRAND_EMAIL = "hi@tokamaki.ru"
+PDF_FOOTER_TOP = 58
+
+pdfmetrics.registerFont(TTFont(PDF_BRAND_FONT, PDF_ASSET_DIR / "DejaVuSans.ttf"))
+PDF_BRAND_LOGO = ImageReader(PDF_ASSET_DIR / "tokamaki_label.webp")
 
 
 @dataclass
@@ -593,6 +605,58 @@ def _draw_pdf_path(
     return path
 
 
+def _draw_pdf_branding(pdf: canvas.Canvas, page: tuple[float, float]) -> None:
+    """Add a compact, reusable Tokamaki footer to every generated PDF page."""
+    page_width, _ = page
+    margin = 28
+    logo_width = 92
+    logo_height = logo_width * 117 / 543
+    footer_y = 22
+
+    pdf.saveState()
+    pdf.setStrokeColorRGB(0.84, 0.87, 0.86)
+    pdf.setLineWidth(0.5)
+    pdf.line(margin, PDF_FOOTER_TOP, page_width - margin, PDF_FOOTER_TOP)
+    pdf.drawImage(
+        PDF_BRAND_LOGO,
+        margin,
+        footer_y,
+        width=logo_width,
+        height=logo_height,
+        preserveAspectRatio=True,
+        mask="auto",
+    )
+
+    pdf.setFillColorRGB(0.18, 0.25, 0.23)
+    pdf.setFont(PDF_BRAND_FONT, 8.5)
+    pdf.drawString(margin + logo_width + 14, footer_y + 6, "Товары для хобби")
+
+    link_label = "tokamaki.ru"
+    link_width = pdf.stringWidth(link_label, PDF_BRAND_FONT, 9)
+    link_x = page_width - margin - link_width
+    pdf.setFillColorRGB(0.04, 0.42, 0.72)
+    pdf.setFont(PDF_BRAND_FONT, 9)
+
+    email_width = pdf.stringWidth(PDF_BRAND_EMAIL, PDF_BRAND_FONT, 9)
+    email_x = link_x - 34 - email_width
+    pdf.drawString(email_x, footer_y + 6, PDF_BRAND_EMAIL)
+    pdf.linkURL(
+        f"mailto:{PDF_BRAND_EMAIL}",
+        (email_x, footer_y + 3, email_x + email_width, footer_y + 16),
+        relative=0,
+        thickness=0,
+    )
+
+    pdf.drawString(link_x, footer_y + 6, link_label)
+    pdf.linkURL(
+        PDF_BRAND_URL,
+        (link_x, footer_y + 3, page_width - margin, footer_y + 16),
+        relative=0,
+        thickness=0,
+    )
+    pdf.restoreState()
+
+
 def _build_pdf(
     width: int,
     height: int,
@@ -606,10 +670,13 @@ def _build_pdf(
     page = landscape(A4) if width >= height else A4
     pdf = canvas.Canvas(output, pagesize=page, pageCompression=1)
     margin = 28
-    available_w, available_h = page[0] - 2 * margin, page[1] - 2 * margin
+    content_bottom = PDF_FOOTER_TOP + 12
+    available_w = page[0] - 2 * margin
+    available_h = page[1] - margin - content_bottom
     scale = min(available_w / width, available_h / height)
     draw_w, draw_h = width * scale, height * scale
-    ox, oy = (page[0] - draw_w) / 2, (page[1] - draw_h) / 2
+    ox = (page[0] - draw_w) / 2
+    oy = content_bottom + (available_h - draw_h) / 2
     pdf.setLineWidth(0.35)
     pdf.setStrokeColor(Color(0.35, 0.35, 0.35))
     pdf.setFillColorRGB(1, 1, 1)
@@ -650,14 +717,19 @@ def _build_pdf(
             else:
                 pdf.setFillColorRGB(0.13, 0.13, 0.13)
             pdf.drawCentredString(text_x, text_y, value)
+    _draw_pdf_branding(pdf, page)
     pdf.showPage()
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(36, page[1] - 40, "Palette")
+
+    pdf.setFont(PDF_BRAND_FONT, 16)
+    pdf.drawString(36, page[1] - 40, "Палитра")
     y = page[1] - 70
     for entry in palette:
-        if y < 40:
+        if y < PDF_FOOTER_TOP + 20:
+            _draw_pdf_branding(pdf, page)
             pdf.showPage()
-            y = page[1] - 40
+            pdf.setFont(PDF_BRAND_FONT, 16)
+            pdf.drawString(36, page[1] - 40, "Палитра (продолжение)")
+            y = page[1] - 70
         r, g, b = entry["rgb"]
         pdf.setFillColorRGB(r / 255, g / 255, b / 255)
         pdf.rect(36, y - 10, 22, 16, stroke=1, fill=1)
@@ -665,6 +737,7 @@ def _build_pdf(
         pdf.setFont("Helvetica", 10)
         pdf.drawString(68, y - 6, f'{entry["number"]}: {entry["hex"]}  ({entry["percentage"]:.1f}%)')
         y -= 23
+    _draw_pdf_branding(pdf, page)
     pdf.save()
     return output.getvalue()
 

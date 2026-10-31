@@ -74,6 +74,8 @@ def test_process_full_flow():
     pdf = client.get(body["pdf_url"])
     assert pdf.status_code == 200
     assert pdf.content.startswith(b"%PDF")
+    assert b"https://tokamaki.ru" in pdf.content
+    assert b"mailto:hi@tokamaki.ru" in pdf.content
     svg = client.get(f'/api/v1/results/{body["result_id"]}/scheme.svg')
     assert svg.status_code == 200
     assert b"<svg" in svg.content and b"<text" in svg.content

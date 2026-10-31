@@ -13,7 +13,7 @@ h1 span { color: #397760; }
 .source-column { display: flex; min-width: 0; flex-direction: column; gap: 14px; }
 .upload { position: relative; display: grid; width: 100%; min-height: 560px; aspect-ratio: 4 / 5; place-items: center; overflow: hidden; border: 2px dashed #9eb7aa; border-radius: 16px; background: #e9eee9; cursor: pointer; }
 .upload > input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
-#upload-placeholder { display: grid; gap: 7px; text-align: center; cursor: pointer; }
+#upload-placeholder { position: absolute; inset: 0; display: grid; gap: 7px; place-content: center; text-align: center; cursor: pointer; }
 #upload-placeholder strong { font-size: 20px; }#upload-placeholder small { color: #6b7772; }
 .upload img { width: 100%; height: 100%; object-fit: contain; }
 .change-photo { position: absolute; z-index: 5; right: 14px; bottom: 14px; padding: 10px 14px; border-radius: 999px; background: rgba(23, 43, 36, .9); color: white; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(23, 43, 36, .22); backdrop-filter: blur(4px); }
