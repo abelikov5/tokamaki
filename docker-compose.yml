@@ -42,8 +42,12 @@ services:
         condition: service_started
 
   generator:
-    build: ./services/generator
+    build:
+      context: .
+      dockerfile: services/generator/Dockerfile
     init: true
+    environment:
+      GENERATOR_MAX_PROCESSING_SIDE: ${GENERATOR_MAX_PROCESSING_SIDE:-900}
     restart: unless-stopped
     volumes:
       - generator-results:/app/data/results
