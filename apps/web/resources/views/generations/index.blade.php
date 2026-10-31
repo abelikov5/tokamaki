@@ -206,7 +206,7 @@
                     <a id="free-pdf-button" class="result-action result-action-secondary" href="#">Скачать PDF бесплатно</a>
                     <section class="result-order-offer" aria-labelledby="result-order-title">
                         <p class="result-order-label">Полный комплект для рисования</p>
-                        <h3 id="result-order-title">Картина по вашему фото — {{ $formatOrderPrice($orderBasePrice) }}</h3>
+                        <h3 id="result-order-title">Картина по фото — {{ $formatOrderPrice($orderBasePrice) }}</h3>
                         <ul>
                             <li><span aria-hidden="true">✓</span> Премиальный холст 40 × 50 см</li>
                             <li><span aria-hidden="true">✓</span> Акриловые краски и кисти</li>
