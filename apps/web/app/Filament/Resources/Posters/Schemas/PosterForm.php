@@ -75,7 +75,7 @@ class PosterForm
                 TextInput::make('category')->label('Категория'),
                 TextInput::make('style')->label('Стиль'),
                 TextInput::make('room')->label('Комната'),
-                TextInput::make('primary_color')->label('Основной цвет'),
+                TextInput::make('primary_color')->label('Основные цвета'),
                 Select::make('orientation')->label('Ориентация')->options([
                     'vertical' => 'Вертикальная',
                     'horizontal' => 'Горизонтальная',

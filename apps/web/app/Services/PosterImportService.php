@@ -129,7 +129,17 @@ class PosterImportService
                 'content_hash' => $contentHash,
                 'source_updated_at' => $source['updated_at'] ?? null,
                 'imported_at' => now(),
-            ])->save();
+            ]);
+
+            if ($primaryColor = $this->contentBuilder->primaryColor($source)) {
+                $poster->primary_color = $primaryColor;
+                $poster->search_keywords = Poster::normalizeSearchKeywords([
+                    ...($poster->search_keywords ?? []),
+                    ...$this->contentBuilder->sourceColors($source),
+                ]);
+            }
+
+            $poster->save();
 
             $size = $this->detectSize($source);
             $poster->variants()->updateOrCreate(

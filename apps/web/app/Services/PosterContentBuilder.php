@@ -23,6 +23,8 @@ class PosterContentBuilder
         $title = 'Постер «'.$subject.'»';
         $visualText = $this->visualText($source['visual_analysis'] ?? []);
         $taxonomy = $this->taxonomy(mb_strtolower($title.' '.$visualText));
+        $sourceColors = $this->sourceColors($source);
+        $primaryColor = $sourceColors !== [] ? implode(', ', $sourceColors) : $taxonomy['color'];
         $shortDescription = $visualText !== ''
             ? Str::limit($visualText, 180)
             : 'Готовый интерьерный постер на подрамнике для дома, офиса или подарка.';
@@ -40,13 +42,55 @@ class PosterContentBuilder
             'category' => $taxonomy['category'],
             'style' => $taxonomy['style'],
             'room' => $taxonomy['room'],
-            'primary_color' => $taxonomy['color'],
+            'primary_color' => $primaryColor,
             'orientation' => $taxonomy['orientation'],
             'search_keywords' => Poster::normalizeSearchKeywords([
-                $taxonomy['category'], $taxonomy['style'], $taxonomy['room'], $taxonomy['color'],
+                $taxonomy['category'], $taxonomy['style'], $taxonomy['room'], $sourceColors === [] ? $taxonomy['color'] : null,
+                ...$sourceColors,
                 ...preg_split('/[^\p{L}\p{N}-]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY),
             ]),
         ];
+    }
+
+    /** @param  array<string, mixed>  $source */
+    public function primaryColor(array $source): ?string
+    {
+        $colors = $this->sourceColors($source);
+
+        return $colors === [] ? null : implode(', ', $colors);
+    }
+
+    /**
+     * @param  array<string, mixed>  $source
+     * @return array<int, string>
+     */
+    public function sourceColors(array $source): array
+    {
+        foreach ($source['characteristics'] ?? [] as $characteristic) {
+            if (! is_array($characteristic)) {
+                continue;
+            }
+
+            $isColor = (int) ($characteristic['id'] ?? 0) === 14177449
+                || mb_strtolower(trim((string) ($characteristic['name'] ?? ''))) === 'цвет';
+
+            if (! $isColor) {
+                continue;
+            }
+
+            $value = $characteristic['value'] ?? [];
+            $values = is_array($value) ? $value : (preg_split('/[,;]+/u', (string) $value) ?: []);
+
+            return collect($values)
+                ->flatMap(fn (mixed $color): array => preg_split('/[,;]+/u', (string) $color, -1, PREG_SPLIT_NO_EMPTY) ?: [])
+                ->map(fn (string $color): string => mb_strtolower(trim($color)))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return [];
     }
 
     private function visualText(mixed $analysis): string

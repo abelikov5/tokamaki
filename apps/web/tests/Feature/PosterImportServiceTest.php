@@ -54,7 +54,13 @@ class PosterImportServiceTest extends TestCase
         ]);
         $poster = Poster::firstOrFail();
         $this->assertNotNull($poster->published_at);
-        $this->assertSame(['Природа', 'Современный', 'Гостиная', 'постер', 'горы'], $poster->search_keywords);
+        $this->assertSame([
+            'Природа', 'Современный', 'Гостиная', 'розовый', 'фиолетовый', 'белый',
+            'бежевый', 'постер', 'горы',
+        ], $poster->search_keywords);
+        $this->assertSame('розовый, фиолетовый, белый, бежевый', $poster->primary_color);
+        $this->assertContains('розовый', $poster->search_keywords);
+        $this->assertContains('фиолетовый', $poster->search_keywords);
         $this->assertStringNotContainsString('«', implode(' ', $poster->search_keywords));
         $this->assertStringNotContainsString('»', implode(' ', $poster->search_keywords));
         $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
@@ -77,7 +83,10 @@ class PosterImportServiceTest extends TestCase
             'title' => 'Картина постер горы',
             'description' => 'Старое описание WB, которое нельзя копировать.',
             'type' => 'poster',
-            'characteristics' => [['value' => [$size.' см']]],
+            'characteristics' => [
+                ['id' => 171566, 'value' => [$size.' см']],
+                ['id' => 14177449, 'name' => 'Цвет', 'value' => ['розовый', 'фиолетовый', 'белый', 'бежевый']],
+            ],
             'dimensions' => $size === '40x30'
                 ? ['length' => 42, 'width' => 32]
                 : ['length' => 52, 'width' => 42],
