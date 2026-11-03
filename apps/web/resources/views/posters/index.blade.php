@@ -26,9 +26,13 @@
         </label>
         <div class="catalog-filters">
             <select name="category" aria-label="Категория">
-                <option value="">Все сюжеты</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->slug }}" @selected(($filters['category'] ?? '') === $category->slug)>{{ $category->name }} · {{ $category->total }}</option>
+                <option value="">Все группы</option>
+                @foreach($categories->groupBy('type') as $type => $group)
+                    <optgroup label="{{ \App\Models\PosterCategory::typeOptions()[$type] ?? 'Другие' }}">
+                        @foreach($group as $category)
+                            <option value="{{ $category->slug }}" @selected(($filters['category'] ?? '') === $category->slug)>{{ $category->name }} · {{ $category->total }}</option>
+                        @endforeach
+                    </optgroup>
                 @endforeach
             </select>
             <select name="size" aria-label="Размер">
@@ -66,7 +70,7 @@
                         @if($poster->primary_image_url)<img src="{{ $poster->primary_image_url }}" alt="{{ $poster->title }}" loading="lazy">@else<span>Токамаки</span>@endif
                     </a>
                     <div>
-                        <p>{{ $poster->posterCategory?->name ?? $poster->category ?? 'Интерьерный постер' }}</p>
+                        <p>{{ $poster->categories->take(3)->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерный постер') }}</p>
                         <h3><a href="{{ route('posters.show', $poster) }}">{{ $poster->title }}</a></h3>
                         <div class="poster-card-meta">
                             <span>30×40 · 40×50</span>

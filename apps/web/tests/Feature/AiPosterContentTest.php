@@ -17,7 +17,7 @@ class AiPosterContentTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_job_generates_site_content_and_uses_only_controlled_category(): void
+    public function test_job_generates_content_assigns_multiple_groups_and_creates_new_ai_suggestions(): void
     {
         config()->set([
             'services.aitunnel.key' => 'test-key',
@@ -41,7 +41,11 @@ class AiPosterContentTest extends TestCase
         ]);
 
         Http::fake([
-            'https://aitunnel.test/*' => Http::response($this->responsePayload('priroda')),
+            'https://aitunnel.test/*' => Http::response($this->responsePayload([
+                ['name' => 'Природа', 'slug' => 'priroda', 'type' => 'theme'],
+                ['name' => 'Бохо', 'slug' => 'boho', 'type' => 'style'],
+                ['name' => 'Гостиная', 'slug' => 'gostinaya', 'type' => 'room'],
+            ])),
         ]);
 
         (new GeneratePosterContentJob($poster->id))->handle(app(AiPosterContentService::class));
@@ -50,16 +54,20 @@ class AiPosterContentTest extends TestCase
         $this->assertSame('generated', $poster->ai_generation_status);
         $this->assertSame('qwen3.7-flash', $poster->ai_model);
         $this->assertSame(AiPosterContentService::PROMPT_VERSION, $poster->ai_prompt_version);
-        $this->assertSame($natureCategory->id, $poster->category_id);
         $this->assertSame('Постер с горным озером на рассвете', $poster->title);
         $this->assertNotNull($poster->ai_generated_at);
         $this->assertSame($poster->content_hash, $poster->ai_input_hash);
-        $this->assertSame('priroda', $poster->ai_response['category_slug']);
+        $this->assertSame(['Природа', 'Бохо', 'Гостиная'], $poster->categories()->orderByPivot('poster_category_id')->pluck('name')->all());
+        $this->assertSame('priroda', $poster->posterCategory?->slug);
+        $this->assertSame('priroda', $poster->ai_response['groups'][0]['slug']);
+        $this->assertDatabaseHas('poster_categories', ['name' => 'Бохо', 'type' => 'style']);
+        $this->assertDatabaseHas('poster_categories', ['name' => 'Гостиная', 'type' => 'room']);
         Http::assertSent(function (Request $request): bool {
             $userContent = $request['messages'][1]['content'];
 
             return $request['model'] === 'qwen3.7-flash'
                 && is_string($userContent)
+                && str_contains($userContent, 'existing_groups')
                 && str_contains($userContent, 'interernye-postery')
                 && str_contains($userContent, 'priroda')
                 && ! str_contains($userContent, 'skrytaya')
@@ -89,7 +97,9 @@ class AiPosterContentTest extends TestCase
             'mime_type' => 'image/jpeg',
         ]);
         Http::fake([
-            'https://aitunnel.test/*' => Http::response($this->responsePayload('interernye-postery')),
+            'https://aitunnel.test/*' => Http::response($this->responsePayload([
+                ['name' => 'Интерьерные постеры', 'slug' => 'interernye-postery', 'type' => 'collection'],
+            ])),
         ]);
 
         app(AiPosterContentService::class)->generate($poster);
@@ -102,7 +112,7 @@ class AiPosterContentTest extends TestCase
         });
     }
 
-    public function test_unknown_ai_category_falls_back_without_creating_a_category(): void
+    public function test_ai_can_create_a_new_normalized_group(): void
     {
         config()->set([
             'services.aitunnel.key' => 'test-key',
@@ -115,17 +125,21 @@ class AiPosterContentTest extends TestCase
             'source_payload' => ['visual_analysis' => ['description' => 'Абстрактный сюжет']],
         ]);
         Http::fake([
-            'https://aitunnel.test/*' => Http::response($this->responsePayload('pridumannaya-kategoriya')),
+            'https://aitunnel.test/*' => Http::response($this->responsePayload([
+                ['name' => 'Морские пейзажи', 'slug' => 'morskie-peizazhi', 'type' => 'theme'],
+            ])),
         ]);
 
         $result = app(AiPosterContentService::class)->generate($poster);
 
-        $this->assertSame($category->id, $result['category_id']);
-        $this->assertDatabaseCount('poster_categories', 1);
+        $created = PosterCategory::where('name', 'Морские пейзажи')->firstOrFail();
+        $this->assertSame($created->id, $result['category_id']);
+        $this->assertSame([$created->id], $result['group_ids']);
+        $this->assertDatabaseCount('poster_categories', 2);
     }
 
     /** @return array<string, mixed> */
-    private function responsePayload(string $categorySlug): array
+    private function responsePayload(array $groups): array
     {
         return [
             'choices' => [[
@@ -136,7 +150,7 @@ class AiPosterContentTest extends TestCase
                         'description' => str_repeat('На постере изображено тихое горное озеро в лучах рассвета. Сдержанная палитра и глубокая перспектива создают спокойное настроение и визуально расширяют пространство. ', 5),
                         'seo_title' => 'Постер с горным озером на рассвете | Токамаки',
                         'seo_description' => str_repeat('Интерьерный постер с горным озером и рассветным небом на холсте с деревянным подрамником. ', 2),
-                        'category_slug' => $categorySlug,
+                        'groups' => $groups,
                         'style' => 'Современный',
                         'room' => 'Гостиная',
                         'orientation' => 'vertical',

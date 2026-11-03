@@ -97,6 +97,7 @@ class PosterCatalogTest extends TestCase
             'seo_description' => 'Авторские постеры с животными для интерьера.',
         ]);
         $included = Poster::factory()->published()->create(['category_id' => $category->id]);
+        $included->categories()->attach($category);
         $excluded = Poster::factory()->published()->create(['title' => 'Постер из другой категории']);
 
         $this->get('/postery/zhivotnye')
@@ -121,9 +122,25 @@ class PosterCatalogTest extends TestCase
             'is_active' => false,
         ]);
         $poster = Poster::factory()->published()->create(['category_id' => $category->id]);
+        $poster->categories()->attach($category);
 
         $this->get('/postery/skrytaya-kategoriya')->assertNotFound();
         $this->get('/postery')->assertOk()->assertSee($poster->title)->assertDontSee('Скрытая категория ·');
         $this->get('/sitemap.xml')->assertDontSee('/postery/skrytaya-kategoriya', false);
+    }
+
+    public function test_one_poster_can_be_found_in_several_group_pages(): void
+    {
+        $boho = PosterCategory::create(['name' => 'Бохо', 'slug' => 'boho', 'type' => 'style', 'is_active' => true]);
+        $abstract = PosterCategory::create(['name' => 'Абстракция', 'slug' => 'abstraktsiya', 'type' => 'theme', 'is_active' => true]);
+        $bedroom = PosterCategory::create(['name' => 'Спальня', 'slug' => 'spalnya', 'type' => 'room', 'is_active' => true]);
+        $poster = Poster::factory()->published()->create();
+        $poster->categories()->attach([$boho->id, $abstract->id, $bedroom->id]);
+
+        foreach (['boho', 'abstraktsiya', 'spalnya'] as $slug) {
+            $this->get('/postery/'.$slug)->assertOk()->assertSee($poster->title);
+        }
+
+        $this->get('/postery')->assertOk()->assertSee('Бохо · Абстракция · Спальня');
     }
 }

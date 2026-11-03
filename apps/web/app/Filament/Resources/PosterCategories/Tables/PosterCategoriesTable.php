@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PosterCategories\Tables;
 
+use App\Models\PosterCategory;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -17,6 +18,7 @@ class PosterCategoriesTable
         return $table
             ->columns([
                 TextColumn::make('name')->label('Название')->searchable()->sortable(),
+                TextColumn::make('type')->label('Тип')->badge()->formatStateUsing(fn (string $state): string => PosterCategory::typeOptions()[$state] ?? $state)->sortable(),
                 TextColumn::make('slug')->label('URL')->searchable()->copyable(),
                 IconColumn::make('is_active')->label('В каталоге')->boolean()->sortable(),
                 TextColumn::make('posters_count')->label('Постеров')->counts('posters')->sortable(),

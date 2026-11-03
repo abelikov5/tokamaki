@@ -22,7 +22,7 @@ class PosterCatalogController extends Controller
             'sort' => ['nullable', 'in:new,price_asc,price_desc'],
         ]);
 
-        $query = Poster::query()->published()->with(['images', 'variants', 'posterCategory']);
+        $query = Poster::query()->published()->with(['images', 'variants', 'categories']);
 
         if (filled($validated['q'] ?? null)) {
             $this->applySearch($query, (string) $validated['q']);
@@ -30,7 +30,7 @@ class PosterCatalogController extends Controller
 
         $query
             ->when($validated['category'] ?? null, fn (Builder $builder, string $category) => $builder->whereHas(
-                'posterCategory',
+                'categories',
                 fn (Builder $categoryQuery) => $categoryQuery->active()->where('slug', $category),
             ))
             ->when($validated['orientation'] ?? null, fn (Builder $builder, string $orientation) => $builder->where('orientation', $orientation))
@@ -46,6 +46,7 @@ class PosterCatalogController extends Controller
             'posters' => $query->paginate(24)->withQueryString(),
             'categories' => PosterCategory::query()->active()
                 ->withCount(['posters as total' => fn (Builder $query) => $query->published()])
+                ->whereHas('posters', fn (Builder $query) => $query->published())
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
@@ -63,13 +64,18 @@ class PosterCatalogController extends Controller
 
         $poster = Poster::query()->where('slug', $slug)->firstOrFail();
         abort_unless($poster->status === 'published' && $poster->published_at !== null, 404);
-        $poster->load(['images', 'variants', 'posterCategory']);
+        $poster->load(['images', 'variants', 'categories']);
+
+        $groupIds = $poster->categories->pluck('id');
 
         $related = Poster::query()
             ->published()
             ->whereKeyNot($poster->id)
-            ->when($poster->category_id, fn (Builder $query) => $query->where('category_id', $poster->category_id))
-            ->with(['images', 'variants', 'posterCategory'])
+            ->when($groupIds->isNotEmpty(), fn (Builder $query) => $query->whereHas(
+                'categories',
+                fn (Builder $categories) => $categories->whereIn('poster_categories.id', $groupIds),
+            ))
+            ->with(['images', 'variants', 'categories'])
             ->limit(4)
             ->get();
 
@@ -81,7 +87,9 @@ class PosterCatalogController extends Controller
         return response()
             ->view('sitemap', [
                 'posters' => Poster::query()->published()->orderBy('updated_at')->get(['slug', 'updated_at']),
-                'categories' => PosterCategory::query()->active()->orderBy('updated_at')->get(['slug', 'updated_at']),
+                'categories' => PosterCategory::query()->active()
+                    ->whereHas('posters', fn (Builder $query) => $query->published())
+                    ->orderBy('updated_at')->get(['slug', 'updated_at']),
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
@@ -90,7 +98,7 @@ class PosterCatalogController extends Controller
     {
         $posters = $category->posters()
             ->published()
-            ->with(['images', 'variants', 'posterCategory'])
+            ->with(['images', 'variants', 'categories'])
             ->orderByDesc('published_at')
             ->paginate(24);
 
@@ -118,7 +126,8 @@ class PosterCatalogController extends Controller
                             ->orWhere('category', 'like', '%'.$variant.'%')
                             ->orWhere('style', 'like', '%'.$variant.'%')
                             ->orWhere('room', 'like', '%'.$variant.'%')
-                            ->orWhere('primary_color', 'like', '%'.$variant.'%');
+                            ->orWhere('primary_color', 'like', '%'.$variant.'%')
+                            ->orWhereHas('categories', fn (Builder $categories) => $categories->where('name', 'like', '%'.$variant.'%'));
                     }
                 });
             }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Poster;
 use App\Models\PosterCategory;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -12,7 +13,7 @@ use RuntimeException;
 
 class AiPosterContentService
 {
-    public const PROMPT_VERSION = 'catalog-v1-2026-11-03';
+    public const PROMPT_VERSION = 'catalog-groups-v2-2026-11-03';
 
     public function __construct(private readonly PosterContentBuilder $contentBuilder) {}
 
@@ -29,13 +30,13 @@ class AiPosterContentService
             ->active()
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name', 'slug']);
+            ->get(['id', 'name', 'slug', 'type', 'is_active']);
 
         if ($categories->isEmpty()) {
-            throw new RuntimeException('Нет активных категорий для классификации постера');
+            throw new RuntimeException('Нет активных групп для классификации постера');
         }
 
-        $poster->loadMissing(['images', 'variants', 'posterCategory']);
+        $poster->loadMissing(['images', 'variants', 'posterCategory', 'categories']);
         $source = is_array($poster->source_payload) ? $poster->source_payload : [];
         $visualAnalysis = is_array($source['visual_analysis'] ?? null) ? $source['visual_analysis'] : [];
         $userContext = $this->userContext($poster, $visualAnalysis, $categories->toArray());
@@ -95,10 +96,11 @@ class AiPosterContentService
                 'colors' => $this->contentBuilder->sourceColors($source),
             ],
             'visual_analysis' => $visualAnalysis,
-            'allowed_categories' => collect($categories)
+            'existing_groups' => collect($categories)
                 ->map(fn (array $category): array => [
                     'slug' => $category['slug'],
                     'name' => $category['name'],
+                    'type' => $category['type'],
                 ])
                 ->values()
                 ->all(),
@@ -121,7 +123,7 @@ class AiPosterContentService
   "description": "",
   "seo_title": "",
   "seo_description": "",
-  "category_slug": "",
+  "groups": [{"name": "", "slug": "", "type": "theme"}],
   "style": "",
   "room": "",
   "orientation": "vertical",
@@ -136,7 +138,11 @@ class AiPosterContentService
 - description: 500–1200 символов, 2–4 содержательных абзаца, без списков, HTML и призывов в стиле маркетплейса;
 - seo_title: до 60 символов, включает основной сюжет и слово «постер»;
 - seo_description: 120–170 символов, естественный текст для поисковой выдачи;
-- category_slug: строго один slug из allowed_categories; не придумывай новые категории;
+- groups: от 3 до 6 подходящих групп разных типов. type — только theme, style, room или collection;
+- сначала используй названия и slug из existing_groups;
+- если действительно не хватает точной группы, предложи новую: дай короткое русское name, стабильный транслитерированный slug и правильный type;
+- не создавай новую группу-синоним существующей, не используй слишком общие или рекламные формулировки;
+- обычно выбери хотя бы один theme, а также подходящие style и room; collection добавляй только когда она уместна;
 - style и room: короткие понятные значения на русском;
 - orientation: только vertical, horizontal или square; если данных недостаточно — vertical;
 - search_keywords: 6–15 коротких релевантных фраз без кавычек, дублей и переспама;
@@ -189,12 +195,8 @@ PROMPT;
             throw new RuntimeException('AITunnel вернул слишком короткий контент');
         }
 
-        $categorySlug = Str::slug((string) ($result['category_slug'] ?? ''));
-        $category = $categories[$categorySlug] ?? null;
-
-        if ($category === null) {
-            $category = $poster->posterCategory?->is_active ? $poster->posterCategory : reset($categories);
-        }
+        $groups = $this->resolveGroups($result, $poster, $categories);
+        $category = $groups->first(fn (PosterCategory $group): bool => ($group->type ?: 'theme') === 'theme') ?? $groups->first();
 
         $orientation = in_array($result['orientation'] ?? null, ['vertical', 'horizontal', 'square'], true)
             ? $result['orientation']
@@ -213,6 +215,7 @@ PROMPT;
             'seo_title' => $seoTitle !== '' ? $seoTitle : Str::limit($title.' | Токамаки', 60, ''),
             'seo_description' => $seoDescription,
             'category_id' => $category->id,
+            'group_ids' => $groups->pluck('id')->all(),
             'style' => $this->plainText($result['style'] ?? $poster->style, 80),
             'room' => $this->plainText($result['room'] ?? $poster->room, 80),
             'orientation' => $orientation,
@@ -221,6 +224,59 @@ PROMPT;
             'ai_prompt_version' => self::PROMPT_VERSION,
             'ai_response' => $result,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     * @param  array<string, PosterCategory>  $categories
+     * @return Collection<int, PosterCategory>
+     */
+    private function resolveGroups(array $result, Poster $poster, array $categories): Collection
+    {
+        $suggestions = is_array($result['groups'] ?? null) ? array_slice($result['groups'], 0, 6) : [];
+
+        if ($suggestions === [] && filled($result['category_slug'] ?? null)) {
+            $suggestions = [['slug' => $result['category_slug'], 'type' => 'theme']];
+        }
+
+        $groups = collect();
+        $types = array_keys(PosterCategory::typeOptions());
+
+        foreach ($suggestions as $suggestion) {
+            if (! is_array($suggestion)) {
+                continue;
+            }
+
+            $name = $this->plainText($suggestion['name'] ?? '', 60);
+            $slug = Str::slug((string) ($suggestion['slug'] ?? $name));
+            $type = in_array($suggestion['type'] ?? null, $types, true) ? $suggestion['type'] : 'theme';
+            $category = $categories[$slug] ?? null;
+
+            if ($category === null && mb_strlen($name) >= 2) {
+                $category = PosterCategory::resolveCanonical($name, $type);
+                $categories[$category->slug] = $category;
+            }
+
+            if ($category?->is_active) {
+                $groups->push($category);
+            }
+        }
+
+        $groups = $groups->unique('id')->take(6)->values();
+
+        if ($groups->isEmpty()) {
+            $groups = $poster->categories->where('is_active', true)->values();
+        }
+
+        if ($groups->isEmpty() && $poster->posterCategory?->is_active) {
+            $groups->push($poster->posterCategory);
+        }
+
+        if ($groups->isEmpty()) {
+            $groups->push(reset($categories));
+        }
+
+        return $groups;
     }
 
     private function plainText(mixed $value, int $limit): string

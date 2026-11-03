@@ -42,6 +42,8 @@ class GeneratePosterContentJob implements ShouldBeUnique, ShouldQueue
         ]);
 
         $content = $service->generate($poster);
+        $groupIds = $content['group_ids'];
+        unset($content['group_ids']);
 
         if ($this->updateSlug) {
             $content['slug'] = Str::slug((string) $content['title']).'-'.$poster->nm_id;
@@ -54,6 +56,7 @@ class GeneratePosterContentJob implements ShouldBeUnique, ShouldQueue
             'ai_input_hash' => $poster->content_hash,
             'ai_generated_at' => now(),
         ]);
+        $poster->categories()->sync($groupIds);
 
         $poster->images()->update(['alt_text' => $poster->fresh()->title]);
     }

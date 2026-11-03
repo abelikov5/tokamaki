@@ -73,6 +73,7 @@ class PosterImportServiceTest extends TestCase
             'is_active' => true,
         ]);
         $this->assertSame('Природа', $poster->posterCategory?->name);
+        $this->assertSame(['Природа'], $poster->categories()->pluck('name')->all());
         $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -65,6 +66,11 @@ class Poster extends Model
     public function posterCategory(): BelongsTo
     {
         return $this->belongsTo(PosterCategory::class, 'category_id');
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(PosterCategory::class, 'poster_category_poster');
     }
 
     public function variants(): HasMany

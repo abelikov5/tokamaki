@@ -154,6 +154,10 @@ class PosterImportService
 
             $poster->save();
 
+            if ($poster->category_id !== null) {
+                $poster->categories()->syncWithoutDetaching([$poster->category_id]);
+            }
+
             $size = $this->detectSize($source);
             $poster->variants()->updateOrCreate(
                 ['size_code' => $size],

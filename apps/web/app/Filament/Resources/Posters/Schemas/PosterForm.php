@@ -81,15 +81,18 @@ class PosterForm
                 Textarea::make('description')->label('Описание товара')->rows(8)->columnSpanFull(),
             ]),
             Section::make('Каталог и поиск')->schema([
-                Select::make('category_id')
-                    ->label('Категория')
-                    ->relationship('posterCategory', 'name', modifyQueryUsing: fn ($query) => $query->orderBy('sort_order')->orderBy('name'))
+                Select::make('categories')
+                    ->label('Группы')
+                    ->relationship('categories', 'name', modifyQueryUsing: fn ($query) => $query->orderBy('type')->orderBy('sort_order')->orderBy('name'))
+                    ->multiple()
                     ->searchable()
                     ->preload()
                     ->required()
+                    ->helperText('Можно выбрать несколько сюжетов, стилей, комнат и коллекций.')
                     ->createOptionForm([
                         TextInput::make('name')->label('Название')->required()->maxLength(255),
                         TextInput::make('slug')->label('URL')->maxLength(255),
+                        Select::make('type')->label('Тип')->options(PosterCategory::typeOptions())->required()->default('theme'),
                         Toggle::make('is_active')->label('Показывать в каталоге')->default(true),
                     ])
                     ->createOptionUsing(function (array $data): int {

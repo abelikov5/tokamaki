@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\PosterCategories\Schemas;
 
+use App\Models\PosterCategory;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -13,8 +15,9 @@ class PosterCategoryForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Категория')->schema([
+            Section::make('Группа')->schema([
                 TextInput::make('name')->label('Название')->required()->maxLength(255),
+                Select::make('type')->label('Тип')->options(PosterCategory::typeOptions())->required()->default('theme'),
                 TextInput::make('slug')
                     ->label('URL')
                     ->helperText('Можно оставить пустым — URL сформируется из названия.')

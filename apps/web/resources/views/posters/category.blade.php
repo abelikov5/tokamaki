@@ -32,7 +32,7 @@
                         @if($poster->primary_image_url)<img src="{{ $poster->primary_image_url }}" alt="{{ $poster->title }}" loading="lazy">@else<span>Токамаки</span>@endif
                     </a>
                     <div>
-                        <p>{{ $category->name }}</p>
+                        <p>{{ $poster->categories->take(3)->pluck('name')->join(' · ') ?: $category->name }}</p>
                         <h3><a href="{{ route('posters.show', $poster) }}">{{ $poster->title }}</a></h3>
                         <div class="poster-card-meta"><span>30×40 · 40×50</span><strong>от {{ number_format((int) (config('catalog.prices.30x40') ?: 990), 0, ',', ' ') }} ₽</strong></div>
                     </div>

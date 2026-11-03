@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Posters\Tables;
 
 use App\Jobs\GeneratePosterContentJob;
 use App\Models\Poster;
-use App\Models\PosterCategory;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -49,7 +48,7 @@ class PostersTable
                     'pending', 'processing' => 'warning',
                     default => 'gray',
                 }),
-                TextColumn::make('posterCategory.name')->label('Категория')->searchable(),
+                TextColumn::make('categories.name')->label('Группы')->badge()->separator(',')->wrap(),
                 TextColumn::make('variants.size_code')->label('Размеры')->badge()->separator(','),
                 TextColumn::make('nm_id')->label('nm_id')->copyable()->searchable(),
                 TextColumn::make('source_user_id')->label('Источник')->formatStateUsing(fn (int $state): string => 'User '.$state),
@@ -61,9 +60,11 @@ class PostersTable
                     'published' => 'Опубликован',
                     'archived' => 'Архив',
                 ]),
-                SelectFilter::make('category_id')->label('Категория')->options(
-                    fn (): array => PosterCategory::query()->orderBy('sort_order')->orderBy('name')->pluck('name', 'id')->all()
-                ),
+                SelectFilter::make('categories')
+                    ->label('Группа')
+                    ->relationship('categories', 'name', fn ($query) => $query->orderBy('type')->orderBy('sort_order')->orderBy('name'))
+                    ->searchable()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -78,7 +79,7 @@ class PostersTable
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalHeading('Сгенерировать контент для выбранных постеров?')
-                        ->modalDescription('Название, описания, SEO, категория и поисковые параметры будут обновлены в фоне.')
+                        ->modalDescription('Название, описания, SEO, группы и поисковые параметры будут обновлены в фоне.')
                         ->action(function (Collection $records): void {
                             $records->each(function (Poster $poster): void {
                                 $poster->update([
