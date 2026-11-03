@@ -57,7 +57,7 @@ class PosterImportService
     private function sourceRecords(PosterImport $posterImport): iterable
     {
         $client = $this->sourceClient();
-        $query = ['user_id' => $posterImport->source_user_id, 'limit' => 100];
+        $query = ['user_id' => $posterImport->source_user_id, 'limit' => 500];
 
         if ($posterImport->requested_nm_ids !== null) {
             foreach ($posterImport->requested_nm_ids as $nmId) {
