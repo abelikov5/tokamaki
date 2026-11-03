@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Posters\Schemas;
 
+use App\Models\Poster;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -9,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 class PosterForm
@@ -25,6 +27,12 @@ class PosterForm
                 TextInput::make('slug')->label('URL')->required()->unique(ignoreRecord: true),
                 TextInput::make('nm_id')->label('Основной nm_id')->disabled(),
             ])->columns(3),
+            Section::make('Фотографии')->schema([
+                View::make('filament.poster-images')
+                    ->viewData(fn (?Poster $record): array => [
+                        'images' => $record?->images()->get() ?? collect(),
+                    ]),
+            ])->columnSpanFull(),
             Section::make('Контент')->schema([
                 TextInput::make('title')->label('Название')->required()->maxLength(255)->columnSpanFull(),
                 Textarea::make('short_description')->label('Короткое описание')->rows(3)->columnSpanFull(),

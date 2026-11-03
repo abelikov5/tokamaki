@@ -14,7 +14,7 @@ class PosterImportServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_imports_grouped_variants_as_draft_and_mirrors_images(): void
+    public function test_it_imports_grouped_variants_as_published_and_mirrors_images(): void
     {
         Storage::fake('public');
         config([
@@ -49,8 +49,9 @@ class PosterImportServiceTest extends TestCase
         $this->assertDatabaseHas('posters', [
             'source_key' => 'group:77',
             'nm_id' => '10003',
-            'status' => 'draft',
+            'status' => 'published',
         ]);
+        $this->assertNotNull(\App\Models\Poster::firstOrFail()->published_at);
         $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
         $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);

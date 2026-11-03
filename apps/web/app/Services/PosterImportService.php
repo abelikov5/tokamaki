@@ -150,6 +150,10 @@ class PosterImportService
 
         $this->syncImages($poster, $source['photos'] ?? []);
 
+        if ($poster->status === 'draft' && $poster->images()->exists()) {
+            $poster->update(['status' => 'published']);
+        }
+
         return $wasCreated;
     }
 
