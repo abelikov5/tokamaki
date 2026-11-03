@@ -44,7 +44,7 @@ class PosterImportServiceTest extends TestCase
 
         $posterImport->refresh();
         $this->assertSame('completed', $posterImport->status);
-        $this->assertSame(3, $posterImport->processed_count);
+        $this->assertSame(2, $posterImport->processed_count);
         $this->assertDatabaseCount('posters', 1);
         $this->assertDatabaseHas('posters', [
             'source_key' => 'group:77',

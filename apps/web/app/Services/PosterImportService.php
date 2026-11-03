@@ -20,8 +20,16 @@ class PosterImportService
     {
         $posterImport->update(['status' => 'running', 'started_at' => now(), 'errors' => null]);
         $errors = [];
+        $latestByDesignAndSize = [];
 
         foreach ($this->sourceRecords($posterImport) as $source) {
+            $sourceKey = isset($source['group_id']) && $source['group_id'] !== null
+                ? 'group:'.$source['group_id']
+                : 'item:'.$source['source_id'];
+            $latestByDesignAndSize[$sourceKey.'|'.$this->detectSize($source)] = $source;
+        }
+
+        foreach ($latestByDesignAndSize as $source) {
             try {
                 $wasCreated = $this->syncPoster($posterImport->source_user_id, $source);
                 $posterImport->increment('processed_count');
