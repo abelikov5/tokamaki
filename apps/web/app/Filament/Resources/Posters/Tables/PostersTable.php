@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\Posters\Tables;
 
 use App\Models\Poster;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -46,7 +49,20 @@ class PostersTable
                     fn (): array => Poster::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category', 'category')->all()
                 ),
             ])
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
+                    ->label('Удалить'),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->label('Удалить выбранные')
+                        ->modalHeading('Удалить выбранные постеры?')
+                        ->modalDescription('Постеры исчезнут из каталога вместе с вариантами и изображениями. Это действие нельзя отменить.')
+                        ->modalSubmitActionLabel('Удалить'),
+                ])->label('Действия'),
+            ])
             ->defaultSort('imported_at', 'desc');
     }
 }
