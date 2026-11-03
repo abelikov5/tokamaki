@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Posters\Schemas;
 
 use App\Models\Poster;
+use App\Models\PosterCategory;
 use App\Models\PosterImage;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -15,6 +16,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class PosterForm
 {
@@ -72,7 +74,23 @@ class PosterForm
                 Textarea::make('description')->label('Описание товара')->rows(8)->columnSpanFull(),
             ]),
             Section::make('Каталог и поиск')->schema([
-                TextInput::make('category')->label('Категория'),
+                Select::make('category_id')
+                    ->label('Категория')
+                    ->relationship('posterCategory', 'name', modifyQueryUsing: fn ($query) => $query->orderBy('sort_order')->orderBy('name'))
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->createOptionForm([
+                        TextInput::make('name')->label('Название')->required()->maxLength(255),
+                        TextInput::make('slug')->label('URL')->maxLength(255),
+                        Toggle::make('is_active')->label('Показывать в каталоге')->default(true),
+                    ])
+                    ->createOptionUsing(function (array $data): int {
+                        $data['slug'] = Str::slug($data['slug'] ?: $data['name']);
+                        $data['sort_order'] = ((int) PosterCategory::max('sort_order')) + 10;
+
+                        return PosterCategory::create($data)->id;
+                    }),
                 TextInput::make('style')->label('Стиль'),
                 TextInput::make('room')->label('Комната'),
                 TextInput::make('primary_color')->label('Основные цвета'),

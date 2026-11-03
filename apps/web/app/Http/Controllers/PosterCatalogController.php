@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Poster;
+use App\Models\PosterCategory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -21,14 +22,17 @@ class PosterCatalogController extends Controller
             'sort' => ['nullable', 'in:new,price_asc,price_desc'],
         ]);
 
-        $query = Poster::query()->published()->with(['images', 'variants']);
+        $query = Poster::query()->published()->with(['images', 'variants', 'posterCategory']);
 
         if (filled($validated['q'] ?? null)) {
             $this->applySearch($query, (string) $validated['q']);
         }
 
         $query
-            ->when($validated['category'] ?? null, fn (Builder $builder, string $category) => $builder->where('category', $category))
+            ->when($validated['category'] ?? null, fn (Builder $builder, string $category) => $builder->whereHas(
+                'posterCategory',
+                fn (Builder $categoryQuery) => $categoryQuery->active()->where('slug', $category),
+            ))
             ->when($validated['orientation'] ?? null, fn (Builder $builder, string $orientation) => $builder->where('orientation', $orientation))
             ->when(($validated['size'] ?? null) === '40x50', fn (Builder $builder) => $builder->whereHas('variants', fn (Builder $variants) => $variants->where('size_code', '40x50')->where('is_active', true)));
 
@@ -40,25 +44,32 @@ class PosterCatalogController extends Controller
 
         return view('posters.index', [
             'posters' => $query->paginate(24)->withQueryString(),
-            'categories' => Poster::query()->published()->whereNotNull('category')
-                ->selectRaw('category, count(*) as total')
-                ->groupBy('category')
-                ->orderByDesc('total')
+            'categories' => PosterCategory::query()->active()
+                ->withCount(['posters as total' => fn (Builder $query) => $query->published()])
+                ->orderBy('sort_order')
+                ->orderBy('name')
                 ->get(),
             'filters' => $validated,
         ]);
     }
 
-    public function show(Poster $poster): View
+    public function show(string $slug): View
     {
+        $category = PosterCategory::query()->active()->where('slug', $slug)->first();
+
+        if ($category !== null) {
+            return $this->showCategory($category);
+        }
+
+        $poster = Poster::query()->where('slug', $slug)->firstOrFail();
         abort_unless($poster->status === 'published' && $poster->published_at !== null, 404);
-        $poster->load(['images', 'variants']);
+        $poster->load(['images', 'variants', 'posterCategory']);
 
         $related = Poster::query()
             ->published()
             ->whereKeyNot($poster->id)
-            ->when($poster->category, fn (Builder $query) => $query->where('category', $poster->category))
-            ->with(['images', 'variants'])
+            ->when($poster->category_id, fn (Builder $query) => $query->where('category_id', $poster->category_id))
+            ->with(['images', 'variants', 'posterCategory'])
             ->limit(4)
             ->get();
 
@@ -70,8 +81,20 @@ class PosterCatalogController extends Controller
         return response()
             ->view('sitemap', [
                 'posters' => Poster::query()->published()->orderBy('updated_at')->get(['slug', 'updated_at']),
+                'categories' => PosterCategory::query()->active()->orderBy('updated_at')->get(['slug', 'updated_at']),
             ])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
+    }
+
+    private function showCategory(PosterCategory $category): View
+    {
+        $posters = $category->posters()
+            ->published()
+            ->with(['images', 'variants', 'posterCategory'])
+            ->orderByDesc('published_at')
+            ->paginate(24);
+
+        return view('posters.category', compact('category', 'posters'));
     }
 
     private function applySearch(Builder $query, string $search): void

@@ -28,7 +28,7 @@
             <select name="category" aria-label="Категория">
                 <option value="">Все сюжеты</option>
                 @foreach($categories as $category)
-                    <option value="{{ $category->category }}" @selected(($filters['category'] ?? '') === $category->category)>{{ $category->category }} · {{ $category->total }}</option>
+                    <option value="{{ $category->slug }}" @selected(($filters['category'] ?? '') === $category->slug)>{{ $category->name }} · {{ $category->total }}</option>
                 @endforeach
             </select>
             <select name="size" aria-label="Размер">
@@ -66,7 +66,7 @@
                         @if($poster->primary_image_url)<img src="{{ $poster->primary_image_url }}" alt="{{ $poster->title }}" loading="lazy">@else<span>Токамаки</span>@endif
                     </a>
                     <div>
-                        <p>{{ $poster->category ?? 'Интерьерный постер' }}</p>
+                        <p>{{ $poster->posterCategory?->name ?? $poster->category ?? 'Интерьерный постер' }}</p>
                         <h3><a href="{{ route('posters.show', $poster) }}">{{ $poster->title }}</a></h3>
                         <div class="poster-card-meta">
                             <span>30×40 · 40×50</span>

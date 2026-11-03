@@ -13,7 +13,7 @@ Route::get('/postery', [PosterCatalogController::class, 'index'])->name('posters
 Route::get('/postery/po-foto', [CustomPosterRequestController::class, 'create'])->name('posters.custom');
 Route::post('/postery/po-foto', [CustomPosterRequestController::class, 'store'])->middleware('throttle:5,1')->name('posters.custom.store');
 Route::get('/admin/custom-poster-requests/{customPosterRequest}/photo', [CustomPosterRequestController::class, 'photo'])->name('admin.custom-poster-requests.photo');
-Route::get('/postery/{poster}', [PosterCatalogController::class, 'show'])->name('posters.show');
+Route::get('/postery/{slug}', [PosterCatalogController::class, 'show'])->name('posters.show');
 Route::get('/kartina-po-nomeram-po-foto', [GenerationController::class, 'index'])->name('generator');
 Route::get('/edit/kartina-po-nomeram-po-foto', [GenerationController::class, 'editor'])->name('generator.editor');
 Route::get('/kartina-po-nomeram-po-foto/proekt/{generation:resume_token}', [GenerationController::class, 'resume'])

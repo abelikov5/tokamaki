@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Poster;
+use App\Models\PosterCategory;
 use App\Models\PosterImage;
 use App\Models\PosterImport;
 use Illuminate\Http\Client\PendingRequest;
@@ -111,6 +112,7 @@ class PosterImportService
             if ($wasCreated || $poster->status === 'draft') {
                 $content = $this->contentBuilder->build($source);
                 $poster->fill($content);
+                $poster->category_id = PosterCategory::resolveCanonical((string) $content['category'])->id;
                 $poster->fill([
                     'slug' => Str::slug($content['title']).'-'.$source['nm_id'],
                 ]);
@@ -118,6 +120,10 @@ class PosterImportService
                 if ($wasCreated) {
                     $poster->status = 'draft';
                 }
+            }
+
+            if ($poster->category_id === null && filled($poster->category)) {
+                $poster->category_id = PosterCategory::resolveCanonical((string) $poster->category)->id;
             }
 
             $poster->fill([

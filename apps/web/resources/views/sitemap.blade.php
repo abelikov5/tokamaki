@@ -3,6 +3,12 @@
     <url><loc>{{ route('home') }}</loc></url>
     <url><loc>{{ route('posters.index') }}</loc></url>
     <url><loc>{{ route('posters.custom') }}</loc></url>
+    @foreach($categories as $category)
+        <url>
+            <loc>{{ route('posters.show', $category) }}</loc>
+            <lastmod>{{ $category->updated_at->toAtomString() }}</lastmod>
+        </url>
+    @endforeach
     @foreach($posters as $poster)
         <url>
             <loc>{{ route('posters.show', $poster) }}</loc>

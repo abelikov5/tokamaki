@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Posters\Tables;
 
 use App\Models\Poster;
+use App\Models\PosterCategory;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -33,7 +34,7 @@ class PostersTable
                     'archived' => 'gray',
                     default => 'warning',
                 }),
-                TextColumn::make('category')->label('Категория')->searchable(),
+                TextColumn::make('posterCategory.name')->label('Категория')->searchable(),
                 TextColumn::make('variants.size_code')->label('Размеры')->badge()->separator(','),
                 TextColumn::make('nm_id')->label('nm_id')->copyable()->searchable(),
                 TextColumn::make('source_user_id')->label('Источник')->formatStateUsing(fn (int $state): string => 'User '.$state),
@@ -45,8 +46,8 @@ class PostersTable
                     'published' => 'Опубликован',
                     'archived' => 'Архив',
                 ]),
-                SelectFilter::make('category')->label('Категория')->options(
-                    fn (): array => Poster::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category', 'category')->all()
+                SelectFilter::make('category_id')->label('Категория')->options(
+                    fn (): array => PosterCategory::query()->orderBy('sort_order')->orderBy('name')->pluck('name', 'id')->all()
                 ),
             ])
             ->recordActions([

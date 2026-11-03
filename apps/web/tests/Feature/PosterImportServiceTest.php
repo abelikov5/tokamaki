@@ -64,6 +64,12 @@ class PosterImportServiceTest extends TestCase
         $this->assertStringNotContainsString('«', implode(' ', $poster->search_keywords));
         $this->assertStringNotContainsString('»', implode(' ', $poster->search_keywords));
         $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
+        $this->assertDatabaseHas('poster_categories', [
+            'name' => 'Природа',
+            'slug' => 'priroda',
+            'is_active' => true,
+        ]);
+        $this->assertSame('Природа', $poster->posterCategory?->name);
         $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);

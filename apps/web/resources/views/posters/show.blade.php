@@ -61,7 +61,7 @@
         @endforelse
     </div>
     <div class="product-info">
-        <p class="poster-kicker">{{ $poster->category ?? 'Интерьерный постер' }}</p>
+        <p class="poster-kicker">{{ $poster->posterCategory?->name ?? $poster->category ?? 'Интерьерный постер' }}</p>
         <h1>{{ $poster->title }}</h1>
         <p class="product-lead">{{ $poster->short_description }}</p>
         <div class="product-facts"><span>Холст</span><span>Деревянный подрамник</span><span>Готов к размещению</span></div>
@@ -85,8 +85,8 @@
 </section>
 
 @if($related->isNotEmpty())
-<section class="related-section"><div class="catalog-heading"><h2>Похожие постеры</h2><a href="{{ route('posters.index', ['category' => $poster->category]) }}">Смотреть все →</a></div><div class="poster-grid related-grid">
-@foreach($related as $item)<article class="poster-card"><a class="poster-card-image" href="{{ route('posters.show', $item) }}">@if($item->primary_image_url)<img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" loading="lazy">@endif</a><div><p>{{ $item->category }}</p><h3><a href="{{ route('posters.show', $item) }}">{{ $item->title }}</a></h3></div></article>@endforeach
+<section class="related-section"><div class="catalog-heading"><h2>Похожие постеры</h2>@if($poster->posterCategory?->is_active)<a href="{{ route('posters.show', $poster->posterCategory) }}">Смотреть все →</a>@endif</div><div class="poster-grid related-grid">
+@foreach($related as $item)<article class="poster-card"><a class="poster-card-image" href="{{ route('posters.show', $item) }}">@if($item->primary_image_url)<img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" loading="lazy">@endif</a><div><p>{{ $item->posterCategory?->name ?? $item->category }}</p><h3><a href="{{ route('posters.show', $item) }}">{{ $item->title }}</a></h3></div></article>@endforeach
 </div></section>
 @endif
 <script>

@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Resources\Posters\Pages\ListPosters;
+use App\Filament\Resources\PosterCategories\Pages\ListPosterCategories;
 use App\Filament\Resources\Posters\Pages\EditPoster;
+use App\Filament\Resources\Posters\Pages\ListPosters;
 use App\Models\Poster;
 use App\Models\PosterImage;
 use App\Models\User;
@@ -22,7 +23,10 @@ class PosterAdminTest extends TestCase
         Poster::factory()->create();
 
         $this->actingAs($admin)->get('/admin/posters')->assertOk();
+        $this->actingAs($admin)->get('/admin/poster-categories')->assertOk();
         $this->actingAs($admin)->get('/admin/custom-poster-requests')->assertOk();
+
+        Livewire::actingAs($admin)->test(ListPosterCategories::class)->assertOk();
     }
 
     public function test_admin_can_bulk_delete_selected_posters(): void

@@ -6,6 +6,7 @@ use Database\Factories\PosterFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -20,6 +21,10 @@ class Poster extends Model
         static::saving(function (self $poster): void {
             $poster->search_keywords = self::normalizeSearchKeywords($poster->search_keywords ?? []);
 
+            if ($poster->isDirty('category_id') && $poster->category_id !== null) {
+                $poster->category = PosterCategory::find($poster->category_id)?->name ?? $poster->category;
+            }
+
             if ($poster->status === 'published' && $poster->published_at === null) {
                 $poster->published_at = now();
             }
@@ -32,7 +37,7 @@ class Poster extends Model
 
     protected $fillable = [
         'source_id', 'source_group_id', 'source_key', 'source_user_id', 'nm_id', 'vendor_code', 'slug', 'status', 'title',
-        'short_description', 'description', 'seo_title', 'seo_description', 'category',
+        'short_description', 'description', 'seo_title', 'seo_description', 'category', 'category_id',
         'style', 'room', 'primary_color', 'orientation', 'search_keywords', 'source_payload',
         'content_hash', 'source_updated_at', 'imported_at', 'published_at',
     ];
@@ -51,6 +56,11 @@ class Poster extends Model
     public function images(): HasMany
     {
         return $this->hasMany(PosterImage::class)->orderBy('sort_order');
+    }
+
+    public function posterCategory(): BelongsTo
+    {
+        return $this->belongsTo(PosterCategory::class, 'category_id');
     }
 
     public function variants(): HasMany

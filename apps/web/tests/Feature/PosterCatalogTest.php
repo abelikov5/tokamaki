@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Poster;
+use App\Models\PosterCategory;
 use App\Models\PosterVariant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -83,5 +84,46 @@ class PosterCatalogTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
             ->assertSee(route('posters.show', $poster), false);
+    }
+
+    public function test_active_category_has_seo_page_and_filters_catalog_by_slug(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Животные',
+            'slug' => 'zhivotnye',
+            'is_active' => true,
+            'sort_order' => 10,
+            'seo_title' => 'Постеры с животными',
+            'seo_description' => 'Авторские постеры с животными для интерьера.',
+        ]);
+        $included = Poster::factory()->published()->create(['category_id' => $category->id]);
+        $excluded = Poster::factory()->published()->create(['title' => 'Постер из другой категории']);
+
+        $this->get('/postery/zhivotnye')
+            ->assertOk()
+            ->assertSee('Постеры с животными')
+            ->assertSee($included->title)
+            ->assertDontSee($excluded->title);
+
+        $this->get('/postery?category=zhivotnye')
+            ->assertOk()
+            ->assertSee($included->title)
+            ->assertDontSee($excluded->title);
+
+        $this->get('/sitemap.xml')->assertSee('/postery/zhivotnye', false);
+    }
+
+    public function test_inactive_category_is_hidden_without_hiding_its_posters_from_main_catalog(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Скрытая категория',
+            'slug' => 'skrytaya-kategoriya',
+            'is_active' => false,
+        ]);
+        $poster = Poster::factory()->published()->create(['category_id' => $category->id]);
+
+        $this->get('/postery/skrytaya-kategoriya')->assertNotFound();
+        $this->get('/postery')->assertOk()->assertSee($poster->title)->assertDontSee('Скрытая категория ·');
+        $this->get('/sitemap.xml')->assertDontSee('/postery/skrytaya-kategoriya', false);
     }
 }
