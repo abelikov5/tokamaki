@@ -1,11 +1,19 @@
 <?php
 
+use App\Http\Controllers\CustomPosterRequestController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PosterCatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
 Route::view('/privacy', 'privacy')->name('privacy');
+Route::get('/sitemap.xml', [PosterCatalogController::class, 'sitemap'])->name('sitemap');
+Route::get('/postery', [PosterCatalogController::class, 'index'])->name('posters.index');
+Route::view('/postery/po-foto', 'posters.custom')->name('posters.custom');
+Route::post('/postery/po-foto', [CustomPosterRequestController::class, 'store'])->middleware('throttle:5,1')->name('posters.custom.store');
+Route::get('/admin/custom-poster-requests/{customPosterRequest}/photo', [CustomPosterRequestController::class, 'photo'])->name('admin.custom-poster-requests.photo');
+Route::get('/postery/{poster}', [PosterCatalogController::class, 'show'])->name('posters.show');
 Route::get('/kartina-po-nomeram-po-foto', [GenerationController::class, 'index'])->name('generator');
 Route::get('/edit/kartina-po-nomeram-po-foto', [GenerationController::class, 'editor'])->name('generator.editor');
 Route::get('/kartina-po-nomeram-po-foto/proekt/{generation:resume_token}', [GenerationController::class, 'resume'])

@@ -36,6 +36,7 @@
         <img class="brand-wordmark" src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="543" height="117">
     </a>
     <nav class="brand-nav" aria-label="Основная навигация">
+        <a href="{{ route('posters.index') }}">Постеры</a>
         <a href="#products">Продукция</a>
         <a href="#personal">По фото</a>
         <a href="#business">Для бизнеса</a>
@@ -84,7 +85,7 @@
             </article>
             <article class="product-card product-card-blue">
                 <div class="canvas-demo" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span></div>
-                <div class="product-copy"><span>02</span><h3>Печать<br>на холсте</h3><p>Фотографии, иллюстрации и интерьерные принты на фактурной основе.</p></div>
+                <div class="product-copy"><span>02</span><h3>Печать<br>на холсте</h3><p>Фотографии, иллюстрации и интерьерные принты на фактурной основе.</p><a href="{{ route('posters.index') }}">Каталог постеров →</a></div>
             </article>
             <article class="product-card product-card-orange">
                 <div class="diamond-demo" aria-hidden="true"></div>

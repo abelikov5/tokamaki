@@ -33,6 +33,11 @@ services:
       GENERATOR_TIMEOUT: 360
       FILAMENT_ADMIN_EMAIL: ${FILAMENT_ADMIN_EMAIL:-}
       FILAMENT_ADMIN_PASSWORD: ${FILAMENT_ADMIN_PASSWORD:-}
+      CATALOG_API_TOKEN: ${CATALOG_API_TOKEN:?CATALOG_API_TOKEN must be set in the root .env file}
+      MOCKUP_CATALOG_URL: ${MOCKUP_CATALOG_URL:-https://mockup.n8n-team.ru}
+      MOCKUP_CATALOG_TOKEN: ${MOCKUP_CATALOG_TOKEN:?MOCKUP_CATALOG_TOKEN must be set in the root .env file}
+      POSTER_PRICE_30X40: ${POSTER_PRICE_30X40:-990}
+      POSTER_PRICE_40X50: ${POSTER_PRICE_40X50:-1290}
     command: sh -c "php artisan migrate --force && php artisan db:seed --class=AdminUserSeeder --force && php-fpm"
     restart: unless-stopped
     depends_on:

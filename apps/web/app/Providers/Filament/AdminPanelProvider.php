@@ -27,7 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Tokamaki — аналитика генератора')
+            ->brandName('Tokamaki — каталог и заказы')
             ->colors([
                 'primary' => Color::Amber,
             ])

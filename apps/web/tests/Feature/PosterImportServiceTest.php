@@ -1,0 +1,82 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\PosterImage;
+use App\Models\PosterImport;
+use App\Services\PosterImportService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+class PosterImportServiceTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_imports_grouped_variants_as_draft_and_mirrors_images(): void
+    {
+        Storage::fake('public');
+        config([
+            'services.mockup_catalog.url' => 'https://mockup.test',
+            'services.mockup_catalog.token' => 'source-token',
+            'catalog.prices.30x40' => 1490,
+            'catalog.prices.40x50' => 1990,
+        ]);
+
+        Http::fake(function ($request) {
+            if (str_starts_with($request->url(), 'https://images.test/')) {
+                return Http::response('image-bytes', 200, ['Content-Type' => 'image/jpeg']);
+            }
+
+            return Http::response([
+                'data' => [
+                    $this->sourcePoster('10001', 501, '40x30'),
+                    $this->sourcePoster('10002', 502, '40x50'),
+                ],
+                'meta' => ['next_cursor' => null],
+            ]);
+        });
+
+        $posterImport = PosterImport::create(['source_user_id' => 1, 'status' => 'pending']);
+        app(PosterImportService::class)->run($posterImport);
+
+        $posterImport->refresh();
+        $this->assertSame('completed', $posterImport->status);
+        $this->assertSame(2, $posterImport->processed_count);
+        $this->assertDatabaseCount('posters', 1);
+        $this->assertDatabaseHas('posters', ['source_key' => 'group:77', 'status' => 'draft']);
+        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
+        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10002', 'size_code' => '40x50', 'price' => 1990]);
+        $this->assertNotNull(PosterImage::firstOrFail()->path);
+    }
+
+    /** @return array<string, mixed> */
+    private function sourcePoster(string $nmId, int $sourceId, string $size): array
+    {
+        return [
+            'source_id' => $sourceId,
+            'user_id' => 1,
+            'group_id' => 77,
+            'group_name' => 'Горный рассвет',
+            'nm_id' => $nmId,
+            'vendor_code' => 'poster_'.$nmId,
+            'title' => 'Картина постер '.$size.' горы',
+            'description' => 'Старое описание WB, которое нельзя копировать.',
+            'type' => 'poster',
+            'characteristics' => [['value' => [$size.' см']]],
+            'dimensions' => [],
+            'sizes' => [],
+            'visual_analysis' => ['summary' => 'Спокойный горный пейзаж в утреннем свете.'],
+            'photos' => [[
+                'source_id' => 900,
+                'role' => 'main',
+                'sort_order' => 0,
+                'url' => 'https://images.test/poster.jpg',
+                'file_name' => 'poster.jpg',
+                'mime_type' => 'image/jpeg',
+            ]],
+            'updated_at' => '2026-11-03T10:00:00+03:00',
+        ];
+    }
+}

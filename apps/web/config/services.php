@@ -45,4 +45,13 @@ return [
         'timeout' => (int) env('GENERATOR_TIMEOUT', 300),
     ],
 
+    'catalog_api' => [
+        'token' => env('CATALOG_API_TOKEN'),
+    ],
+
+    'mockup_catalog' => [
+        'url' => rtrim(env('MOCKUP_CATALOG_URL', 'https://mockup.n8n-team.ru'), '/'),
+        'token' => env('MOCKUP_CATALOG_TOKEN'),
+    ],
+
 ];
