@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Poster extends Model
 {
@@ -17,6 +18,8 @@ class Poster extends Model
     protected static function booted(): void
     {
         static::saving(function (self $poster): void {
+            $poster->search_keywords = self::normalizeSearchKeywords($poster->search_keywords ?? []);
+
             if ($poster->status === 'published' && $poster->published_at === null) {
                 $poster->published_at = now();
             }
@@ -79,5 +82,20 @@ class Poster extends Model
     public function getWildberriesUrlAttribute(): string
     {
         return 'https://www.wildberries.ru/catalog/'.$this->nm_id.'/detail.aspx';
+    }
+
+    /** @param  array<int, mixed>  $keywords */
+    public static function normalizeSearchKeywords(array $keywords): array
+    {
+        return collect($keywords)
+            ->map(fn (mixed $keyword): string => Str::of((string) $keyword)
+                ->replaceMatches('/[«»"„“”]/u', '')
+                ->replaceMatches('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/u', '')
+                ->squish()
+                ->toString())
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 }

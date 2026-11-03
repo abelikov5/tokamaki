@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Poster;
 use App\Models\PosterImage;
 use App\Models\PosterImport;
 use App\Services\PosterImportService;
@@ -51,7 +52,11 @@ class PosterImportServiceTest extends TestCase
             'nm_id' => '10003',
             'status' => 'published',
         ]);
-        $this->assertNotNull(\App\Models\Poster::firstOrFail()->published_at);
+        $poster = Poster::firstOrFail();
+        $this->assertNotNull($poster->published_at);
+        $this->assertSame(['Природа', 'Современный', 'Гостиная', 'постер', 'горы'], $poster->search_keywords);
+        $this->assertStringNotContainsString('«', implode(' ', $poster->search_keywords));
+        $this->assertStringNotContainsString('»', implode(' ', $poster->search_keywords));
         $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
         $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);

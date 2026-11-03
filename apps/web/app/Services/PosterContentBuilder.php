@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Poster;
 use Illuminate\Support\Str;
 
 class PosterContentBuilder
@@ -41,10 +42,10 @@ class PosterContentBuilder
             'room' => $taxonomy['room'],
             'primary_color' => $taxonomy['color'],
             'orientation' => $taxonomy['orientation'],
-            'search_keywords' => array_values(array_unique(array_filter([
+            'search_keywords' => Poster::normalizeSearchKeywords([
                 $taxonomy['category'], $taxonomy['style'], $taxonomy['room'], $taxonomy['color'],
-                ...preg_split('/\s+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY),
-            ]))),
+                ...preg_split('/[^\p{L}\p{N}-]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY),
+            ]),
         ];
     }
 

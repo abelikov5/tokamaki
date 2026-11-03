@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\Posters\Schemas;
 
 use App\Models\Poster;
+use App\Models\PosterImage;
+use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -32,6 +35,36 @@ class PosterForm
                     ->viewData(fn (?Poster $record): array => [
                         'images' => $record?->images()->get() ?? collect(),
                     ]),
+                Repeater::make('images')
+                    ->label('Управление фотографиями')
+                    ->relationship()
+                    ->schema([
+                        FileUpload::make('path')
+                            ->label('Фотография')
+                            ->image()
+                            ->disk('public')
+                            ->directory('posters/manual')
+                            ->visibility('public')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->maxSize(20480)
+                            ->imagePreviewHeight('190')
+                            ->openable()
+                            ->downloadable()
+                            ->required(fn (?PosterImage $record): bool => blank($record?->remote_url)),
+                        Select::make('role')->label('Тип')->required()->options([
+                            'main' => 'Главное изображение',
+                            'slide' => 'Дополнительное изображение',
+                        ])->default('slide'),
+                        TextInput::make('alt_text')->label('Описание для изображения')->maxLength(255),
+                    ])
+                    ->columns(1)
+                    ->grid(3)
+                    ->orderColumn('sort_order')
+                    ->addActionLabel('Добавить фотографию')
+                    ->deleteAction(fn (Action $action) => $action
+                        ->label('Удалить фотографию')
+                        ->requiresConfirmation())
+                    ->columnSpanFull(),
             ])->columnSpanFull(),
             Section::make('Контент')->schema([
                 TextInput::make('title')->label('Название')->required()->maxLength(255)->columnSpanFull(),
