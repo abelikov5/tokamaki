@@ -114,6 +114,8 @@ class PosterImportService
             $poster->fill([
                 'source_id' => $poster->source_id ?? $source['source_id'],
                 'source_group_id' => $source['group_id'] ?? null,
+                'nm_id' => (string) $source['nm_id'],
+                'vendor_code' => $source['vendor_code'] ?? null,
                 'source_payload' => $source,
                 'content_hash' => $contentHash,
                 'source_updated_at' => $source['updated_at'] ?? null,
@@ -122,11 +124,11 @@ class PosterImportService
 
             $size = $this->detectSize($source);
             $poster->variants()->updateOrCreate(
-                ['nm_id' => (string) $source['nm_id']],
+                ['size_code' => $size],
                 [
                     'source_id' => $source['source_id'],
+                    'nm_id' => (string) $source['nm_id'],
                     'vendor_code' => $source['vendor_code'] ?? null,
-                    'size_code' => $size,
                     'width_cm' => (int) Str::before($size, 'x'),
                     'height_cm' => (int) Str::after($size, 'x'),
                     'price' => config('catalog.prices.'.$size),

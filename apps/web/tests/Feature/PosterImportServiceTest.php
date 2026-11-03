@@ -33,6 +33,7 @@ class PosterImportServiceTest extends TestCase
                 'data' => [
                     $this->sourcePoster('10001', 501, '40x30'),
                     $this->sourcePoster('10002', 502, '40x50'),
+                    $this->sourcePoster('10003', 503, '40x50'),
                 ],
                 'meta' => ['next_cursor' => null],
             ]);
@@ -43,11 +44,16 @@ class PosterImportServiceTest extends TestCase
 
         $posterImport->refresh();
         $this->assertSame('completed', $posterImport->status);
-        $this->assertSame(2, $posterImport->processed_count);
+        $this->assertSame(3, $posterImport->processed_count);
         $this->assertDatabaseCount('posters', 1);
-        $this->assertDatabaseHas('posters', ['source_key' => 'group:77', 'status' => 'draft']);
+        $this->assertDatabaseHas('posters', [
+            'source_key' => 'group:77',
+            'nm_id' => '10003',
+            'status' => 'draft',
+        ]);
+        $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
-        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10002', 'size_code' => '40x50', 'price' => 1990]);
+        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);
         $this->assertNotNull(PosterImage::firstOrFail()->path);
     }
 
