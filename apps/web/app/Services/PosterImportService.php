@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\GeneratePosterContentJob;
 use App\Models\Poster;
 use App\Models\PosterCategory;
 use App\Models\PosterImage;
@@ -102,12 +103,13 @@ class PosterImportService
             : 'item:'.$source['source_id'];
         $contentHash = hash('sha256', json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        [$poster, $wasCreated] = DB::transaction(function () use ($sourceUserId, $sourceKey, $contentHash, $source): array {
+        [$poster, $wasCreated, $needsGeneration] = DB::transaction(function () use ($sourceUserId, $sourceKey, $contentHash, $source): array {
             $poster = Poster::firstOrNew([
                 'source_user_id' => $sourceUserId,
                 'source_key' => $sourceKey,
             ]);
             $wasCreated = ! $poster->exists;
+            $needsGeneration = $wasCreated || $poster->status === 'draft';
 
             if ($wasCreated || $poster->status === 'draft') {
                 $content = $this->contentBuilder->build($source);
@@ -145,6 +147,11 @@ class PosterImportService
                 ]);
             }
 
+            if ($needsGeneration) {
+                $poster->ai_generation_status = 'pending';
+                $poster->ai_generation_error = null;
+            }
+
             $poster->save();
 
             $size = $this->detectSize($source);
@@ -161,13 +168,17 @@ class PosterImportService
                 ],
             );
 
-            return [$poster, $wasCreated];
+            return [$poster, $wasCreated, $needsGeneration];
         });
 
         $this->syncImages($poster, $source['photos'] ?? []);
 
         if ($poster->status === 'draft' && $poster->images()->exists()) {
             $poster->update(['status' => 'published']);
+        }
+
+        if ($needsGeneration) {
+            GeneratePosterContentJob::dispatch($poster->id, updateSlug: true);
         }
 
         return $wasCreated;

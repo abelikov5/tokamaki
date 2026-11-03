@@ -38,6 +38,7 @@ class PosterAdminTest extends TestCase
         $this->actingAs($admin);
 
         Livewire::test(ListPosters::class)
+            ->assertTableBulkActionExists('generateAiContent')
             ->assertTableBulkActionExists('delete')
             ->callTableBulkAction('delete', $posters->take(2));
 
@@ -65,6 +66,7 @@ class PosterAdminTest extends TestCase
             ->assertSee('https://images.example.test/poster.jpg', false)
             ->assertFormFieldExists('images')
             ->assertActionExists('publish')
+            ->assertActionExists('generateAiContent')
             ->callAction('publish');
 
         $this->assertDatabaseHas('posters', ['id' => $poster->id, 'status' => 'published']);

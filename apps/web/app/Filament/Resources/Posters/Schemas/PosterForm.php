@@ -105,6 +105,18 @@ class PosterForm
                 TextInput::make('seo_title')->label('SEO title')->maxLength(60)->columnSpanFull(),
                 Textarea::make('seo_description')->label('Meta description')->rows(3)->maxLength(320)->columnSpanFull(),
             ]),
+            Section::make('ИИ-контент')->schema([
+                TextInput::make('ai_generation_status')->label('Статус')->disabled()->formatStateUsing(fn (?string $state): string => match ($state) {
+                    'pending' => 'В очереди',
+                    'processing' => 'Генерируется',
+                    'generated' => 'Готово',
+                    'failed' => 'Ошибка',
+                    default => 'Не запускался',
+                }),
+                TextInput::make('ai_model')->label('Модель')->disabled(),
+                TextInput::make('ai_generated_at')->label('Дата генерации')->disabled(),
+                Textarea::make('ai_generation_error')->label('Ошибка')->disabled()->columnSpanFull(),
+            ])->columns(3),
             Section::make('Размеры и WB')->schema([
                 Repeater::make('variants')->relationship()->schema([
                     Select::make('size_code')->label('Размер')->required()->options(['30x40' => '30×40', '40x50' => '40×50']),

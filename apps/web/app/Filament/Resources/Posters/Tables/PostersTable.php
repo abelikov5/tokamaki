@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Posters\Tables;
 
+use App\Jobs\GeneratePosterContentJob;
 use App\Models\Poster;
 use App\Models\PosterCategory;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -12,6 +14,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class PostersTable
 {
@@ -33,6 +36,18 @@ class PostersTable
                     'published' => 'success',
                     'archived' => 'gray',
                     default => 'warning',
+                }),
+                TextColumn::make('ai_generation_status')->label('ИИ')->badge()->formatStateUsing(fn (?string $state): string => match ($state) {
+                    'pending' => 'В очереди',
+                    'processing' => 'Генерируется',
+                    'generated' => 'Готово',
+                    'failed' => 'Ошибка',
+                    default => 'Нет',
+                })->color(fn (?string $state): string => match ($state) {
+                    'generated' => 'success',
+                    'failed' => 'danger',
+                    'pending', 'processing' => 'warning',
+                    default => 'gray',
                 }),
                 TextColumn::make('posterCategory.name')->label('Категория')->searchable(),
                 TextColumn::make('variants.size_code')->label('Размеры')->badge()->separator(','),
@@ -57,6 +72,23 @@ class PostersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('generateAiContent')
+                        ->label('Сгенерировать через ИИ')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalHeading('Сгенерировать контент для выбранных постеров?')
+                        ->modalDescription('Название, описания, SEO, категория и поисковые параметры будут обновлены в фоне.')
+                        ->action(function (Collection $records): void {
+                            $records->each(function (Poster $poster): void {
+                                $poster->update([
+                                    'ai_generation_status' => 'pending',
+                                    'ai_generation_error' => null,
+                                ]);
+                                GeneratePosterContentJob::dispatch($poster->id);
+                            });
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make()
                         ->label('Удалить выбранные')
                         ->modalHeading('Удалить выбранные постеры?')

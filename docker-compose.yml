@@ -31,6 +31,7 @@ services:
       CACHE_STORE: database
       SESSION_DRIVER: database
       QUEUE_CONNECTION: database
+      DB_QUEUE_RETRY_AFTER: 1000
       GENERATOR_URL: http://generator:8000
       GENERATOR_TIMEOUT: 360
       FILAMENT_ADMIN_EMAIL: ${FILAMENT_ADMIN_EMAIL:-}
@@ -38,6 +39,10 @@ services:
       CATALOG_API_TOKEN: ${CATALOG_API_TOKEN:?CATALOG_API_TOKEN must be set in the root .env file}
       MOCKUP_CATALOG_URL: ${MOCKUP_CATALOG_URL:-https://mockup.n8n-team.ru}
       MOCKUP_CATALOG_TOKEN: ${MOCKUP_CATALOG_TOKEN:?MOCKUP_CATALOG_TOKEN must be set in the root .env file}
+      AITUNNEL_API_KEY: ${AITUNNEL_API_KEY:-}
+      AITUNNEL_API_URL: ${AITUNNEL_API_URL:-https://api.aitunnel.ru/v1/chat/completions}
+      AITUNNEL_POSTER_MODEL: ${AITUNNEL_POSTER_MODEL:-~google/gemini-flash-latest}
+      AITUNNEL_TIMEOUT: ${AITUNNEL_TIMEOUT:-120}
       POSTER_PRICE_30X40: ${POSTER_PRICE_30X40:-990}
       POSTER_PRICE_40X50: ${POSTER_PRICE_40X50:-1290}
     command: sh -c "php artisan migrate --force && php artisan db:seed --class=AdminUserSeeder --force && php-fpm"

@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\GeneratePosterContentJob;
 use App\Models\Poster;
 use App\Models\PosterImage;
 use App\Models\PosterImport;
 use App\Services\PosterImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -17,6 +19,7 @@ class PosterImportServiceTest extends TestCase
 
     public function test_it_imports_grouped_variants_as_published_and_mirrors_images(): void
     {
+        Queue::fake();
         Storage::fake('public');
         config([
             'services.mockup_catalog.url' => 'https://mockup.test',
@@ -74,6 +77,8 @@ class PosterImportServiceTest extends TestCase
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);
         $this->assertNotNull(PosterImage::firstOrFail()->path);
+        $this->assertSame('pending', $poster->ai_generation_status);
+        Queue::assertPushed(GeneratePosterContentJob::class, fn (GeneratePosterContentJob $job): bool => $job->posterId === $poster->id && $job->updateSlug);
     }
 
     /** @return array<string, mixed> */

@@ -54,4 +54,11 @@ return [
         'token' => env('MOCKUP_CATALOG_TOKEN'),
     ],
 
+    'aitunnel' => [
+        'key' => env('AITUNNEL_API_KEY'),
+        'api_url' => env('AITUNNEL_API_URL', 'https://api.aitunnel.ru/v1/chat/completions'),
+        'poster_model' => env('AITUNNEL_POSTER_MODEL', '~google/gemini-flash-latest'),
+        'timeout' => (int) env('AITUNNEL_TIMEOUT', 120),
+    ],
+
 ];

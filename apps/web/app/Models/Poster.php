@@ -39,7 +39,8 @@ class Poster extends Model
         'source_id', 'source_group_id', 'source_key', 'source_user_id', 'nm_id', 'vendor_code', 'slug', 'status', 'title',
         'short_description', 'description', 'seo_title', 'seo_description', 'category', 'category_id',
         'style', 'room', 'primary_color', 'orientation', 'search_keywords', 'source_payload',
-        'content_hash', 'source_updated_at', 'imported_at', 'published_at',
+        'content_hash', 'source_updated_at', 'imported_at', 'published_at', 'ai_generation_status',
+        'ai_model', 'ai_prompt_version', 'ai_input_hash', 'ai_generation_error', 'ai_generated_at',
     ];
 
     protected function casts(): array
@@ -50,6 +51,7 @@ class Poster extends Model
             'source_updated_at' => 'datetime',
             'imported_at' => 'datetime',
             'published_at' => 'datetime',
+            'ai_generated_at' => 'datetime',
         ];
     }
 
