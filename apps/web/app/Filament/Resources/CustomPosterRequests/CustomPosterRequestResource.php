@@ -27,11 +27,11 @@ class CustomPosterRequestResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
-    protected static ?string $navigationLabel = 'Постеры по фото';
+    protected static ?string $navigationLabel = 'Заказы постеров';
 
-    protected static ?string $modelLabel = 'заявка на постер';
+    protected static ?string $modelLabel = 'заказ постера';
 
-    protected static ?string $pluralModelLabel = 'Постеры по фото';
+    protected static ?string $pluralModelLabel = 'Заказы постеров';
 
     public static function form(Schema $schema): Schema
     {
@@ -45,9 +45,11 @@ class CustomPosterRequestResource extends Resource
                     'cancelled' => 'Отменена',
                 ]),
                 TextInput::make('size_code')->label('Размер')->disabled(),
-                TextInput::make('name')->label('Имя')->disabled(),
-                TextInput::make('phone')->label('Телефон')->disabled(),
+                TextInput::make('poster.title')->label('Готовый постер')->disabled(),
                 TextInput::make('email')->label('Email')->disabled(),
+                TextInput::make('city')->label('Город')->disabled(),
+                TextInput::make('street')->label('Улица')->disabled(),
+                TextInput::make('amount')->label('Сумма, ₽')->disabled(),
                 Textarea::make('comment')->label('Комментарий')->disabled()->columnSpanFull(),
             ])->columns(2),
         ]);
@@ -56,14 +58,16 @@ class CustomPosterRequestResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            ImageColumn::make('photo')->label('Фото')->getStateUsing(fn (CustomPosterRequest $record): string => $record->admin_photo_url)->height(72),
+            ImageColumn::make('photo')->label('Макет')->getStateUsing(fn (CustomPosterRequest $record): ?string => $record->admin_photo_url)->height(72),
             TextColumn::make('status')->label('Статус')->badge()->formatStateUsing(fn (string $state): string => match ($state) {
                 'new' => 'Новая', 'processing' => 'В работе', 'approved' => 'Согласована',
                 'completed' => 'Выполнена', 'cancelled' => 'Отменена', default => $state,
             }),
-            TextColumn::make('name')->label('Имя')->searchable(),
-            TextColumn::make('phone')->label('Телефон')->copyable()->searchable(),
+            TextColumn::make('poster.title')->label('Постер')->limit(32)->placeholder('По своему фото')->searchable(),
+            TextColumn::make('email')->label('Email')->copyable()->searchable(),
+            TextColumn::make('city')->label('Город')->searchable(),
             TextColumn::make('size_code')->label('Размер')->formatStateUsing(fn (string $state): string => str_replace('x', '×', $state)),
+            TextColumn::make('amount')->label('Сумма')->formatStateUsing(fn (?int $state): string => $state ? number_format($state, 0, ',', ' ').' ₽' : '—'),
             TextColumn::make('created_at')->label('Создана')->dateTime('d.m.Y H:i')->sortable(),
         ])->filters([
             SelectFilter::make('status')->label('Статус')->options([

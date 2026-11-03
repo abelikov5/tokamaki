@@ -30,7 +30,7 @@ class PosterCatalogController extends Controller
         $query
             ->when($validated['category'] ?? null, fn (Builder $builder, string $category) => $builder->where('category', $category))
             ->when($validated['orientation'] ?? null, fn (Builder $builder, string $orientation) => $builder->where('orientation', $orientation))
-            ->when($validated['size'] ?? null, fn (Builder $builder, string $size) => $builder->whereHas('variants', fn (Builder $variants) => $variants->where('size_code', $size)->where('is_active', true)));
+            ->when(($validated['size'] ?? null) === '40x50', fn (Builder $builder) => $builder->whereHas('variants', fn (Builder $variants) => $variants->where('size_code', '40x50')->where('is_active', true)));
 
         match ($validated['sort'] ?? 'new') {
             'price_asc' => $query->withMin('variants', 'price')->orderBy('variants_min_price'),

@@ -69,9 +69,8 @@
                         <p>{{ $poster->category ?? 'Интерьерный постер' }}</p>
                         <h3><a href="{{ route('posters.show', $poster) }}">{{ $poster->title }}</a></h3>
                         <div class="poster-card-meta">
-                            <span>{{ $poster->variants->pluck('size_code')->map(fn($size) => str_replace('x', '×', $size))->join(' · ') }}</span>
-                            @php($price = $poster->variants->whereNotNull('price')->min('price'))
-                            <strong>{{ $price ? 'от '.number_format($price, 0, ',', ' ').' ₽' : 'Цена на WB' }}</strong>
+                            <span>30×40 · 40×50</span>
+                            <strong>от {{ number_format((int) (config('catalog.prices.30x40') ?: 990), 0, ',', ' ') }} ₽</strong>
                         </div>
                     </div>
                 </article>

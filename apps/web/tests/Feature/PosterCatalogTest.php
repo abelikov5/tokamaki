@@ -52,6 +52,29 @@ class PosterCatalogTest extends TestCase
         $this->get(route('posters.show', $poster))->assertNotFound();
     }
 
+    public function test_30x40_is_available_even_without_wildberries_variant(): void
+    {
+        $poster = Poster::factory()->published()->create();
+        PosterVariant::create([
+            'poster_id' => $poster->id,
+            'nm_id' => '987654321',
+            'size_code' => '40x50',
+            'width_cm' => 40,
+            'height_cm' => 50,
+            'price' => 1290,
+            'is_active' => true,
+        ]);
+
+        $this->get('/postery?size=30x40')
+            ->assertOk()
+            ->assertSee($poster->title);
+
+        $this->get(route('posters.show', $poster))
+            ->assertOk()
+            ->assertSee('30×40')
+            ->assertSee(route('posters.custom', ['poster' => $poster->id, 'size' => '30x40']), false);
+    }
+
     public function test_sitemap_contains_published_product_page(): void
     {
         $poster = Poster::factory()->published()->create();

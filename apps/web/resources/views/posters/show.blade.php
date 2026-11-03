@@ -3,6 +3,15 @@
 @section('title'){{ $poster->seo_title ?: $poster->title.' — постер на подрамнике' }}@endsection
 @section('description'){{ $poster->seo_description ?: $poster->short_description }}@endsection
 
+@php
+    $prices = [
+        '30x40' => (int) (config('catalog.prices.30x40') ?: 990),
+        '40x50' => (int) (config('catalog.prices.40x50') ?: 1290),
+    ];
+    $selectedSize = in_array(request('size'), array_keys($prices), true) ? request('size') : '30x40';
+    $activeVariants = $poster->variants->where('is_active', true)->keyBy('size_code');
+@endphp
+
 @section('head')
 @php
     $schema = [
@@ -14,24 +23,22 @@
         'brand' => ['@type' => 'Brand', 'name' => 'Токамаки'],
         'productGroupID' => 'tokamaki-'.$poster->id,
         'variesBy' => ['https://schema.org/size'],
-        'hasVariant' => $poster->variants->map(function($variant) use ($poster) {
-            $product = [
+        'hasVariant' => collect($prices)->map(function($price, $size) use ($poster, $activeVariants) {
+            $variant = $activeVariants->get($size);
+            return [
                 '@type' => 'Product',
-                'name' => $poster->title.' '.$variant->size_code,
-                'sku' => $variant->nm_id,
-                'size' => str_replace('x', '×', $variant->size_code).' см',
-                'url' => route('posters.show', $poster).'?size='.$variant->size_code,
-            ];
-            if ($variant->price) {
-                $product['offers'] = [
+                'name' => $poster->title.' '.$size,
+                'sku' => $variant?->nm_id ?: 'tokamaki-'.$poster->id.'-'.$size,
+                'size' => str_replace('x', '×', $size).' см',
+                'url' => route('posters.show', $poster).'?size='.$size,
+                'offers' => [
                     '@type' => 'Offer',
-                    'price' => $variant->price,
+                    'price' => $price,
                     'priceCurrency' => 'RUB',
                     'availability' => 'https://schema.org/InStock',
-                    'url' => $variant->wildberries_url,
-                ];
-            }
-            return $product;
+                    'url' => route('posters.custom', ['poster' => $poster->id, 'size' => $size]),
+                ],
+            ];
         })->values()->all(),
     ];
 @endphp
@@ -60,18 +67,18 @@
         <div class="product-facts"><span>Холст</span><span>Деревянный подрамник</span><span>Готов к размещению</span></div>
         <fieldset class="variant-picker">
             <legend>Выберите размер</legend>
-            @foreach($poster->variants as $variant)
+            @foreach($prices as $size => $price)
+                @php($wbVariant = $activeVariants->get($size))
                 <label>
-                    <input type="radio" name="poster-size" value="{{ $variant->size_code }}" data-url="{{ $variant->wildberries_url }}" data-price="{{ $variant->price }}" @checked($loop->first)>
-                    <span><b>{{ str_replace('x', '×', $variant->size_code) }} см</b><small>{{ $variant->price ? number_format($variant->price, 0, ',', ' ').' ₽' : 'Цена на Wildberries' }}</small></span>
+                    <input type="radio" name="poster-size" value="{{ $size }}" data-order-url="{{ route('posters.custom', ['poster' => $poster->id, 'size' => $size]) }}" data-wb-url="{{ $wbVariant?->wildberries_url }}" @checked($selectedSize === $size)>
+                    <span><b>{{ str_replace('x', '×', $size) }} см</b><small>{{ number_format($price, 0, ',', ' ') }} ₽</small></span>
                 </label>
             @endforeach
         </fieldset>
-        @php($firstVariant = $poster->variants->first())
-        @if($firstVariant)
-            <a id="wb-buy" class="wb-buy" href="{{ $firstVariant->wildberries_url }}" rel="nofollow sponsored">Купить на Wildberries <span>↗</span></a>
-        @endif
-        <p class="market-note">Цена и наличие проверяются на странице Wildberries.</p>
+        @php($selectedWbVariant = $activeVariants->get($selectedSize))
+        <a id="poster-order" class="wb-buy" href="{{ route('posters.custom', ['poster' => $poster->id, 'size' => $selectedSize]) }}">Оформить заказ <span>→</span></a>
+        <a id="wb-buy" class="wb-secondary" href="{{ $selectedWbVariant?->wildberries_url ?: '#' }}" rel="nofollow sponsored" @if(!$selectedWbVariant) hidden @endif>Купить на Wildberries <span>↗</span></a>
+        <p class="market-note">Размер 30×40 доступен всегда, даже если его нет на Wildberries. Бесплатная доставка до ПВЗ.</p>
         <details open><summary>О постере</summary><div>{!! nl2br(e($poster->description)) !!}</div></details>
         <details><summary>Размер и материал</summary><div>Интерьерная печать на холсте. Изображение аккуратно натянуто на деревянный подрамник.</div></details>
     </div>
@@ -84,8 +91,10 @@
 @endif
 <script>
 document.querySelectorAll('[name="poster-size"]').forEach((input) => input.addEventListener('change', () => {
-    const button = document.getElementById('wb-buy');
-    if (button) button.href = input.dataset.url;
+    document.getElementById('poster-order').href = input.dataset.orderUrl;
+    const wbButton = document.getElementById('wb-buy');
+    wbButton.hidden = !input.dataset.wbUrl;
+    wbButton.href = input.dataset.wbUrl || '#';
 }));
 </script>
 @endsection

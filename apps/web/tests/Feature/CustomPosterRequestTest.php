@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\CustomPosterRequest;
+use App\Models\Poster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -19,19 +20,42 @@ class CustomPosterRequestTest extends TestCase
         $this->post('/postery/po-foto', [
             'photo' => UploadedFile::fake()->image('family.jpg', 1200, 1600),
             'size' => '40x50',
-            'name' => 'Анна',
-            'phone' => '+7 900 000-00-00',
             'email' => 'anna@example.test',
+            'city' => 'Москва',
+            'street' => 'ул. Тверская',
             'consent' => '1',
         ])->assertRedirect()->assertSessionHas('poster_request_success');
 
         $this->assertDatabaseHas('custom_poster_requests', [
-            'name' => 'Анна',
+            'email' => 'anna@example.test',
+            'city' => 'Москва',
             'size_code' => '40x50',
+            'amount' => 1290,
             'status' => 'new',
         ]);
 
         $path = (string) CustomPosterRequest::firstOrFail()->photo_path;
         Storage::disk('local')->assertExists($path);
+    }
+
+    public function test_customer_can_order_ready_poster_in_30x40_without_upload(): void
+    {
+        $poster = Poster::factory()->published()->create();
+
+        $this->post('/postery/po-foto', [
+            'poster_id' => $poster->id,
+            'size' => '30x40',
+            'email' => 'buyer@example.test',
+            'city' => 'Казань',
+            'street' => 'ул. Баумана',
+            'consent' => '1',
+        ])->assertRedirect()->assertSessionHas('poster_request_success');
+
+        $this->assertDatabaseHas('custom_poster_requests', [
+            'poster_id' => $poster->id,
+            'size_code' => '30x40',
+            'amount' => 990,
+            'photo_path' => null,
+        ]);
     }
 }

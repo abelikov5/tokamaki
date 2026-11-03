@@ -10,7 +10,7 @@ Route::view('/', 'home')->name('home');
 Route::view('/privacy', 'privacy')->name('privacy');
 Route::get('/sitemap.xml', [PosterCatalogController::class, 'sitemap'])->name('sitemap');
 Route::get('/postery', [PosterCatalogController::class, 'index'])->name('posters.index');
-Route::view('/postery/po-foto', 'posters.custom')->name('posters.custom');
+Route::get('/postery/po-foto', [CustomPosterRequestController::class, 'create'])->name('posters.custom');
 Route::post('/postery/po-foto', [CustomPosterRequestController::class, 'store'])->middleware('throttle:5,1')->name('posters.custom.store');
 Route::get('/admin/custom-poster-requests/{customPosterRequest}/photo', [CustomPosterRequestController::class, 'photo'])->name('admin.custom-poster-requests.photo');
 Route::get('/postery/{poster}', [PosterCatalogController::class, 'show'])->name('posters.show');
