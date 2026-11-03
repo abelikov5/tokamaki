@@ -54,6 +54,7 @@ class AiPosterContentTest extends TestCase
         $this->assertSame('Постер с горным озером на рассвете', $poster->title);
         $this->assertNotNull($poster->ai_generated_at);
         $this->assertSame($poster->content_hash, $poster->ai_input_hash);
+        $this->assertSame('priroda', $poster->ai_response['category_slug']);
         Http::assertSent(function (Request $request): bool {
             $userContent = $request['messages'][1]['content'];
 

@@ -219,6 +219,7 @@ PROMPT;
             'search_keywords' => array_slice($keywords, 0, 20),
             'ai_model' => $model,
             'ai_prompt_version' => self::PROMPT_VERSION,
+            'ai_response' => $result,
         ];
     }
 

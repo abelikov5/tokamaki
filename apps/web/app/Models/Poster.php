@@ -41,6 +41,7 @@ class Poster extends Model
         'style', 'room', 'primary_color', 'orientation', 'search_keywords', 'source_payload',
         'content_hash', 'source_updated_at', 'imported_at', 'published_at', 'ai_generation_status',
         'ai_model', 'ai_prompt_version', 'ai_input_hash', 'ai_generation_error', 'ai_generated_at',
+        'ai_response',
     ];
 
     protected function casts(): array
@@ -52,6 +53,7 @@ class Poster extends Model
             'imported_at' => 'datetime',
             'published_at' => 'datetime',
             'ai_generated_at' => 'datetime',
+            'ai_response' => 'array',
         ];
     }
 

@@ -37,35 +37,42 @@ class PosterForm
                     ->viewData(fn (?Poster $record): array => [
                         'images' => $record?->images()->get() ?? collect(),
                     ]),
-                Repeater::make('images')
-                    ->label('Управление фотографиями')
-                    ->relationship()
+                Section::make('Управление фотографиями')
+                    ->description('Добавление, удаление, порядок и подписи изображений')
+                    ->collapsible()
+                    ->collapsed()
                     ->schema([
-                        FileUpload::make('path')
-                            ->label('Фотография')
-                            ->image()
-                            ->disk('public')
-                            ->directory('posters/manual')
-                            ->visibility('public')
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                            ->maxSize(20480)
-                            ->imagePreviewHeight('190')
-                            ->openable()
-                            ->downloadable()
-                            ->required(fn (?PosterImage $record): bool => blank($record?->remote_url)),
-                        Select::make('role')->label('Тип')->required()->options([
-                            'main' => 'Главное изображение',
-                            'slide' => 'Дополнительное изображение',
-                        ])->default('slide'),
-                        TextInput::make('alt_text')->label('Описание для изображения')->maxLength(255),
+                        Repeater::make('images')
+                            ->hiddenLabel()
+                            ->relationship()
+                            ->schema([
+                                FileUpload::make('path')
+                                    ->label('Фотография')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('posters/manual')
+                                    ->visibility('public')
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                                    ->maxSize(20480)
+                                    ->imagePreviewHeight('190')
+                                    ->openable()
+                                    ->downloadable()
+                                    ->required(fn (?PosterImage $record): bool => blank($record?->remote_url)),
+                                Select::make('role')->label('Тип')->required()->options([
+                                    'main' => 'Главное изображение',
+                                    'slide' => 'Дополнительное изображение',
+                                ])->default('slide'),
+                                TextInput::make('alt_text')->label('Описание для изображения')->maxLength(255),
+                            ])
+                            ->columns(1)
+                            ->grid(3)
+                            ->orderColumn('sort_order')
+                            ->addActionLabel('Добавить фотографию')
+                            ->deleteAction(fn (Action $action) => $action
+                                ->label('Удалить фотографию')
+                                ->requiresConfirmation())
+                            ->columnSpanFull(),
                     ])
-                    ->columns(1)
-                    ->grid(3)
-                    ->orderColumn('sort_order')
-                    ->addActionLabel('Добавить фотографию')
-                    ->deleteAction(fn (Action $action) => $action
-                        ->label('Удалить фотографию')
-                        ->requiresConfirmation())
                     ->columnSpanFull(),
             ])->columnSpanFull(),
             Section::make('Контент')->schema([
@@ -116,6 +123,15 @@ class PosterForm
                 TextInput::make('ai_model')->label('Модель')->disabled(),
                 TextInput::make('ai_generated_at')->label('Дата генерации')->disabled(),
                 Textarea::make('ai_generation_error')->label('Ошибка')->disabled()->columnSpanFull(),
+                Textarea::make('ai_response')
+                    ->label('Ответ модели (JSON)')
+                    ->formatStateUsing(fn (mixed $state): string => is_array($state)
+                        ? (string) json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
+                        : (string) $state)
+                    ->rows(18)
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->columnSpanFull(),
             ])->columns(3),
             Section::make('Размеры и WB')->schema([
                 Repeater::make('variants')->relationship()->schema([
