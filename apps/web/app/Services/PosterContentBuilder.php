@@ -12,11 +12,14 @@ class PosterContentBuilder
      */
     public function build(array $source): array
     {
-        $sourceTitle = trim((string) ($source['group_name'] ?: $source['title'] ?? 'Интерьерный постер'));
-        $title = Str::of($sourceTitle)
+        $sourceTitle = trim((string) ($source['title'] ?: $source['group_name'] ?? 'Интерьерный постер'));
+        $subject = Str::of($sourceTitle)
             ->replaceMatches('/\s+(30|40|50)\s*[xх×]\s*(30|40|50)\s*(см)?/iu', '')
+            ->replaceMatches('/^(картина|постер|холст)(\s+(картина|постер|холст))*/iu', '')
             ->squish()
             ->toString();
+        $subject = $subject !== '' ? Str::ucfirst($subject) : 'Интерьерный постер';
+        $title = 'Постер «'.$subject.'»';
         $visualText = $this->visualText($source['visual_analysis'] ?? []);
         $taxonomy = $this->taxonomy(mb_strtolower($title.' '.$visualText));
         $shortDescription = $visualText !== ''

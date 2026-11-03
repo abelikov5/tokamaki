@@ -108,15 +108,16 @@ class PosterImportService
             ]);
             $wasCreated = ! $poster->exists;
 
-            if ($wasCreated) {
+            if ($wasCreated || $poster->status === 'draft') {
                 $content = $this->contentBuilder->build($source);
                 $poster->fill($content);
                 $poster->fill([
-                    'nm_id' => (string) $source['nm_id'],
-                    'vendor_code' => $source['vendor_code'] ?? null,
                     'slug' => Str::slug($content['title']).'-'.$source['nm_id'],
-                    'status' => 'draft',
                 ]);
+
+                if ($wasCreated) {
+                    $poster->status = 'draft';
+                }
             }
 
             $poster->fill([
@@ -161,9 +162,19 @@ class PosterImportService
             $source['title'] ?? null,
             $source['characteristics'] ?? [],
             $source['dimensions'] ?? [],
+            $source['sizes'] ?? [],
         ], JSON_UNESCAPED_UNICODE));
 
         if (preg_match('/(?:30\s*[xх×]\s*40|40\s*[xх×]\s*30)/u', $text) === 1) {
+            return '30x40';
+        }
+
+        $length = (int) data_get($source, 'dimensions.length', 0);
+        $width = (int) data_get($source, 'dimensions.width', 0);
+        $longSide = max($length, $width);
+        $shortSide = min($length, $width);
+
+        if ($longSide >= 38 && $longSide <= 45 && $shortSide >= 28 && $shortSide <= 35) {
             return '30x40';
         }
 

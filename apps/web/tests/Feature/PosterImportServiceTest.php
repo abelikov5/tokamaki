@@ -51,6 +51,7 @@ class PosterImportServiceTest extends TestCase
             'nm_id' => '10003',
             'status' => 'draft',
         ]);
+        $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
         $this->assertDatabaseCount('poster_variants', 2);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
         $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);
@@ -67,11 +68,13 @@ class PosterImportServiceTest extends TestCase
             'group_name' => 'Горный рассвет',
             'nm_id' => $nmId,
             'vendor_code' => 'poster_'.$nmId,
-            'title' => 'Картина постер '.$size.' горы',
+            'title' => 'Картина постер горы',
             'description' => 'Старое описание WB, которое нельзя копировать.',
             'type' => 'poster',
             'characteristics' => [['value' => [$size.' см']]],
-            'dimensions' => [],
+            'dimensions' => $size === '40x30'
+                ? ['length' => 42, 'width' => 32]
+                : ['length' => 52, 'width' => 42],
             'sizes' => [],
             'visual_analysis' => ['summary' => 'Спокойный горный пейзаж в утреннем свете.'],
             'photos' => [[
