@@ -44,7 +44,7 @@ class AiPosterContentTest extends TestCase
             'https://aitunnel.test/*' => Http::response($this->responsePayload([
                 ['name' => 'Природа', 'slug' => 'priroda', 'type' => 'theme'],
                 ['name' => 'Бохо', 'slug' => 'boho', 'type' => 'style'],
-                ['name' => 'Гостиная', 'slug' => 'gostinaya', 'type' => 'room'],
+                ['name' => 'Для гостиной', 'slug' => 'dlya-gostinoy', 'type' => 'room'],
             ])),
         ]);
 

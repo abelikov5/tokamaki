@@ -141,6 +141,7 @@ class AiPosterContentService
 - groups: от 3 до 6 подходящих групп разных типов. type — только theme, style, room или collection;
 - сначала используй названия и slug из existing_groups;
 - если действительно не хватает точной группы, предложи новую: дай короткое русское name, стабильный транслитерированный slug и правильный type;
+- name должно быть короткой именительной формой: «Спальня», а не «Для спальни»; «Гостиная», а не «Для гостиной»;
 - не создавай новую группу-синоним существующей, не используй слишком общие или рекламные формулировки;
 - обычно выбери хотя бы один theme, а также подходящие style и room; collection добавляй только когда она уместна;
 - style и room: короткие понятные значения на русском;
@@ -247,9 +248,9 @@ PROMPT;
                 continue;
             }
 
-            $name = $this->plainText($suggestion['name'] ?? '', 60);
-            $slug = Str::slug((string) ($suggestion['slug'] ?? $name));
             $type = in_array($suggestion['type'] ?? null, $types, true) ? $suggestion['type'] : 'theme';
+            $name = $this->groupName($suggestion['name'] ?? '', $type);
+            $slug = Str::slug($name);
             $category = $categories[$slug] ?? null;
 
             if ($category === null && mb_strlen($name) >= 2) {
@@ -277,6 +278,27 @@ PROMPT;
         }
 
         return $groups;
+    }
+
+    private function groupName(mixed $value, string $type): string
+    {
+        $name = $this->plainText($value, 60);
+
+        if ($type === 'room') {
+            $rooms = [
+                'для спальни' => 'Спальня',
+                'для гостиной' => 'Гостиная',
+                'для детской' => 'Детская',
+                'для кухни' => 'Кухня',
+                'для кабинета' => 'Кабинет',
+                'для прихожей' => 'Прихожая',
+                'для ванной комнаты' => 'Ванная',
+            ];
+            $name = $rooms[mb_strtolower($name)]
+                ?? Str::of($name)->replaceMatches('/^для\s+/iu', '')->ucfirst()->toString();
+        }
+
+        return $name;
     }
 
     private function plainText(mixed $value, int $limit): string
