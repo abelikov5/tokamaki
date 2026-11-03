@@ -10,10 +10,12 @@ services:
     restart: unless-stopped
     depends_on:
       - php
+    volumes:
+      - poster-media:/var/www/html/public/storage:ro
 
   php:
     build: ./apps/web
-    environment:
+    environment: &web-environment
       APP_NAME: Paints by Numbers
       APP_ENV: production
       APP_DEBUG: "false"
@@ -40,11 +42,24 @@ services:
       POSTER_PRICE_40X50: ${POSTER_PRICE_40X50:-1290}
     command: sh -c "php artisan migrate --force && php artisan db:seed --class=AdminUserSeeder --force && php-fpm"
     restart: unless-stopped
+    volumes:
+      - poster-media:/var/www/html/storage/app/public
     depends_on:
       postgres:
         condition: service_healthy
       generator:
         condition: service_started
+
+  queue:
+    build: ./apps/web
+    environment: *web-environment
+    command: php artisan queue:work --sleep=3 --tries=3 --timeout=900
+    restart: unless-stopped
+    volumes:
+      - poster-media:/var/www/html/storage/app/public
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   generator:
     build:
@@ -80,5 +95,6 @@ services:
 
 volumes:
   generator-results:
+  poster-media:
   postgres-data:
   redis-data:
