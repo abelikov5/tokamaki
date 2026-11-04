@@ -121,13 +121,17 @@ class PosterCatalogController extends Controller
                 $variants = array_unique([$term, ...($synonyms[$term] ?? [])]);
                 $searchQuery->where(function (Builder $termQuery) use ($variants): void {
                     foreach ($variants as $variant) {
-                        $termQuery->orWhere('title', 'like', '%'.$variant.'%')
-                            ->orWhere('description', 'like', '%'.$variant.'%')
-                            ->orWhere('category', 'like', '%'.$variant.'%')
-                            ->orWhere('style', 'like', '%'.$variant.'%')
-                            ->orWhere('room', 'like', '%'.$variant.'%')
-                            ->orWhere('primary_color', 'like', '%'.$variant.'%')
-                            ->orWhereHas('categories', fn (Builder $categories) => $categories->where('name', 'like', '%'.$variant.'%'));
+                        $like = '%'.mb_strtolower($variant).'%';
+
+                        $termQuery
+                            ->orWhereRaw('LOWER(title) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(description) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(category) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(style) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(room) LIKE ?', [$like])
+                            ->orWhereRaw('LOWER(primary_color) LIKE ?', [$like])
+                            ->orWhereJsonContains('search_keywords', $variant)
+                            ->orWhereHas('categories', fn (Builder $categories) => $categories->whereRaw('LOWER(name) LIKE ?', [$like]));
                     }
                 });
             }

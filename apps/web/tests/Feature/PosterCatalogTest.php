@@ -26,6 +26,23 @@ class PosterCatalogTest extends TestCase
             ->assertDontSee('Черновик');
     }
 
+    public function test_catalog_searches_ai_keywords_when_query_has_a_different_word_form(): void
+    {
+        $rainbow = Poster::factory()->published()->create([
+            'title' => 'Картина на холсте Радужное небо с облаками',
+            'search_keywords' => ['радуга', 'небо с радугой'],
+        ]);
+        $other = Poster::factory()->published()->create([
+            'title' => 'Картина с горами',
+            'search_keywords' => ['горы'],
+        ]);
+
+        $this->get('/kartiny-na-holste?q=радуга')
+            ->assertOk()
+            ->assertSee($rainbow->title)
+            ->assertDontSee($other->title);
+    }
+
     public function test_published_poster_has_unique_page_and_variant_link(): void
     {
         $poster = Poster::factory()->published()->create();
