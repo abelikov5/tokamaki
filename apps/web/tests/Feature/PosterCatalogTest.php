@@ -43,7 +43,7 @@ class PosterCatalogTest extends TestCase
             ->assertDontSee($other->title);
     }
 
-    public function test_published_poster_has_unique_page_and_variant_link(): void
+    public function test_published_poster_has_unique_page_and_order_dialog_without_marketplace_link(): void
     {
         $poster = Poster::factory()->published()->create();
         PosterVariant::create([
@@ -60,7 +60,10 @@ class PosterCatalogTest extends TestCase
             ->assertOk()
             ->assertSee($poster->title)
             ->assertSee('30×40')
-            ->assertSee('https://www.wildberries.ru/catalog/123456789/detail.aspx', false);
+            ->assertSee('id="poster-order-dialog"', false)
+            ->assertSee(route('posters.custom.store'), false)
+            ->assertSee('name="poster_id" value="'.$poster->id.'"', false)
+            ->assertDontSee('https://www.wildberries.ru/catalog/123456789/detail.aspx', false);
     }
 
     public function test_draft_poster_page_is_not_public(): void

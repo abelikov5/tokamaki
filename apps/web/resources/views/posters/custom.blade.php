@@ -27,7 +27,6 @@
 
         <ul class="checkout-benefits">
             <li><span>✓</span><div><strong>Холст на подрамнике</strong><small>Готовую картину можно сразу разместить на стене</small></div></li>
-            <li><span>✓</span><div><strong>Размер 30×40 всегда доступен</strong><small>Независимо от наличия этой позиции на Wildberries</small></div></li>
             <li><span>✓</span><div><strong>Бесплатная доставка</strong><small>До ПВЗ Авито или СДЭК</small></div></li>
             <li><span>✓</span><div><strong>Проверка перед печатью</strong><small>Если потребуется, согласуем детали по email</small></div></li>
         </ul>
