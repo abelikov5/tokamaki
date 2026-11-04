@@ -30,6 +30,10 @@ class PosterAdminTest extends TestCase
         $this->actingAs($admin)->get('/admin/custom-poster-requests')->assertOk();
 
         Livewire::actingAs($admin)->test(ListPosterCategories::class)->assertOk();
+        Livewire::actingAs($admin)->test(ListPosters::class)
+            ->assertOk()
+            ->assertTableColumnExists('is_admin_recommended')
+            ->assertTableColumnExists('view_count');
 
         PosterImport::create([
             'source_user_id' => 1,
@@ -80,6 +84,8 @@ class PosterAdminTest extends TestCase
             ->assertSee('https://images.example.test/poster.jpg', false)
             ->assertFormFieldExists('images')
             ->assertFormFieldExists('vendor_code')
+            ->assertFormFieldExists('is_admin_recommended')
+            ->assertFormFieldExists('view_count')
             ->assertActionExists('publish')
             ->assertActionExists('generateAiContent')
             ->callAction('publish');

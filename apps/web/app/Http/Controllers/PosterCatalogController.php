@@ -39,7 +39,7 @@ class PosterCatalogController extends Controller
         match ($validated['sort'] ?? 'new') {
             'price_asc' => $query->withMin('variants', 'price')->orderBy('variants_min_price'),
             'price_desc' => $query->withMax('variants', 'price')->orderByDesc('variants_max_price'),
-            default => $query->orderByDesc('published_at'),
+            default => $query->orderByDesc('is_admin_recommended')->orderByDesc('published_at'),
         };
 
         return view('posters.index', [
@@ -64,6 +64,7 @@ class PosterCatalogController extends Controller
 
         $poster = Poster::query()->where('slug', $slug)->firstOrFail();
         abort_unless($poster->status === 'published' && $poster->published_at !== null, 404);
+        $poster->increment('view_count');
         $poster->load(['images', 'variants', 'categories']);
 
         $groupIds = $poster->categories->pluck('id');
@@ -98,6 +99,7 @@ class PosterCatalogController extends Controller
         }
 
         $related = $relatedQuery
+            ->orderByDesc('is_admin_recommended')
             ->orderByDesc('related_primary_theme_count')
             ->orderByDesc('related_theme_count')
             ->orderByDesc('related_style_count')
@@ -132,6 +134,7 @@ class PosterCatalogController extends Controller
         $posters = $category->posters()
             ->published()
             ->with(['images', 'variants', 'categories'])
+            ->orderByDesc('is_admin_recommended')
             ->orderByDesc('published_at')
             ->paginate(24);
 

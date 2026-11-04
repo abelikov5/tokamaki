@@ -32,7 +32,11 @@ class PosterForm
                 TextInput::make('slug')->label('URL')->required()->unique(ignoreRecord: true),
                 TextInput::make('nm_id')->label('Основной nm_id')->disabled(),
                 TextInput::make('vendor_code')->label('Артикул')->disabled(),
-            ])->columns(4),
+                Toggle::make('is_admin_recommended')
+                    ->label('Рекомендация админа')
+                    ->helperText('Поднимает картину в каталоге, подборках и похожих товарах.'),
+                TextInput::make('view_count')->label('Просмотры')->numeric()->disabled(),
+            ])->columns(3)->columnSpanFull(),
             Section::make('Фотографии')->schema([
                 View::make('filament.poster-images')
                     ->viewData(fn (?Poster $record): array => [

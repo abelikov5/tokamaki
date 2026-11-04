@@ -9,9 +9,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -26,6 +28,14 @@ class PostersTable
                     ->getStateUsing(fn (Poster $record): ?string => $record->primary_image_url)
                     ->height(72),
                 TextColumn::make('title')->label('Название')->searchable()->wrap()->limit(55),
+                IconColumn::make('is_admin_recommended')
+                    ->label('Рекомендация')
+                    ->boolean()
+                    ->sortable(),
+                TextColumn::make('view_count')
+                    ->label('Просмотры')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('status')->label('Статус')->badge()->formatStateUsing(fn (string $state): string => match ($state) {
                     'draft' => 'Черновик',
                     'published' => 'Опубликован',
@@ -60,6 +70,10 @@ class PostersTable
                     'published' => 'Опубликован',
                     'archived' => 'Архив',
                 ]),
+                TernaryFilter::make('is_admin_recommended')
+                    ->label('Рекомендация админа')
+                    ->trueLabel('Только рекомендованные')
+                    ->falseLabel('Только обычные'),
                 SelectFilter::make('categories')
                     ->label('Группа')
                     ->relationship('categories', 'name', fn ($query) => $query->orderBy('type')->orderBy('sort_order')->orderBy('name'))

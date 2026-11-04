@@ -37,7 +37,8 @@ class Poster extends Model
     }
 
     protected $fillable = [
-        'source_id', 'source_group_id', 'source_key', 'source_user_id', 'nm_id', 'vendor_code', 'slug', 'status', 'title',
+        'source_id', 'source_group_id', 'source_key', 'source_user_id', 'nm_id', 'vendor_code', 'slug', 'status',
+        'is_admin_recommended', 'view_count', 'title',
         'short_description', 'description', 'seo_title', 'seo_description', 'category', 'category_id',
         'style', 'room', 'primary_color', 'orientation', 'search_keywords', 'source_payload',
         'content_hash', 'source_updated_at', 'imported_at', 'published_at', 'ai_generation_status',
@@ -48,6 +49,8 @@ class Poster extends Model
     protected function casts(): array
     {
         return [
+            'is_admin_recommended' => 'boolean',
+            'view_count' => 'integer',
             'search_keywords' => 'array',
             'source_payload' => 'array',
             'source_updated_at' => 'datetime',

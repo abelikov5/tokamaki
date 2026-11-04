@@ -254,4 +254,75 @@ class PosterCatalogTest extends TestCase
                 $natureOnly->id,
             ]);
     }
+
+    public function test_product_page_increments_view_count(): void
+    {
+        $poster = Poster::factory()->published()->create(['view_count' => 7]);
+
+        $this->get(route('posters.show', $poster))->assertOk();
+        $this->get(route('posters.show', $poster))->assertOk();
+
+        $this->assertSame(9, $poster->fresh()->view_count);
+    }
+
+    public function test_admin_recommended_posters_are_first_in_catalog_and_category(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Животные',
+            'slug' => 'zhivotnye',
+            'type' => 'theme',
+            'is_active' => true,
+        ]);
+        $regular = Poster::factory()->published()->create([
+            'title' => 'Новая обычная картина',
+            'published_at' => now(),
+        ]);
+        $recommended = Poster::factory()->published()->create([
+            'title' => 'Выбор администратора',
+            'is_admin_recommended' => true,
+            'published_at' => now()->subDay(),
+        ]);
+        $regular->categories()->attach($category);
+        $recommended->categories()->attach($category);
+
+        $this->get(route('posters.index'))
+            ->assertOk()
+            ->assertViewHas('posters', fn ($posters): bool => $posters->pluck('id')->all() === [
+                $recommended->id,
+                $regular->id,
+            ]);
+
+        $this->get(route('posters.show', $category))
+            ->assertOk()
+            ->assertViewHas('posters', fn ($posters): bool => $posters->pluck('id')->all() === [
+                $recommended->id,
+                $regular->id,
+            ]);
+    }
+
+    public function test_admin_recommended_posters_are_first_in_related_results(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Животные',
+            'slug' => 'zhivotnye',
+            'type' => 'theme',
+            'is_active' => true,
+        ]);
+        $poster = Poster::factory()->published()->create(['category_id' => $category->id]);
+        $poster->categories()->attach($category);
+        $regular = Poster::factory()->published()->create(['title' => 'Обычная картина']);
+        $regular->categories()->attach($category);
+        $recommended = Poster::factory()->published()->create([
+            'title' => 'Рекомендованная картина',
+            'is_admin_recommended' => true,
+        ]);
+        $recommended->categories()->attach($category);
+
+        $this->get(route('posters.show', $poster))
+            ->assertOk()
+            ->assertViewHas('related', fn ($related): bool => $related->pluck('id')->take(2)->all() === [
+                $recommended->id,
+                $regular->id,
+            ]);
+    }
 }
