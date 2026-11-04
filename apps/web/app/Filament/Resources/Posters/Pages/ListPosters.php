@@ -29,9 +29,9 @@ class ListPosters extends ListRecords
                     Select::make('selection_mode')
                         ->label('Режим импорта')
                         ->options([
-                            'all' => 'Все постеры',
+                            'all' => 'Все картины',
                             'selected' => 'По списку nm_id',
-                            'random' => 'Случайные постеры',
+                            'random' => 'Случайные картины',
                         ])
                         ->default('all')
                         ->required()
@@ -69,7 +69,7 @@ class ListPosters extends ListRecords
                     ImportPostersJob::dispatch($posterImport->id);
                     Notification::make()
                         ->title('Импорт поставлен в очередь')
-                        ->body('Ход выполнения отображается в разделе «Импорты постеров».')
+                        ->body('Ход выполнения отображается в разделе «Импорты картин».')
                         ->success()
                         ->send();
                 }),

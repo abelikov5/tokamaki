@@ -16,6 +16,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CustomPosterRequestController extends Controller
 {
+    public function legacyCreate(Request $request): RedirectResponse
+    {
+        return redirect()->route('posters.custom', $request->query(), 301);
+    }
+
     public function create(Request $request): View
     {
         $validated = $request->validate([
@@ -55,12 +60,12 @@ class CustomPosterRequestController extends Controller
             : null;
 
         if (isset($validated['poster_id']) && ! $poster) {
-            throw ValidationException::withMessages(['poster_id' => 'Выбранный постер недоступен.']);
+            throw ValidationException::withMessages(['poster_id' => 'Выбранная картина недоступна.']);
         }
 
         $file = $request->file('photo');
         if (! $poster && ! $file) {
-            throw ValidationException::withMessages(['photo' => 'Загрузите фотографию для персонального постера.']);
+            throw ValidationException::withMessages(['photo' => 'Загрузите фотографию для персональной картины на холсте.']);
         }
 
         $path = $file?->store('custom-posters/'.now()->format('Y/m'), 'local');

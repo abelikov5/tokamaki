@@ -20,13 +20,13 @@ class PosterResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static ?string $navigationLabel = 'Постеры';
+    protected static ?string $navigationLabel = 'Картины на холсте';
 
     protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
-    protected static ?string $modelLabel = 'постер';
+    protected static ?string $modelLabel = 'картина';
 
-    protected static ?string $pluralModelLabel = 'Постеры';
+    protected static ?string $pluralModelLabel = 'Картины на холсте';
 
     protected static ?string $recordTitleAttribute = 'title';
 

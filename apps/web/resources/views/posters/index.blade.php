@@ -1,18 +1,18 @@
 @extends('layouts.posters')
 
-@section('title', 'Постеры на подрамнике 30×40 и 40×50 — каталог Токамаки')
-@section('description', 'Готовые интерьерные постеры на подрамнике. Поиск по сюжету, стилю, комнате, цвету и размеру.')
+@section('title', 'Картины на холсте 30×40 и 40×50 — Токамаки')
+@section('description', 'Готовые интерьерные картины с печатью на холсте и деревянным подрамником. Поиск по сюжету, стилю, комнате и цвету.')
 
 @section('content')
 <section class="catalog-hero">
     <div>
         <p class="poster-kicker">Готовы украсить стену</p>
-        <h1>Постеры, которые<br><em>собирают интерьер</em></h1>
+        <h1>Картины на холсте,<br><em>которые собирают интерьер</em></h1>
         <p>Выбирайте готовую работу или создайте свою. Холст уже натянут на деревянный подрамник — останется только повесить.</p>
     </div>
     <a class="custom-poster-card" href="{{ route('posters.custom') }}">
         <span>Ваше изображение</span>
-        <strong>Постер<br>по своему фото</strong>
+        <strong>Картина<br>по своему фото</strong>
         <i>Создать →</i>
     </a>
 </section>
@@ -20,8 +20,8 @@
 <section class="catalog-shell">
     <form class="catalog-tools" method="get" action="{{ route('posters.index') }}">
         <label class="catalog-search">
-            <span class="sr-only">Поиск постеров</span>
-            <input name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Например, бежевый постер с горами">
+            <span class="sr-only">Поиск картин</span>
+            <input name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Например, бежевая картина с горами">
             <button type="submit">Найти</button>
         </label>
         <div class="catalog-filters">
@@ -56,12 +56,12 @@
     </form>
 
     <div class="catalog-heading">
-        <h2>{{ filled($filters['q'] ?? null) ? 'Результаты поиска' : 'Готовые постеры' }}</h2>
-        <span>{{ $posters->total() }} {{ trans_choice('постер|постера|постеров', $posters->total()) }}</span>
+        <h2>{{ filled($filters['q'] ?? null) ? 'Результаты поиска' : 'Готовые картины' }}</h2>
+        <span>{{ $posters->total() }} {{ trans_choice('картина|картины|картин', $posters->total()) }}</span>
     </div>
 
     @if($posters->isEmpty())
-        <div class="empty-catalog"><h2>Ничего не нашли</h2><p>Попробуйте убрать часть фильтров или описать сюжет другими словами.</p><a href="{{ route('posters.index') }}">Показать все постеры</a></div>
+        <div class="empty-catalog"><h2>Ничего не нашли</h2><p>Попробуйте убрать часть фильтров или описать сюжет другими словами.</p><a href="{{ route('posters.index') }}">Показать все картины</a></div>
     @else
         <div class="poster-grid">
             @foreach($posters as $poster)
@@ -70,7 +70,7 @@
                         @if($poster->primary_image_url)<img src="{{ $poster->primary_image_url }}" alt="{{ $poster->title }}" loading="lazy">@else<span>Токамаки</span>@endif
                     </a>
                     <div>
-                        <p>{{ $poster->categories->take(3)->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерный постер') }}</p>
+                        <p>{{ $poster->categories->take(3)->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерная картина') }}</p>
                         <h3><a href="{{ route('posters.show', $poster) }}">{{ $poster->title }}</a></h3>
                         <div class="poster-card-meta">
                             <span>30×40 · 40×50</span>

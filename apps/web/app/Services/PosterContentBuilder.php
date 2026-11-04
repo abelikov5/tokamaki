@@ -13,32 +13,32 @@ class PosterContentBuilder
      */
     public function build(array $source): array
     {
-        $sourceTitle = trim((string) ($source['title'] ?: $source['group_name'] ?? 'Интерьерный постер'));
+        $sourceTitle = trim((string) ($source['title'] ?: $source['group_name'] ?? 'Интерьерная картина'));
         $subject = Str::of($sourceTitle)
             ->replaceMatches('/\s+(30|40|50)\s*[xх×]\s*(30|40|50)\s*(см)?/iu', '')
             ->replaceMatches('/^(картина|постер|холст)(\s+(картина|постер|холст))*/iu', '')
             ->squish()
             ->toString();
-        $subject = $subject !== '' ? Str::ucfirst($subject) : 'Интерьерный постер';
-        $title = 'Постер «'.$subject.'»';
+        $subject = $subject !== '' ? Str::ucfirst($subject) : 'Интерьерная картина';
+        $title = 'Картина на холсте «'.$subject.'»';
         $visualText = $this->visualText($source['visual_analysis'] ?? []);
         $taxonomy = $this->taxonomy(mb_strtolower($title.' '.$visualText));
         $sourceColors = $this->sourceColors($source);
         $primaryColor = $sourceColors !== [] ? implode(', ', $sourceColors) : $taxonomy['color'];
         $shortDescription = $visualText !== ''
             ? Str::limit($visualText, 180)
-            : 'Готовый интерьерный постер на подрамнике для дома, офиса или подарка.';
+            : 'Готовая интерьерная картина с печатью на холсте и деревянным подрамником.';
 
         return [
             'title' => $title,
             'short_description' => $shortDescription,
             'description' => sprintf(
-                'Интерьерный постер «%s» напечатан на холсте и натянут на деревянный подрамник. %s Картина готова к размещению на стене и подойдёт для современного интерьера или подарка.',
-                $title,
+                'Картина «%s» напечатана на холсте и натянута на деревянный подрамник. %s Это интерьерная печать, а не ручная живопись. Картина готова к размещению на стене.',
+                $subject,
                 $visualText !== '' ? rtrim($visualText, '.').'.' : ''
             ),
-            'seo_title' => Str::limit($title.' — постер на подрамнике | Токамаки', 60, ''),
-            'seo_description' => Str::limit('Купить постер «'.$title.'» на подрамнике. Размеры 30×40 и 40×50 см. Интерьерная печать Tokamaki.', 160, ''),
+            'seo_title' => Str::limit($subject.' — картина на холсте | Токамаки', 60, ''),
+            'seo_description' => Str::limit('Купить картину «'.$subject.'» с печатью на холсте и деревянным подрамником. Размеры 30×40 и 40×50 см.', 160, ''),
             'category' => $taxonomy['category'],
             'style' => $taxonomy['style'],
             'room' => $taxonomy['room'],
@@ -46,7 +46,7 @@ class PosterContentBuilder
             'orientation' => $taxonomy['orientation'],
             'search_keywords' => Poster::normalizeSearchKeywords([
                 $taxonomy['category'], $taxonomy['style'], $taxonomy['room'], $sourceColors === [] ? $taxonomy['color'] : null,
-                ...$sourceColors,
+                ...$sourceColors, 'картина на холсте', 'интерьерная картина', 'постер на холсте',
                 ...preg_split('/[^\p{L}\p{N}-]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY),
             ]),
         ];
@@ -118,7 +118,7 @@ class PosterContentBuilder
             Str::contains($text, ['город', 'улиц', 'москва', 'париж', 'архитект']) => 'Города',
             Str::contains($text, ['абстрак', 'геометр', 'линии', 'формы']) => 'Абстракция',
             Str::contains($text, ['детск', 'мульт', 'ребен']) => 'Для детской',
-            default => 'Интерьерные постеры',
+            default => 'Интерьерные картины',
         };
 
         return [

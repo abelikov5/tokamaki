@@ -24,7 +24,7 @@ class AiPosterContentTest extends TestCase
             'services.aitunnel.api_url' => 'https://aitunnel.test/v1/chat/completions',
             'services.aitunnel.poster_model' => 'qwen3.7-flash',
         ]);
-        $currentCategory = PosterCategory::create(['name' => 'Интерьерные постеры', 'slug' => 'interernye-postery', 'is_active' => true]);
+        $currentCategory = PosterCategory::create(['name' => 'Интерьерные картины', 'slug' => 'interernye-kartiny', 'is_active' => true]);
         $natureCategory = PosterCategory::create(['name' => 'Природа', 'slug' => 'priroda', 'is_active' => true, 'sort_order' => 10]);
         PosterCategory::create(['name' => 'Скрытая', 'slug' => 'skrytaya', 'is_active' => false]);
         $poster = Poster::factory()->published()->create([
@@ -54,7 +54,7 @@ class AiPosterContentTest extends TestCase
         $this->assertSame('generated', $poster->ai_generation_status);
         $this->assertSame('qwen3.7-flash', $poster->ai_model);
         $this->assertSame(AiPosterContentService::PROMPT_VERSION, $poster->ai_prompt_version);
-        $this->assertSame('Постер с горным озером на рассвете', $poster->title);
+        $this->assertSame('Картина на холсте с горным озером', $poster->title);
         $this->assertNotNull($poster->ai_generated_at);
         $this->assertSame($poster->content_hash, $poster->ai_input_hash);
         $this->assertSame(['Природа', 'Бохо', 'Гостиная'], $poster->categories()->orderByPivot('poster_category_id')->pluck('name')->all());
@@ -68,7 +68,7 @@ class AiPosterContentTest extends TestCase
             return $request['model'] === 'qwen3.7-flash'
                 && is_string($userContent)
                 && str_contains($userContent, 'existing_groups')
-                && str_contains($userContent, 'interernye-postery')
+                && str_contains($userContent, 'interernye-kartiny')
                 && str_contains($userContent, 'priroda')
                 && ! str_contains($userContent, 'skrytaya')
                 && ! str_contains($userContent, 'Старое описание Wildberries');
@@ -84,7 +84,7 @@ class AiPosterContentTest extends TestCase
             'services.aitunnel.api_url' => 'https://aitunnel.test/v1/chat/completions',
             'services.aitunnel.poster_model' => 'vision-flash',
         ]);
-        $category = PosterCategory::create(['name' => 'Интерьерные постеры', 'slug' => 'interernye-postery', 'is_active' => true]);
+        $category = PosterCategory::create(['name' => 'Интерьерные картины', 'slug' => 'interernye-kartiny', 'is_active' => true]);
         $poster = Poster::factory()->published()->create([
             'category_id' => $category->id,
             'source_payload' => ['title' => 'Неизвестный сюжет'],
@@ -98,7 +98,7 @@ class AiPosterContentTest extends TestCase
         ]);
         Http::fake([
             'https://aitunnel.test/*' => Http::response($this->responsePayload([
-                ['name' => 'Интерьерные постеры', 'slug' => 'interernye-postery', 'type' => 'collection'],
+                ['name' => 'Интерьерные картины', 'slug' => 'interernye-kartiny', 'type' => 'collection'],
             ])),
         ]);
 
@@ -119,7 +119,7 @@ class AiPosterContentTest extends TestCase
             'services.aitunnel.api_url' => 'https://aitunnel.test/v1/chat/completions',
             'services.aitunnel.poster_model' => 'qwen3.7-flash',
         ]);
-        $category = PosterCategory::create(['name' => 'Интерьерные постеры', 'slug' => 'interernye-postery', 'is_active' => true]);
+        $category = PosterCategory::create(['name' => 'Интерьерные картины', 'slug' => 'interernye-kartiny', 'is_active' => true]);
         $poster = Poster::factory()->published()->create([
             'category_id' => $category->id,
             'source_payload' => ['visual_analysis' => ['description' => 'Абстрактный сюжет']],
@@ -145,16 +145,16 @@ class AiPosterContentTest extends TestCase
             'choices' => [[
                 'message' => [
                     'content' => json_encode([
-                        'title' => 'Постер с горным озером на рассвете',
+                        'title' => 'Картина на холсте с горным озером',
                         'short_description' => str_repeat('Спокойный горный пейзаж в мягких утренних оттенках. ', 3),
-                        'description' => str_repeat('На постере изображено тихое горное озеро в лучах рассвета. Сдержанная палитра и глубокая перспектива создают спокойное настроение и визуально расширяют пространство. ', 5),
-                        'seo_title' => 'Постер с горным озером на рассвете | Токамаки',
-                        'seo_description' => str_repeat('Интерьерный постер с горным озером и рассветным небом на холсте с деревянным подрамником. ', 2),
+                        'description' => str_repeat('На картине изображено тихое горное озеро в лучах рассвета. Сдержанная палитра и глубокая перспектива создают спокойное настроение и визуально расширяют пространство. ', 5),
+                        'seo_title' => 'Горное озеро — картина на холсте',
+                        'seo_description' => str_repeat('Интерьерная картина с горным озером и рассветным небом, напечатанная на холсте. ', 2),
                         'groups' => $groups,
                         'style' => 'Современный',
                         'room' => 'Гостиная',
                         'orientation' => 'vertical',
-                        'search_keywords' => ['горное озеро', 'рассвет', 'пейзаж', 'постер в гостиную', 'горы', 'спокойный интерьер'],
+                        'search_keywords' => ['горное озеро', 'рассвет', 'пейзаж', 'картина в гостиную', 'горы', 'спокойный интерьер'],
                     ], JSON_UNESCAPED_UNICODE),
                 ],
             ]],

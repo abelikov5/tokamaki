@@ -20,7 +20,7 @@ class PosterCatalogTest extends TestCase
         ]);
         Poster::factory()->create(['title' => 'Черновик']);
 
-        $this->get('/postery?q=машина')
+        $this->get('/kartiny-na-holste?q=машина')
             ->assertOk()
             ->assertSee($published->title)
             ->assertDontSee('Черновик');
@@ -66,7 +66,7 @@ class PosterCatalogTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->get('/postery?size=30x40')
+        $this->get('/kartiny-na-holste?size=30x40')
             ->assertOk()
             ->assertSee($poster->title);
 
@@ -93,25 +93,25 @@ class PosterCatalogTest extends TestCase
             'slug' => 'zhivotnye',
             'is_active' => true,
             'sort_order' => 10,
-            'seo_title' => 'Постеры с животными',
-            'seo_description' => 'Авторские постеры с животными для интерьера.',
+            'seo_title' => 'Картины с животными',
+            'seo_description' => 'Картины на холсте с животными для интерьера.',
         ]);
         $included = Poster::factory()->published()->create(['category_id' => $category->id]);
         $included->categories()->attach($category);
-        $excluded = Poster::factory()->published()->create(['title' => 'Постер из другой категории']);
+        $excluded = Poster::factory()->published()->create(['title' => 'Картина из другой категории']);
 
-        $this->get('/postery/zhivotnye')
+        $this->get('/kartiny-na-holste/zhivotnye')
             ->assertOk()
-            ->assertSee('Постеры с животными')
+            ->assertSee('Картины с животными')
             ->assertSee($included->title)
             ->assertDontSee($excluded->title);
 
-        $this->get('/postery?category=zhivotnye')
+        $this->get('/kartiny-na-holste?category=zhivotnye')
             ->assertOk()
             ->assertSee($included->title)
             ->assertDontSee($excluded->title);
 
-        $this->get('/sitemap.xml')->assertSee('/postery/zhivotnye', false);
+        $this->get('/sitemap.xml')->assertSee('/kartiny-na-holste/zhivotnye', false);
     }
 
     public function test_inactive_category_is_hidden_without_hiding_its_posters_from_main_catalog(): void
@@ -124,9 +124,9 @@ class PosterCatalogTest extends TestCase
         $poster = Poster::factory()->published()->create(['category_id' => $category->id]);
         $poster->categories()->attach($category);
 
-        $this->get('/postery/skrytaya-kategoriya')->assertNotFound();
-        $this->get('/postery')->assertOk()->assertSee($poster->title)->assertDontSee('Скрытая категория ·');
-        $this->get('/sitemap.xml')->assertDontSee('/postery/skrytaya-kategoriya', false);
+        $this->get('/kartiny-na-holste/skrytaya-kategoriya')->assertNotFound();
+        $this->get('/kartiny-na-holste')->assertOk()->assertSee($poster->title)->assertDontSee('Скрытая категория ·');
+        $this->get('/sitemap.xml')->assertDontSee('/kartiny-na-holste/skrytaya-kategoriya', false);
     }
 
     public function test_one_poster_can_be_found_in_several_group_pages(): void
@@ -138,9 +138,21 @@ class PosterCatalogTest extends TestCase
         $poster->categories()->attach([$boho->id, $abstract->id, $bedroom->id]);
 
         foreach (['boho', 'abstraktsiya', 'spalnya'] as $slug) {
-            $this->get('/postery/'.$slug)->assertOk()->assertSee($poster->title);
+            $this->get('/kartiny-na-holste/'.$slug)->assertOk()->assertSee($poster->title);
         }
 
-        $this->get('/postery')->assertOk()->assertSee('Бохо · Абстракция · Спальня');
+        $this->get('/kartiny-na-holste')->assertOk()->assertSee('Бохо · Абстракция · Спальня');
+    }
+
+    public function test_legacy_poster_urls_redirect_permanently_to_canvas_paintings(): void
+    {
+        $poster = Poster::factory()->published()->create();
+
+        $this->get('/postery?q=море')
+            ->assertRedirect('/kartiny-na-holste?q=%D0%BC%D0%BE%D1%80%D0%B5')
+            ->assertStatus(301);
+        $this->get('/postery/'.$poster->slug)
+            ->assertRedirect(route('posters.show', $poster))
+            ->assertStatus(301);
     }
 }

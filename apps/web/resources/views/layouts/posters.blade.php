@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Постеры на подрамнике — Токамаки')</title>
-    <meta name="description" content="@yield('description', 'Готовые интерьерные постеры и постеры по вашему фото на подрамнике.')">
+    <title>@yield('title', 'Картины на холсте — Токамаки')</title>
+    <meta name="description" content="@yield('description', 'Готовые интерьерные картины и картины по вашему фото: печать на холсте с деревянным подрамником.')">
     @if(request()->query())<meta name="robots" content="noindex,follow">@endif
     <link rel="canonical" href="@yield('canonical', url()->current())">
     <link rel="icon" type="image/webp" href="{{ asset('images/logo_tokamaki.webp') }}">
@@ -19,15 +19,15 @@
         <img src="{{ asset('images/logo_tokamaki.webp') }}" alt="" width="52" height="42">
         <img src="{{ asset('images/tokamaki_label.webp') }}" alt="Токамаки" width="150" height="33">
     </a>
-    <nav aria-label="Каталог постеров">
-        <a href="{{ route('posters.index') }}">Готовые постеры</a>
-        <a href="{{ route('posters.custom') }}">Постер по фото</a>
+    <nav aria-label="Каталог картин на холсте">
+        <a href="{{ route('posters.index') }}">Готовые картины</a>
+        <a href="{{ route('posters.custom') }}">Картина по фото</a>
         <a href="{{ route('home') }}">О бренде</a>
     </nav>
 </header>
 <main>@yield('content')</main>
 <footer class="poster-footer">
-    <p>Токамаки — интерьерные постеры и персональная печать на холсте.</p>
+    <p>Токамаки — интерьерные картины и персональная печать на холсте.</p>
     <nav><a href="{{ route('posters.index') }}">Каталог</a><a href="{{ route('posters.custom') }}">По своему фото</a><a href="{{ route('privacy') }}">Конфиденциальность</a></nav>
 </footer>
 </body>

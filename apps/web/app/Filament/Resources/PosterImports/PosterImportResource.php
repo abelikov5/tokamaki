@@ -17,13 +17,13 @@ class PosterImportResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowDownTray;
 
-    protected static ?string $navigationLabel = 'Импорты постеров';
+    protected static ?string $navigationLabel = 'Импорты картин';
 
     protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
-    protected static ?string $modelLabel = 'импорт постеров';
+    protected static ?string $modelLabel = 'импорт картин';
 
-    protected static ?string $pluralModelLabel = 'Импорты постеров';
+    protected static ?string $pluralModelLabel = 'Импорты картин';
 
     public static function table(Table $table): Table
     {

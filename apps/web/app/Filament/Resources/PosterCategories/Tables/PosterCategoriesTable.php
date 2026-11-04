@@ -21,7 +21,7 @@ class PosterCategoriesTable
                 TextColumn::make('type')->label('Тип')->badge()->formatStateUsing(fn (string $state): string => PosterCategory::typeOptions()[$state] ?? $state)->sortable(),
                 TextColumn::make('slug')->label('URL')->searchable()->copyable(),
                 IconColumn::make('is_active')->label('В каталоге')->boolean()->sortable(),
-                TextColumn::make('posters_count')->label('Постеров')->counts('posters')->sortable(),
+                TextColumn::make('posters_count')->label('Картин')->counts('posters')->sortable(),
                 TextColumn::make('sort_order')->label('Порядок')->sortable(),
             ])
             ->defaultSort('sort_order')

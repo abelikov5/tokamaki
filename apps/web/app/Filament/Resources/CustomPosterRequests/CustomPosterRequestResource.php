@@ -27,11 +27,11 @@ class CustomPosterRequestResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
-    protected static ?string $navigationLabel = 'Заказы постеров';
+    protected static ?string $navigationLabel = 'Заказы картин';
 
-    protected static ?string $modelLabel = 'заказ постера';
+    protected static ?string $modelLabel = 'заказ картины';
 
-    protected static ?string $pluralModelLabel = 'Заказы постеров';
+    protected static ?string $pluralModelLabel = 'Заказы картин';
 
     public static function form(Schema $schema): Schema
     {
@@ -45,7 +45,7 @@ class CustomPosterRequestResource extends Resource
                     'cancelled' => 'Отменена',
                 ]),
                 TextInput::make('size_code')->label('Размер')->disabled(),
-                TextInput::make('poster.title')->label('Готовый постер')->disabled(),
+                TextInput::make('poster.title')->label('Готовая картина')->disabled(),
                 TextInput::make('email')->label('Email')->disabled(),
                 TextInput::make('city')->label('Город')->disabled(),
                 TextInput::make('street')->label('Улица')->disabled(),
@@ -63,7 +63,7 @@ class CustomPosterRequestResource extends Resource
                 'new' => 'Новая', 'processing' => 'В работе', 'approved' => 'Согласована',
                 'completed' => 'Выполнена', 'cancelled' => 'Отменена', default => $state,
             }),
-            TextColumn::make('poster.title')->label('Постер')->limit(32)->placeholder('По своему фото')->searchable(),
+            TextColumn::make('poster.title')->label('Картина')->limit(32)->placeholder('По своему фото')->searchable(),
             TextColumn::make('email')->label('Email')->copyable()->searchable(),
             TextColumn::make('city')->label('Город')->searchable(),
             TextColumn::make('size_code')->label('Размер')->formatStateUsing(fn (string $state): string => str_replace('x', '×', $state)),

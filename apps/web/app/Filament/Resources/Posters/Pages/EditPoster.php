@@ -21,7 +21,7 @@ class EditPoster extends EditRecord
                 ->icon('heroicon-o-sparkles')
                 ->color('info')
                 ->requiresConfirmation()
-                ->modalHeading('Перегенерировать контент постера?')
+                ->modalHeading('Перегенерировать контент картины?')
                 ->modalDescription('Название, описания, SEO, категория и поисковые параметры будут обновлены по изображению. Задача выполнится в фоне.')
                 ->action(function (): void {
                     $this->record->update([
@@ -38,8 +38,8 @@ class EditPoster extends EditRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Опубликовать постер?')
-                ->modalDescription('После публикации постер появится в каталоге сайта.')
+                ->modalHeading('Опубликовать картину?')
+                ->modalDescription('После публикации картина появится в каталоге сайта.')
                 ->visible(fn (): bool => $this->record->status !== 'published')
                 ->action(function (): void {
                     if (! $this->record->images()->exists()) {
@@ -55,7 +55,7 @@ class EditPoster extends EditRecord
                     $this->record->update(['status' => 'published']);
                     $this->refreshFormData(['status']);
 
-                    Notification::make()->title('Постер опубликован')->success()->send();
+                    Notification::make()->title('Картина опубликована')->success()->send();
                 }),
             Action::make('open')->label('Открыть на сайте')->url(fn (): string => route('posters.show', $this->record))->openUrlInNewTab()->visible(fn (): bool => $this->record->status === 'published'),
             DeleteAction::make(),

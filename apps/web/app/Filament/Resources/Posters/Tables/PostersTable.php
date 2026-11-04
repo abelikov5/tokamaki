@@ -22,7 +22,7 @@ class PostersTable
         return $table
             ->columns([
                 ImageColumn::make('preview')
-                    ->label('Постер')
+                    ->label('Картина')
                     ->getStateUsing(fn (Poster $record): ?string => $record->primary_image_url)
                     ->height(72),
                 TextColumn::make('title')->label('Название')->searchable()->wrap()->limit(55),
@@ -78,7 +78,7 @@ class PostersTable
                         ->icon('heroicon-o-sparkles')
                         ->color('info')
                         ->requiresConfirmation()
-                        ->modalHeading('Сгенерировать контент для выбранных постеров?')
+                        ->modalHeading('Сгенерировать контент для выбранных картин?')
                         ->modalDescription('Название, описания, SEO, группы и поисковые параметры будут обновлены в фоне.')
                         ->action(function (Collection $records): void {
                             $records->each(function (Poster $poster): void {
@@ -92,8 +92,8 @@ class PostersTable
                         ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make()
                         ->label('Удалить выбранные')
-                        ->modalHeading('Удалить выбранные постеры?')
-                        ->modalDescription('Постеры исчезнут из каталога вместе с вариантами и изображениями. Это действие нельзя отменить.')
+                        ->modalHeading('Удалить выбранные картины?')
+                        ->modalDescription('Картины исчезнут из каталога вместе с вариантами и изображениями. Это действие нельзя отменить.')
                         ->modalSubmitActionLabel('Удалить'),
                 ])->label('Действия'),
             ])

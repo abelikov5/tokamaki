@@ -21,13 +21,13 @@ class PosterCategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static ?string $navigationLabel = 'Группы постеров';
+    protected static ?string $navigationLabel = 'Группы картин';
 
     protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
     protected static ?string $modelLabel = 'группа';
 
-    protected static ?string $pluralModelLabel = 'Группы постеров';
+    protected static ?string $pluralModelLabel = 'Группы картин';
 
     protected static ?string $recordTitleAttribute = 'name';
 

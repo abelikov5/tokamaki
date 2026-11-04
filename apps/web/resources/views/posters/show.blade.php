@@ -1,6 +1,6 @@
 @extends('layouts.posters')
 
-@section('title'){{ $poster->seo_title ?: $poster->title.' — постер на подрамнике' }}@endsection
+@section('title'){{ $poster->seo_title ?: $poster->title.' — картина на холсте' }}@endsection
 @section('description'){{ $poster->seo_description ?: $poster->short_description }}@endsection
 
 @php
@@ -52,7 +52,7 @@
 @endsection
 
 @section('content')
-<nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="{{ route('home') }}">Главная</a><span>→</span><a href="{{ route('posters.index') }}">Постеры</a><span>→</span><span>{{ $poster->title }}</span></nav>
+<nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="{{ route('home') }}">Главная</a><span>→</span><a href="{{ route('posters.index') }}">Картины на холсте</a><span>→</span><span>{{ $poster->title }}</span></nav>
 <section class="product-layout">
     <div class="product-gallery">
         @forelse($poster->images as $image)
@@ -63,7 +63,7 @@
         @endforelse
     </div>
     <div class="product-info">
-        <p class="poster-kicker">{{ $activeGroups->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерный постер') }}</p>
+        <p class="poster-kicker">{{ $activeGroups->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерная картина') }}</p>
         <h1>{{ $poster->title }}</h1>
         <p class="product-lead">{{ $poster->short_description }}</p>
         <div class="product-facts"><span>Холст</span><span>Деревянный подрамник</span><span>Готов к размещению</span></div>
@@ -81,13 +81,13 @@
         <a id="poster-order" class="wb-buy" href="{{ route('posters.custom', ['poster' => $poster->id, 'size' => $selectedSize]) }}">Оформить заказ <span>→</span></a>
         <a id="wb-buy" class="wb-secondary" href="{{ $selectedWbVariant?->wildberries_url ?: '#' }}" rel="nofollow sponsored" @if(!$selectedWbVariant) hidden @endif>Купить на Wildberries <span>↗</span></a>
         <p class="market-note">Размер 30×40 доступен всегда, даже если его нет на Wildberries. Бесплатная доставка до ПВЗ.</p>
-        <details open><summary>О постере</summary><div>{!! nl2br(e($poster->description)) !!}</div></details>
+        <details open><summary>О картине</summary><div>{!! nl2br(e($poster->description)) !!}</div></details>
         <details><summary>Размер и материал</summary><div>Интерьерная печать на холсте. Изображение аккуратно натянуто на деревянный подрамник.</div></details>
     </div>
 </section>
 
 @if($related->isNotEmpty())
-<section class="related-section"><div class="catalog-heading"><h2>Похожие постеры</h2>@if($primaryGroup)<a href="{{ route('posters.show', $primaryGroup) }}">Смотреть все →</a>@endif</div><div class="poster-grid related-grid">
+<section class="related-section"><div class="catalog-heading"><h2>Похожие картины</h2>@if($primaryGroup)<a href="{{ route('posters.show', $primaryGroup) }}">Смотреть все →</a>@endif</div><div class="poster-grid related-grid">
 @foreach($related as $item)<article class="poster-card"><a class="poster-card-image" href="{{ route('posters.show', $item) }}">@if($item->primary_image_url)<img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" loading="lazy">@endif</a><div><p>{{ $item->categories->take(3)->pluck('name')->join(' · ') ?: $item->category }}</p><h3><a href="{{ route('posters.show', $item) }}">{{ $item->title }}</a></h3></div></article>@endforeach
 </div></section>
 @endif

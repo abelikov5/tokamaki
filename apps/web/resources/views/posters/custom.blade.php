@@ -1,7 +1,7 @@
 @extends('layouts.posters')
 
-@section('title', $poster ? 'Заказать «'.$poster->title.'» — Токамаки' : 'Постер по своему фото на подрамнике — Токамаки')
-@section('description', $poster ? 'Оформите заказ готового постера на подрамнике в размере 30×40 или 40×50 см.' : 'Загрузите фотографию, выберите размер 30×40 или 40×50 и закажите персональный постер на подрамнике.')
+@section('title', $poster ? 'Заказать «'.$poster->title.'» — Токамаки' : 'Картина на холсте по своему фото — Токамаки')
+@section('description', $poster ? 'Оформите заказ готовой картины с печатью на холсте в размере 30×40 или 40×50 см.' : 'Загрузите фотографию и закажите персональную картину с печатью на холсте и деревянным подрамником.')
 
 @php
     $currentSize = old('size', $selectedSize);
@@ -12,21 +12,21 @@
 <section class="poster-checkout">
     <div class="checkout-copy">
         <p class="poster-kicker">Оформление заказа</p>
-        <h1>{{ $poster ? 'Ваш постер — готов к заказу' : 'Ваше фото — постер на стене' }}</h1>
+        <h1>{{ $poster ? 'Ваша картина — готова к заказу' : 'Ваше фото — картина на холсте' }}</h1>
         <p>{{ $poster ? 'Выберите размер и укажите город с улицей. Менеджер уточнит удобный пункт выдачи по электронной почте.' : 'Загрузите фотографию, выберите размер и укажите адрес. Мы проверим качество изображения перед печатью.' }}</p>
 
         <div class="checkout-product">
             @if($poster)
                 <div class="checkout-product-image">@if($poster->primary_image_url)<img src="{{ $poster->primary_image_url }}" alt="{{ $poster->title }}">@endif</div>
-                <div><small>Выбранный постер</small><strong>{{ $poster->title }}</strong><a href="{{ route('posters.show', $poster) }}">Вернуться к постеру</a></div>
+                <div><small>Выбранная картина</small><strong>{{ $poster->title }}</strong><a href="{{ route('posters.show', $poster) }}">Вернуться к картине</a></div>
             @else
                 <div class="checkout-product-mark">+</div>
-                <div><small>Персональный постер</small><strong>По вашему фото</strong><span>Проверим резкость и пропорции до печати</span></div>
+                <div><small>Персональная картина</small><strong>По вашему фото</strong><span>Проверим резкость и пропорции до печати</span></div>
             @endif
         </div>
 
         <ul class="checkout-benefits">
-            <li><span>✓</span><div><strong>Холст на подрамнике</strong><small>Готовый постер можно сразу разместить на стене</small></div></li>
+            <li><span>✓</span><div><strong>Холст на подрамнике</strong><small>Готовую картину можно сразу разместить на стене</small></div></li>
             <li><span>✓</span><div><strong>Размер 30×40 всегда доступен</strong><small>Независимо от наличия этой позиции на Wildberries</small></div></li>
             <li><span>✓</span><div><strong>Бесплатная доставка</strong><small>До ПВЗ Авито или СДЭК</small></div></li>
             <li><span>✓</span><div><strong>Проверка перед печатью</strong><small>Если потребуется, согласуем детали по email</small></div></li>
@@ -47,7 +47,7 @@
 
         <div class="order-form-heading">
             <p>Данные заказа</p>
-            <h2>Куда доставить постер?</h2>
+            <h2>Куда доставить картину?</h2>
             <span>Доставка до ПВЗ бесплатная. Точный пункт выдачи уточним после оформления.</span>
         </div>
 
@@ -60,7 +60,7 @@
         @endunless
 
         <fieldset class="checkout-size-options">
-            <legend>Размер постера</legend>
+            <legend>Размер картины</legend>
             @foreach(['30x40' => 'Компактный формат', '40x50' => 'Для акцентной стены'] as $size => $caption)
                 <label>
                     <input type="radio" name="size" value="{{ $size }}" data-price="{{ $prices[$size] }}" @checked($currentSize === $size)>
@@ -76,7 +76,7 @@
             <label class="street-field"><span>Комментарий <small>необязательно</small></span><textarea name="comment" rows="3" maxlength="2000" placeholder="Пожелания к заказу">{{ old('comment') }}</textarea></label>
         </div>
 
-        <div class="checkout-total"><span>Постер <b id="checkout-size-label">{{ str_replace('x', '×', $currentSize) }} см</b></span><strong id="checkout-total">{{ $formatPrice($prices[$currentSize]) }}</strong></div>
+        <div class="checkout-total"><span>Картина <b id="checkout-size-label">{{ str_replace('x', '×', $currentSize) }} см</b></span><strong id="checkout-total">{{ $formatPrice($prices[$currentSize]) }}</strong></div>
         <button class="poster-order-submit" type="submit">Оформить заказ</button>
         <small class="checkout-privacy">Нажимая кнопку, вы соглашаетесь с <a href="{{ route('privacy') }}" target="_blank">политикой конфиденциальности</a>.</small>
     </form>

@@ -61,14 +61,15 @@ class PosterImportServiceTest extends TestCase
         $this->assertNotNull($poster->published_at);
         $this->assertSame([
             'Природа', 'Современный', 'Гостиная', 'розовый', 'фиолетовый', 'белый',
-            'бежевый', 'постер', 'горы',
+            'бежевый', 'картина на холсте', 'интерьерная картина', 'постер на холсте',
+            'картина', 'на', 'холсте', 'горы',
         ], $poster->search_keywords);
         $this->assertSame('розовый, фиолетовый, белый, бежевый', $poster->primary_color);
         $this->assertContains('розовый', $poster->search_keywords);
         $this->assertContains('фиолетовый', $poster->search_keywords);
         $this->assertStringNotContainsString('«', implode(' ', $poster->search_keywords));
         $this->assertStringNotContainsString('»', implode(' ', $poster->search_keywords));
-        $this->assertDatabaseHas('posters', ['title' => 'Постер «Горы»']);
+        $this->assertDatabaseHas('posters', ['title' => 'Картина на холсте «Горы»']);
         $this->assertDatabaseHas('poster_categories', [
             'name' => 'Природа',
             'slug' => 'priroda',
