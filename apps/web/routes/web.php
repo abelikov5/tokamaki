@@ -14,10 +14,6 @@ Route::get('/kartiny-na-holste/po-foto', [CustomPosterRequestController::class, 
 Route::post('/kartiny-na-holste/po-foto', [CustomPosterRequestController::class, 'store'])->middleware('throttle:5,1')->name('posters.custom.store');
 Route::get('/admin/custom-poster-requests/{customPosterRequest}/photo', [CustomPosterRequestController::class, 'photo'])->name('admin.custom-poster-requests.photo');
 Route::get('/kartiny-na-holste/{slug}', [PosterCatalogController::class, 'show'])->name('posters.show');
-Route::get('/postery', [PosterCatalogController::class, 'legacyIndex']);
-Route::get('/postery/po-foto', [CustomPosterRequestController::class, 'legacyCreate']);
-Route::post('/postery/po-foto', [CustomPosterRequestController::class, 'store'])->middleware('throttle:5,1');
-Route::get('/postery/{slug}', [PosterCatalogController::class, 'legacyShow']);
 Route::get('/kartina-po-nomeram-po-foto', [GenerationController::class, 'index'])->name('generator');
 Route::get('/edit/kartina-po-nomeram-po-foto', [GenerationController::class, 'editor'])->name('generator.editor');
 Route::get('/kartina-po-nomeram-po-foto/proekt/{generation:resume_token}', [GenerationController::class, 'resume'])

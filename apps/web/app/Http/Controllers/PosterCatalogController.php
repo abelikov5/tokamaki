@@ -6,23 +6,12 @@ use App\Models\Poster;
 use App\Models\PosterCategory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class PosterCatalogController extends Controller
 {
-    public function legacyIndex(Request $request): RedirectResponse
-    {
-        return redirect()->route('posters.index', $request->query(), 301);
-    }
-
-    public function legacyShow(Request $request, string $slug): RedirectResponse
-    {
-        return redirect()->route('posters.show', ['slug' => $slug, ...$request->query()], 301);
-    }
-
     public function index(Request $request): View
     {
         $validated = $request->validate([

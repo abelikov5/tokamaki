@@ -16,11 +16,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CustomPosterRequestController extends Controller
 {
-    public function legacyCreate(Request $request): RedirectResponse
-    {
-        return redirect()->route('posters.custom', $request->query(), 301);
-    }
-
     public function create(Request $request): View
     {
         $validated = $request->validate([

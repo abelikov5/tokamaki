@@ -144,15 +144,4 @@ class PosterCatalogTest extends TestCase
         $this->get('/kartiny-na-holste')->assertOk()->assertSee('Бохо · Абстракция · Спальня');
     }
 
-    public function test_legacy_poster_urls_redirect_permanently_to_canvas_paintings(): void
-    {
-        $poster = Poster::factory()->published()->create();
-
-        $this->get('/postery?q=море')
-            ->assertRedirect('/kartiny-na-holste?q=%D0%BC%D0%BE%D1%80%D0%B5')
-            ->assertStatus(301);
-        $this->get('/postery/'.$poster->slug)
-            ->assertRedirect(route('posters.show', $poster))
-            ->assertStatus(301);
-    }
 }

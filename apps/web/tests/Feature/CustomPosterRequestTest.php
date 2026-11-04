@@ -17,7 +17,7 @@ class CustomPosterRequestTest extends TestCase
     {
         Storage::fake('local');
 
-        $this->post('/postery/po-foto', [
+        $this->post(route('posters.custom.store'), [
             'photo' => UploadedFile::fake()->image('family.jpg', 1200, 1600),
             'size' => '40x50',
             'email' => 'anna@example.test',
@@ -42,7 +42,7 @@ class CustomPosterRequestTest extends TestCase
     {
         $poster = Poster::factory()->published()->create();
 
-        $this->post('/postery/po-foto', [
+        $this->post(route('posters.custom.store'), [
             'poster_id' => $poster->id,
             'size' => '30x40',
             'email' => 'buyer@example.test',
