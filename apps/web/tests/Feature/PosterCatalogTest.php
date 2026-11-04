@@ -161,4 +161,50 @@ class PosterCatalogTest extends TestCase
         $this->get('/kartiny-na-holste')->assertOk()->assertSee('Бохо · Абстракция · Спальня');
     }
 
+    public function test_catalog_renders_commercial_content_collections_and_structured_data(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Гостиная',
+            'slug' => 'gostinaya',
+            'type' => 'room',
+            'is_active' => true,
+        ]);
+        $poster = Poster::factory()->published()->create(['title' => 'Тёплая абстракция']);
+        $poster->categories()->attach($category);
+
+        $this->get('/kartiny-na-holste')
+            ->assertOk()
+            ->assertSee('Картины на холсте купить — готовые 30×40 и 40×50 | Токамаки')
+            ->assertSee('Готовые картины на холсте')
+            ->assertSee('Популярные подборки')
+            ->assertSee('/kartiny-na-holste/gostinaya', false)
+            ->assertSee('Частые вопросы о картинах на холсте')
+            ->assertSee('"@type": "BreadcrumbList"', false)
+            ->assertSee('"@type": "ItemList"', false)
+            ->assertSee('"@type": "FAQPage"', false);
+    }
+
+    public function test_catalog_renders_live_filter_controls_and_active_filter_chips(): void
+    {
+        $category = PosterCategory::create([
+            'name' => 'Минимализм',
+            'slug' => 'minimalizm',
+            'type' => 'style',
+            'is_active' => true,
+        ]);
+        $poster = Poster::factory()->published()->create([
+            'orientation' => 'vertical',
+        ]);
+        $poster->categories()->attach($category);
+
+        $this->get('/kartiny-na-holste?category=minimalizm&size=30x40&orientation=vertical&sort=price_asc')
+            ->assertOk()
+            ->assertSee('data-live-filter', false)
+            ->assertSee('catalogTools.requestSubmit()', false)
+            ->assertSee('aria-label="Активные фильтры"', false)
+            ->assertSee('Минимализм')
+            ->assertSee('30×40 см')
+            ->assertSee('Вертикальные')
+            ->assertSee('Сначала дешевле');
+    }
 }
