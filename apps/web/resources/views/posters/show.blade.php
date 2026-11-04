@@ -66,7 +66,7 @@
         <p class="poster-kicker">{{ $activeGroups->pluck('name')->join(' · ') ?: ($poster->category ?? 'Интерьерная картина') }}</p>
         <h1>{{ $poster->title }}</h1>
         <p class="product-lead">{{ $poster->short_description }}</p>
-        <div class="product-facts"><span>Бесплатная доставка</span><span>Сочные цвета</span><span>Крепежи в комплекте</span></div>
+        <div class="product-facts"><span>Бесплатная доставка</span><span>Сочные цвета</span><span>Крепежи в комплекте!</span></div>
         <fieldset class="variant-picker">
             <legend>Выберите размер</legend>
             @foreach($prices as $size => $price)
