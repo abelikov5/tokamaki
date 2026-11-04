@@ -64,6 +64,29 @@ class PosterAdminTest extends TestCase
         $this->assertDatabaseHas('posters', ['id' => $posters->last()->id]);
     }
 
+    public function test_admin_can_toggle_recommendation_from_poster_list(): void
+    {
+        config()->set('services.filament_admin.email', 'admin@example.com');
+        $admin = User::factory()->create(['email' => 'admin@example.com']);
+        $poster = Poster::factory()->create(['is_admin_recommended' => false]);
+
+        $this->actingAs($admin);
+
+        $component = Livewire::test(ListPosters::class);
+
+        $result = $component->instance()->updateTableColumnState(
+            'is_admin_recommended',
+            $component->instance()->getTableRecordKey($poster),
+            true,
+        );
+
+        $this->assertTrue($result);
+        $this->assertDatabaseHas('posters', [
+            'id' => $poster->id,
+            'is_admin_recommended' => true,
+        ]);
+    }
+
     public function test_admin_can_see_images_and_publish_a_draft(): void
     {
         config()->set('services.filament_admin.email', 'admin@example.com');

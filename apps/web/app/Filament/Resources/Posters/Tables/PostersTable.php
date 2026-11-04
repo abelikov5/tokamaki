@@ -9,9 +9,9 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -28,9 +28,8 @@ class PostersTable
                     ->getStateUsing(fn (Poster $record): ?string => $record->primary_image_url)
                     ->height(72),
                 TextColumn::make('title')->label('Название')->searchable()->wrap()->limit(55),
-                IconColumn::make('is_admin_recommended')
+                ToggleColumn::make('is_admin_recommended')
                     ->label('Рекомендация')
-                    ->boolean()
                     ->sortable(),
                 TextColumn::make('view_count')
                     ->label('Просмотры')
