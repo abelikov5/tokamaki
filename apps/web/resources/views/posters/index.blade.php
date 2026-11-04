@@ -163,7 +163,7 @@
     <div class="catalog-trust" aria-label="Преимущества картин Токамаки">
         <div><b>01</b><span><strong>Печать на холсте</strong><small>Интерьерная печать с аккуратной цветопередачей</small></span></div>
         <div><b>02</b><span><strong>Деревянный подрамник</strong><small>Холст уже натянут и готов к размещению</small></span></div>
-        <div><b>03</b><span><strong>Бесплатная доставка</strong><small>До удобного пункта выдачи</small></span></div>
+        <div><b>03</b><span><strong>Бесплатная доставка</strong><small>До ПВЗ СДЭК или Авито</small></span></div>
     </div>
 
     <div class="catalog-heading">
