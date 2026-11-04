@@ -61,6 +61,7 @@ class PosterImportService
                         $posterImport->source_user_id,
                         $source,
                         $posterImport->image_limit ?: 3,
+                        $posterImport->generate_ai,
                     ) || $wasCreated;
                 } catch (Throwable $exception) {
                     $designFailed = true;
@@ -133,12 +134,12 @@ class PosterImportService
     /**
      * @param  array<string, mixed>  $source
      */
-    private function syncPoster(int $sourceUserId, array $source, int $imageLimit): bool
+    private function syncPoster(int $sourceUserId, array $source, int $imageLimit, bool $generateAi): bool
     {
         $sourceKey = $this->sourceKey($source);
         $contentHash = hash('sha256', json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        [$poster, $wasCreated, $needsGeneration] = DB::transaction(function () use ($sourceUserId, $sourceKey, $contentHash, $source): array {
+        [$poster, $wasCreated, $needsGeneration] = DB::transaction(function () use ($sourceUserId, $sourceKey, $contentHash, $source, $generateAi): array {
             $poster = Poster::firstOrNew([
                 'source_user_id' => $sourceUserId,
                 'source_key' => $sourceKey,
@@ -182,7 +183,7 @@ class PosterImportService
                 ]);
             }
 
-            if ($needsGeneration) {
+            if ($needsGeneration && $generateAi) {
                 $poster->ai_generation_status = 'pending';
                 $poster->ai_generation_error = null;
             }
@@ -216,7 +217,7 @@ class PosterImportService
             $poster->update(['status' => 'published']);
         }
 
-        if ($needsGeneration) {
+        if ($needsGeneration && $generateAi) {
             GeneratePosterContentJob::dispatch($poster->id, updateSlug: true);
         }
 

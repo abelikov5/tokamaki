@@ -9,6 +9,7 @@ use App\Filament\Resources\Posters\Pages\ListPosters;
 use App\Models\Poster;
 use App\Models\PosterImage;
 use App\Models\PosterImport;
+use App\Models\PosterImportSchedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -62,6 +63,36 @@ class PosterAdminTest extends TestCase
 
         $this->assertDatabaseCount('posters', 1);
         $this->assertDatabaseHas('posters', ['id' => $posters->last()->id]);
+    }
+
+    public function test_admin_can_configure_scheduled_poster_import(): void
+    {
+        config()->set('services.filament_admin.email', 'admin@example.com');
+        $admin = User::factory()->create(['email' => 'admin@example.com']);
+
+        Livewire::actingAs($admin)->test(ListPosterImports::class)
+            ->assertActionExists('configureSchedule')
+            ->callAction('configureSchedule', [
+                'enabled' => true,
+                'source_user_id' => 2,
+                'scheduled_time' => '04:15',
+                'random_count' => 25,
+                'image_limit' => 4,
+                'only_new' => true,
+                'generate_ai' => true,
+            ])
+            ->assertNotified();
+
+        $this->assertDatabaseHas('poster_import_schedules', [
+            'id' => PosterImportSchedule::current()->id,
+            'enabled' => true,
+            'source_user_id' => 2,
+            'scheduled_time' => '04:15',
+            'random_count' => 25,
+            'image_limit' => 4,
+            'only_new' => true,
+            'generate_ai' => true,
+        ]);
     }
 
     public function test_admin_can_toggle_recommendation_from_poster_list(): void

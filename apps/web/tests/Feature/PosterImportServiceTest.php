@@ -171,6 +171,36 @@ class PosterImportServiceTest extends TestCase
         $this->assertSame([900, 901], PosterImage::query()->orderBy('sort_order')->pluck('source_id')->all());
     }
 
+    public function test_import_can_skip_ai_description_generation(): void
+    {
+        Queue::fake([GeneratePosterContentJob::class]);
+        Storage::fake('public');
+        config([
+            'services.mockup_catalog.url' => 'https://mockup.test',
+            'services.mockup_catalog.token' => 'source-token',
+        ]);
+        Http::fake(function ($request) {
+            if (str_starts_with($request->url(), 'https://images.test/')) {
+                return Http::response('image-bytes', 200, ['Content-Type' => 'image/jpeg']);
+            }
+
+            return Http::response([
+                'data' => [$this->sourcePoster('10001', 501, '40x50')],
+                'meta' => ['next_cursor' => null],
+            ]);
+        });
+        $posterImport = PosterImport::create([
+            'source_user_id' => 1,
+            'generate_ai' => false,
+            'status' => 'pending',
+        ]);
+
+        app(PosterImportService::class)->run($posterImport);
+
+        $this->assertSame('not_requested', Poster::firstOrFail()->ai_generation_status);
+        Queue::assertNotPushed(GeneratePosterContentJob::class);
+    }
+
     /** @return array<string, mixed> */
     private function sourcePoster(string $nmId, int $sourceId, string $size, int $groupId = 77, int $photoCount = 1): array
     {

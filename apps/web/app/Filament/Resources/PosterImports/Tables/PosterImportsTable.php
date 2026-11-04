@@ -15,6 +15,11 @@ class PosterImportsTable
             ->poll('5s')
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
+                TextColumn::make('source')
+                    ->label('Запуск')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => $state === 'scheduled' ? 'Автоматически' : 'Вручную')
+                    ->color(fn (string $state): string => $state === 'scheduled' ? 'info' : 'gray'),
                 TextColumn::make('status')
                     ->label('Статус')
                     ->badge()
@@ -45,6 +50,7 @@ class PosterImportsTable
                     ->getStateUsing(fn (PosterImport $record): string => $record->processed_count.' / '.$record->total_count),
                 TextColumn::make('random_count')->label('Запрошено')->placeholder('—'),
                 TextColumn::make('image_limit')->label('Фото')->numeric(),
+                IconColumn::make('generate_ai')->label('ИИ-описание')->boolean(),
                 IconColumn::make('only_new')->label('Только новые')->boolean(),
                 TextColumn::make('created_count')->label('Создано')->numeric(),
                 TextColumn::make('updated_count')->label('Обновлено')->numeric(),

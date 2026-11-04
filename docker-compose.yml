@@ -66,6 +66,15 @@ services:
       postgres:
         condition: service_healthy
 
+  scheduler:
+    build: ./apps/web
+    environment: *web-environment
+    command: php artisan schedule:work
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   generator:
     build:
       context: .
