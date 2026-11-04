@@ -21,6 +21,7 @@ class PosterImportController extends Controller
 
         $posterImport = PosterImport::create([
             'source_user_id' => (int) ($validated['user_id'] ?? 1),
+            'selection_mode' => isset($validated['nm_ids']) ? 'selected' : 'all',
             'requested_nm_ids' => $validated['nm_ids'] ?? null,
             'status' => 'pending',
         ]);
@@ -45,12 +46,17 @@ class PosterImportController extends Controller
         return [
             'id' => $posterImport->id,
             'user_id' => $posterImport->source_user_id,
+            'selection_mode' => $posterImport->selection_mode,
             'status' => $posterImport->status,
             'requested_nm_ids' => $posterImport->requested_nm_ids,
+            'random_count' => $posterImport->random_count,
+            'only_new' => $posterImport->only_new,
+            'total_count' => $posterImport->total_count,
             'processed_count' => $posterImport->processed_count,
             'created_count' => $posterImport->created_count,
             'updated_count' => $posterImport->updated_count,
             'failed_count' => $posterImport->failed_count,
+            'skipped_count' => $posterImport->skipped_count,
             'errors' => $posterImport->errors,
             'created_at' => $posterImport->created_at?->toIso8601String(),
             'finished_at' => $posterImport->finished_at?->toIso8601String(),

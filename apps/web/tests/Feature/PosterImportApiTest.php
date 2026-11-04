@@ -30,6 +30,7 @@ class PosterImportApiTest extends TestCase
             ->postJson('/api/v1/admin/poster-imports', ['nm_ids' => ['10001', '10002']])
             ->assertAccepted()
             ->assertJsonPath('data.user_id', 1)
+            ->assertJsonPath('data.selection_mode', 'selected')
             ->assertJsonPath('data.status', 'pending');
 
         $id = $response->json('data.id');

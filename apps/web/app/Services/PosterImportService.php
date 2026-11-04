@@ -25,25 +25,50 @@ class PosterImportService
         $latestByDesignAndSize = [];
 
         foreach ($this->sourceRecords($posterImport) as $source) {
-            $sourceKey = isset($source['group_id']) && $source['group_id'] !== null
-                ? 'group:'.$source['group_id']
-                : 'item:'.$source['source_id'];
+            $sourceKey = $this->sourceKey($source);
             $latestByDesignAndSize[$sourceKey.'|'.$this->detectSize($source)] = $source;
         }
 
-        foreach ($latestByDesignAndSize as $source) {
-            try {
-                $wasCreated = $this->syncPoster($posterImport->source_user_id, $source);
-                $posterImport->increment('processed_count');
-                $posterImport->increment($wasCreated ? 'created_count' : 'updated_count');
-            } catch (Throwable $exception) {
-                $posterImport->increment('processed_count');
-                $posterImport->increment('failed_count');
-                $errors[] = [
-                    'nm_id' => $source['nm_id'] ?? null,
-                    'message' => $exception->getMessage(),
-                ];
+        $designs = collect($latestByDesignAndSize)
+            ->groupBy(fn (array $source): string => $this->sourceKey($source));
+        $skippedCount = 0;
+
+        if ($posterImport->only_new && $designs->isNotEmpty()) {
+            $existingKeys = Poster::query()
+                ->where('source_user_id', $posterImport->source_user_id)
+                ->whereIn('source_key', $designs->keys()->all())
+                ->pluck('source_key');
+            $skippedCount = $existingKeys->count();
+            $designs = $designs->except($existingKeys->all());
+        }
+
+        if ($posterImport->selection_mode === 'random') {
+            $designs = $designs->shuffle()->take($posterImport->random_count ?: 100);
+        }
+
+        $posterImport->update([
+            'total_count' => $designs->count(),
+            'skipped_count' => $skippedCount,
+        ]);
+
+        foreach ($designs as $sources) {
+            $wasCreated = false;
+            $designFailed = false;
+
+            foreach ($sources as $source) {
+                try {
+                    $wasCreated = $this->syncPoster($posterImport->source_user_id, $source) || $wasCreated;
+                } catch (Throwable $exception) {
+                    $designFailed = true;
+                    $errors[] = [
+                        'nm_id' => $source['nm_id'] ?? null,
+                        'message' => $exception->getMessage(),
+                    ];
+                }
             }
+
+            $posterImport->increment('processed_count');
+            $posterImport->increment($designFailed ? 'failed_count' : ($wasCreated ? 'created_count' : 'updated_count'));
         }
 
         $posterImport->update([
@@ -93,14 +118,20 @@ class PosterImportService
             ->retry(2, 500);
     }
 
+    /** @param array<string, mixed> $source */
+    private function sourceKey(array $source): string
+    {
+        return isset($source['group_id']) && $source['group_id'] !== null
+            ? 'group:'.$source['group_id']
+            : 'item:'.$source['source_id'];
+    }
+
     /**
      * @param  array<string, mixed>  $source
      */
     private function syncPoster(int $sourceUserId, array $source): bool
     {
-        $sourceKey = isset($source['group_id']) && $source['group_id'] !== null
-            ? 'group:'.$source['group_id']
-            : 'item:'.$source['source_id'];
+        $sourceKey = $this->sourceKey($source);
         $contentHash = hash('sha256', json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
         [$poster, $wasCreated, $needsGeneration] = DB::transaction(function () use ($sourceUserId, $sourceKey, $contentHash, $source): array {

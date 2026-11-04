@@ -48,7 +48,9 @@ class PosterImportServiceTest extends TestCase
 
         $posterImport->refresh();
         $this->assertSame('completed', $posterImport->status);
-        $this->assertSame(2, $posterImport->processed_count);
+        $this->assertSame(1, $posterImport->total_count);
+        $this->assertSame(1, $posterImport->processed_count);
+        $this->assertSame(1, $posterImport->created_count);
         $this->assertDatabaseCount('posters', 1);
         $this->assertDatabaseHas('posters', [
             'source_key' => 'group:77',
@@ -82,13 +84,64 @@ class PosterImportServiceTest extends TestCase
         Queue::assertPushed(GeneratePosterContentJob::class, fn (GeneratePosterContentJob $job): bool => $job->posterId === $poster->id && $job->updateSlug);
     }
 
+    public function test_random_import_selects_unique_designs_and_skips_existing_ones(): void
+    {
+        Queue::fake();
+        Storage::fake('public');
+        config([
+            'services.mockup_catalog.url' => 'https://mockup.test',
+            'services.mockup_catalog.token' => 'source-token',
+        ]);
+
+        Poster::factory()->published()->create([
+            'source_user_id' => 1,
+            'source_key' => 'group:1',
+            'source_group_id' => 1,
+        ]);
+
+        Http::fake(function ($request) {
+            if (str_starts_with($request->url(), 'https://images.test/')) {
+                return Http::response('image-bytes', 200, ['Content-Type' => 'image/jpeg']);
+            }
+
+            return Http::response([
+                'data' => [
+                    $this->sourcePoster('10001', 501, '40x50', 1),
+                    $this->sourcePoster('10002', 502, '40x50', 2),
+                    $this->sourcePoster('10003', 503, '40x50', 3),
+                    $this->sourcePoster('10004', 504, '40x50', 4),
+                ],
+                'meta' => ['next_cursor' => null],
+            ]);
+        });
+
+        $posterImport = PosterImport::create([
+            'source_user_id' => 1,
+            'selection_mode' => 'random',
+            'random_count' => 2,
+            'only_new' => true,
+            'status' => 'pending',
+        ]);
+
+        app(PosterImportService::class)->run($posterImport);
+        $posterImport->refresh();
+
+        $this->assertSame('completed', $posterImport->status);
+        $this->assertSame(2, $posterImport->total_count);
+        $this->assertSame(2, $posterImport->processed_count);
+        $this->assertSame(2, $posterImport->created_count);
+        $this->assertSame(1, $posterImport->skipped_count);
+        $this->assertDatabaseCount('posters', 3);
+        $this->assertSame(2, Poster::whereIn('source_key', ['group:2', 'group:3', 'group:4'])->count());
+    }
+
     /** @return array<string, mixed> */
-    private function sourcePoster(string $nmId, int $sourceId, string $size): array
+    private function sourcePoster(string $nmId, int $sourceId, string $size, int $groupId = 77): array
     {
         return [
             'source_id' => $sourceId,
             'user_id' => 1,
-            'group_id' => 77,
+            'group_id' => $groupId,
             'group_name' => 'Горный рассвет',
             'nm_id' => $nmId,
             'vendor_code' => 'poster_'.$nmId,
