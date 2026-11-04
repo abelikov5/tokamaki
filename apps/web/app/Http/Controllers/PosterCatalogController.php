@@ -67,15 +67,48 @@ class PosterCatalogController extends Controller
         $poster->load(['images', 'variants', 'categories']);
 
         $groupIds = $poster->categories->pluck('id');
+        $primaryTheme = $poster->categories->first(
+            fn (PosterCategory $category): bool => $category->type === 'theme' && $category->id === $poster->category_id,
+        ) ?? $poster->categories->firstWhere('type', 'theme');
+        $relatedGroupIds = [
+            'primary_theme' => $primaryTheme ? [$primaryTheme->id] : [],
+            'theme' => $poster->categories
+                ->where('type', 'theme')
+                ->where('id', '!=', $primaryTheme?->id)
+                ->pluck('id'),
+            'style' => $poster->categories->where('type', 'style')->pluck('id'),
+            'collection' => $poster->categories->where('type', 'collection')->pluck('id'),
+            'room' => $poster->categories->where('type', 'room')->pluck('id'),
+        ];
 
-        $related = Poster::query()
+        $relatedQuery = Poster::query()
             ->published()
             ->whereKeyNot($poster->id)
             ->when($groupIds->isNotEmpty(), fn (Builder $query) => $query->whereHas(
                 'categories',
                 fn (Builder $categories) => $categories->whereIn('poster_categories.id', $groupIds),
             ))
-            ->with(['images', 'variants', 'categories'])
+            ->with(['images', 'variants', 'categories']);
+
+        foreach ($relatedGroupIds as $group => $ids) {
+            $relatedQuery->withCount([
+                'categories as related_'.$group.'_count' => fn (Builder $categories) => $categories
+                    ->whereIn('poster_categories.id', $ids),
+            ]);
+        }
+
+        $related = $relatedQuery
+            ->orderByDesc('related_primary_theme_count')
+            ->orderByDesc('related_theme_count')
+            ->orderByDesc('related_style_count')
+            ->when(filled($poster->primary_color), fn (Builder $query) => $query
+                ->orderByRaw('CASE WHEN primary_color = ? THEN 1 ELSE 0 END DESC', [$poster->primary_color]))
+            ->when(filled($poster->orientation), fn (Builder $query) => $query
+                ->orderByRaw('CASE WHEN orientation = ? THEN 1 ELSE 0 END DESC', [$poster->orientation]))
+            ->orderByDesc('related_collection_count')
+            ->orderByDesc('related_room_count')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
             ->limit(4)
             ->get();
 

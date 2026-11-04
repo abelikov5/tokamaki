@@ -207,4 +207,51 @@ class PosterCatalogTest extends TestCase
             ->assertSee('Вертикальные')
             ->assertSee('Сначала дешевле');
     }
+
+    public function test_related_posters_prioritize_primary_theme_then_style_and_visual_attributes(): void
+    {
+        $animals = PosterCategory::create(['name' => 'Животные', 'slug' => 'zhivotnye', 'type' => 'theme', 'is_active' => true]);
+        $nature = PosterCategory::create(['name' => 'Природа', 'slug' => 'priroda', 'type' => 'theme', 'is_active' => true]);
+        $eclectic = PosterCategory::create(['name' => 'Эклектика', 'slug' => 'eklektika', 'type' => 'style', 'is_active' => true]);
+        $livingRoom = PosterCategory::create(['name' => 'Гостиная', 'slug' => 'gostinaya', 'type' => 'room', 'is_active' => true]);
+
+        $frog = Poster::factory()->published()->create([
+            'category_id' => $animals->id,
+            'primary_color' => 'розовый',
+            'orientation' => 'vertical',
+        ]);
+        $frog->categories()->attach([$animals->id, $nature->id, $eclectic->id, $livingRoom->id]);
+
+        $abstract = Poster::factory()->published()->create(['title' => 'Абстракция для гостиной']);
+        $abstract->categories()->attach([$nature->id, $livingRoom->id]);
+
+        $matchingAnimalColor = Poster::factory()->published()->create([
+            'title' => 'Розовая лиса',
+            'primary_color' => 'розовый',
+            'orientation' => 'vertical',
+        ]);
+        $matchingAnimalColor->categories()->attach($animals);
+
+        $matchingAnimalStyle = Poster::factory()->published()->create([
+            'title' => 'Эклектичный тигр',
+            'primary_color' => 'синий',
+            'orientation' => 'horizontal',
+        ]);
+        $matchingAnimalStyle->categories()->attach([$animals->id, $eclectic->id]);
+
+        $natureOnly = Poster::factory()->published()->create(['title' => 'Лесной пейзаж']);
+        $natureOnly->categories()->attach($nature);
+
+        $roomOnly = Poster::factory()->published()->create(['title' => 'Декор гостиной']);
+        $roomOnly->categories()->attach($livingRoom);
+
+        $this->get(route('posters.show', $frog))
+            ->assertOk()
+            ->assertViewHas('related', fn ($related): bool => $related->pluck('id')->all() === [
+                $matchingAnimalStyle->id,
+                $matchingAnimalColor->id,
+                $abstract->id,
+                $natureOnly->id,
+            ]);
+    }
 }
