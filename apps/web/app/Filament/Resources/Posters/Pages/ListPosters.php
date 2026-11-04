@@ -53,6 +53,14 @@ class ListPosters extends ListRecords
                         ->label('Только ещё не импортированные')
                         ->helperText('Уже существующие дизайны будут пропущены до случайной выборки.')
                         ->default(true),
+                    TextInput::make('image_limit')
+                        ->label('Количество фотографий')
+                        ->helperText('Будут сохранены первые фотографии товара в указанном количестве.')
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(10)
+                        ->default(3)
+                        ->required(),
                 ])
                 ->action(function (array $data): void {
                     $nmIds = collect(preg_split('/[\s,;]+/', (string) ($data['nm_ids'] ?? ''), -1, PREG_SPLIT_NO_EMPTY))
@@ -63,6 +71,7 @@ class ListPosters extends ListRecords
                         'requested_nm_ids' => $data['selection_mode'] === 'selected' ? $nmIds : null,
                         'random_count' => $data['selection_mode'] === 'random' ? (int) $data['random_count'] : null,
                         'only_new' => (bool) ($data['only_new'] ?? false),
+                        'image_limit' => (int) $data['image_limit'],
                         'status' => 'pending',
                     ]);
 

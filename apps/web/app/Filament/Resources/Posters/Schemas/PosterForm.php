@@ -31,7 +31,8 @@ class PosterForm
                 ]),
                 TextInput::make('slug')->label('URL')->required()->unique(ignoreRecord: true),
                 TextInput::make('nm_id')->label('Основной nm_id')->disabled(),
-            ])->columns(3),
+                TextInput::make('vendor_code')->label('Артикул')->disabled(),
+            ])->columns(4),
             Section::make('Фотографии')->schema([
                 View::make('filament.poster-images')
                     ->viewData(fn (?Poster $record): array => [
@@ -140,9 +141,10 @@ class PosterForm
                 Repeater::make('variants')->relationship()->schema([
                     Select::make('size_code')->label('Размер')->required()->options(['30x40' => '30×40', '40x50' => '40×50']),
                     TextInput::make('nm_id')->label('nm_id')->required(),
+                    TextInput::make('vendor_code')->label('Артикул')->disabled(),
                     TextInput::make('price')->label('Цена, ₽')->numeric()->minValue(0),
                     Toggle::make('is_active')->label('Активен')->default(true),
-                ])->columns(4)->addable(false)->deletable(false)->reorderable(false)->columnSpanFull(),
+                ])->columns(5)->addable(false)->deletable(false)->reorderable(false)->columnSpanFull(),
             ]),
         ]);
     }

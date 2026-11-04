@@ -44,6 +44,7 @@ class PosterImportsTable
                     ->badge()
                     ->getStateUsing(fn (PosterImport $record): string => $record->processed_count.' / '.$record->total_count),
                 TextColumn::make('random_count')->label('Запрошено')->placeholder('—'),
+                TextColumn::make('image_limit')->label('Фото')->numeric(),
                 IconColumn::make('only_new')->label('Только новые')->boolean(),
                 TextColumn::make('created_count')->label('Создано')->numeric(),
                 TextColumn::make('updated_count')->label('Обновлено')->numeric(),

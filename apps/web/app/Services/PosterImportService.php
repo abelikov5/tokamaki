@@ -57,7 +57,11 @@ class PosterImportService
 
             foreach ($sources as $source) {
                 try {
-                    $wasCreated = $this->syncPoster($posterImport->source_user_id, $source) || $wasCreated;
+                    $wasCreated = $this->syncPoster(
+                        $posterImport->source_user_id,
+                        $source,
+                        $posterImport->image_limit ?: 3,
+                    ) || $wasCreated;
                 } catch (Throwable $exception) {
                     $designFailed = true;
                     $errors[] = [
@@ -129,7 +133,7 @@ class PosterImportService
     /**
      * @param  array<string, mixed>  $source
      */
-    private function syncPoster(int $sourceUserId, array $source): bool
+    private function syncPoster(int $sourceUserId, array $source, int $imageLimit): bool
     {
         $sourceKey = $this->sourceKey($source);
         $contentHash = hash('sha256', json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -206,7 +210,7 @@ class PosterImportService
             return [$poster, $wasCreated, $needsGeneration];
         });
 
-        $this->syncImages($poster, $source['photos'] ?? []);
+        $this->syncImages($poster, $source['photos'] ?? [], $imageLimit);
 
         if ($poster->status === 'draft' && $poster->images()->exists()) {
             $poster->update(['status' => 'published']);
@@ -250,9 +254,14 @@ class PosterImportService
     /**
      * @param  array<int, array<string, mixed>>  $photos
      */
-    private function syncImages(Poster $poster, array $photos): void
+    private function syncImages(Poster $poster, array $photos, int $imageLimit): void
     {
-        foreach ($photos as $photo) {
+        $selectedPhotos = collect($photos)
+            ->sortBy(fn (array $photo): int => (int) ($photo['sort_order'] ?? 0))
+            ->take($imageLimit)
+            ->values();
+
+        foreach ($selectedPhotos as $photo) {
             $image = PosterImage::firstOrNew([
                 'poster_id' => $poster->id,
                 'source_id' => $photo['source_id'],
@@ -271,6 +280,16 @@ class PosterImportService
             }
 
             $image->save();
+        }
+
+        $selectedSourceIds = $selectedPhotos->pluck('source_id')->filter()->all();
+
+        if ($selectedSourceIds !== []) {
+            $poster->images()
+                ->whereNotNull('source_id')
+                ->whereNotIn('source_id', $selectedSourceIds)
+                ->get()
+                ->each->delete();
         }
     }
 

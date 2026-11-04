@@ -79,6 +79,7 @@ class PosterAdminTest extends TestCase
         Livewire::test(EditPoster::class, ['record' => $poster->getRouteKey()])
             ->assertSee('https://images.example.test/poster.jpg', false)
             ->assertFormFieldExists('images')
+            ->assertFormFieldExists('vendor_code')
             ->assertActionExists('publish')
             ->assertActionExists('generateAiContent')
             ->callAction('publish');

@@ -31,10 +31,11 @@ class PosterImportApiTest extends TestCase
             ->assertAccepted()
             ->assertJsonPath('data.user_id', 1)
             ->assertJsonPath('data.selection_mode', 'selected')
+            ->assertJsonPath('data.image_limit', 3)
             ->assertJsonPath('data.status', 'pending');
 
         $id = $response->json('data.id');
-        $this->assertDatabaseHas('poster_imports', ['id' => $id, 'source_user_id' => 1]);
+        $this->assertDatabaseHas('poster_imports', ['id' => $id, 'source_user_id' => 1, 'image_limit' => 3]);
         Queue::assertPushed(ImportPostersJob::class, fn (ImportPostersJob $job): bool => $job->posterImportId === $id);
     }
 
@@ -46,5 +47,30 @@ class PosterImportApiTest extends TestCase
             ->postJson('/api/v1/admin/poster-imports', ['user_id' => 7])
             ->assertAccepted()
             ->assertJsonPath('data.user_id', 7);
+    }
+
+    public function test_import_accepts_image_limit(): void
+    {
+        Queue::fake();
+
+        $this->withToken('catalog-test-token')
+            ->postJson('/api/v1/admin/poster-imports', ['image_limit' => 5])
+            ->assertAccepted()
+            ->assertJsonPath('data.image_limit', 5);
+
+        $this->assertDatabaseHas('poster_imports', ['image_limit' => 5]);
+    }
+
+    public function test_import_rejects_image_limit_above_ten(): void
+    {
+        Queue::fake();
+
+        $this->withToken('catalog-test-token')
+            ->postJson('/api/v1/admin/poster-imports', ['image_limit' => 11])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('image_limit');
+
+        $this->assertDatabaseCount('poster_imports', 0);
+        Queue::assertNothingPushed();
     }
 }

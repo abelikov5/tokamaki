@@ -17,12 +17,14 @@ class PosterImportController extends Controller
             'user_id' => ['sometimes', 'integer', 'min:1'],
             'nm_ids' => ['sometimes', 'array', 'max:100'],
             'nm_ids.*' => ['string', 'distinct', 'max:32'],
+            'image_limit' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ]);
 
         $posterImport = PosterImport::create([
             'source_user_id' => (int) ($validated['user_id'] ?? 1),
             'selection_mode' => isset($validated['nm_ids']) ? 'selected' : 'all',
             'requested_nm_ids' => $validated['nm_ids'] ?? null,
+            'image_limit' => (int) ($validated['image_limit'] ?? 3),
             'status' => 'pending',
         ]);
 
@@ -51,6 +53,7 @@ class PosterImportController extends Controller
             'requested_nm_ids' => $posterImport->requested_nm_ids,
             'random_count' => $posterImport->random_count,
             'only_new' => $posterImport->only_new,
+            'image_limit' => $posterImport->image_limit,
             'total_count' => $posterImport->total_count,
             'processed_count' => $posterImport->processed_count,
             'created_count' => $posterImport->created_count,

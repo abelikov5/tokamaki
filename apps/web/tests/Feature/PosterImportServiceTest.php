@@ -35,9 +35,9 @@ class PosterImportServiceTest extends TestCase
 
             return Http::response([
                 'data' => [
-                    $this->sourcePoster('10001', 501, '40x30'),
-                    $this->sourcePoster('10002', 502, '40x50'),
-                    $this->sourcePoster('10003', 503, '40x50'),
+                    $this->sourcePoster('10001', 501, '40x30', photoCount: 5),
+                    $this->sourcePoster('10002', 502, '40x50', photoCount: 5),
+                    $this->sourcePoster('10003', 503, '40x50', photoCount: 5),
                 ],
                 'meta' => ['next_cursor' => null],
             ]);
@@ -55,6 +55,7 @@ class PosterImportServiceTest extends TestCase
         $this->assertDatabaseHas('posters', [
             'source_key' => 'group:77',
             'nm_id' => '10003',
+            'vendor_code' => 'poster_10003',
             'status' => 'published',
         ]);
         $poster = Poster::firstOrFail();
@@ -78,8 +79,10 @@ class PosterImportServiceTest extends TestCase
         $this->assertSame('Природа', $poster->posterCategory?->name);
         $this->assertSame(['Природа'], $poster->categories()->pluck('name')->all());
         $this->assertDatabaseCount('poster_variants', 2);
-        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'size_code' => '30x40', 'price' => 1490]);
-        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'size_code' => '40x50', 'price' => 1990]);
+        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10001', 'vendor_code' => 'poster_10001', 'size_code' => '30x40', 'price' => 1490]);
+        $this->assertDatabaseHas('poster_variants', ['nm_id' => '10003', 'vendor_code' => 'poster_10003', 'size_code' => '40x50', 'price' => 1990]);
+        $this->assertDatabaseCount('poster_images', 3);
+        $this->assertSame([900, 901, 902], $poster->images()->pluck('source_id')->all());
         $this->assertNotNull(PosterImage::firstOrFail()->path);
         $this->assertSame('pending', $poster->ai_generation_status);
         Queue::assertPushed(GeneratePosterContentJob::class, fn (GeneratePosterContentJob $job): bool => $job->posterId === $poster->id && $job->updateSlug);
@@ -136,8 +139,40 @@ class PosterImportServiceTest extends TestCase
         $this->assertSame(2, Poster::whereIn('source_key', ['group:2', 'group:3', 'group:4'])->count());
     }
 
+    public function test_import_image_limit_controls_how_many_photos_are_saved(): void
+    {
+        Queue::fake();
+        Storage::fake('public');
+        config([
+            'services.mockup_catalog.url' => 'https://mockup.test',
+            'services.mockup_catalog.token' => 'source-token',
+        ]);
+
+        Http::fake(function ($request) {
+            if (str_starts_with($request->url(), 'https://images.test/')) {
+                return Http::response('image-bytes', 200, ['Content-Type' => 'image/jpeg']);
+            }
+
+            return Http::response([
+                'data' => [$this->sourcePoster('10001', 501, '40x50', photoCount: 5)],
+                'meta' => ['next_cursor' => null],
+            ]);
+        });
+
+        $posterImport = PosterImport::create([
+            'source_user_id' => 1,
+            'image_limit' => 2,
+            'status' => 'pending',
+        ]);
+
+        app(PosterImportService::class)->run($posterImport);
+
+        $this->assertDatabaseCount('poster_images', 2);
+        $this->assertSame([900, 901], PosterImage::query()->orderBy('sort_order')->pluck('source_id')->all());
+    }
+
     /** @return array<string, mixed> */
-    private function sourcePoster(string $nmId, int $sourceId, string $size, int $groupId = 77): array
+    private function sourcePoster(string $nmId, int $sourceId, string $size, int $groupId = 77, int $photoCount = 1): array
     {
         return [
             'source_id' => $sourceId,
@@ -158,14 +193,14 @@ class PosterImportServiceTest extends TestCase
                 : ['length' => 52, 'width' => 42],
             'sizes' => [],
             'visual_analysis' => ['summary' => 'Спокойный горный пейзаж в утреннем свете.'],
-            'photos' => [[
-                'source_id' => 900,
-                'role' => 'main',
-                'sort_order' => 0,
-                'url' => 'https://images.test/poster.jpg',
-                'file_name' => 'poster.jpg',
+            'photos' => collect(range(0, $photoCount - 1))->map(fn (int $index): array => [
+                'source_id' => 900 + $index,
+                'role' => $index === 0 ? 'main' : 'slide',
+                'sort_order' => $index,
+                'url' => 'https://images.test/poster-'.$index.'.jpg',
+                'file_name' => 'poster-'.$index.'.jpg',
                 'mime_type' => 'image/jpeg',
-            ]],
+            ])->all(),
             'updated_at' => '2026-11-03T10:00:00+03:00',
         ];
     }
