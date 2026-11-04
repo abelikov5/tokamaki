@@ -77,7 +77,7 @@
                 </label>
             @endforeach
         </fieldset>
-        <button id="poster-order" class="wb-buy" type="button">Оформить заказ <span>→</span></button>
+        <button id="poster-order" class="wb-buy" type="button">Оформить заказ</button>
         <p class="market-note">Бесплатная доставка до ПВЗ Авито или СДЭК.</p>
         <details open><summary>О картине</summary><div>{!! nl2br(e($poster->description)) !!}</div></details>
         <details><summary>Размер и материал</summary><div>Интерьерная печать на холсте. Изображение аккуратно натянуто на деревянный подрамник.</div></details>
