@@ -16,6 +16,10 @@ docker compose --project-name tokamaki ps
 
 for attempt in {1..30}; do
     if curl --fail --silent --show-error http://127.0.0.1:8081/healthz >/dev/null; then
+        if [[ -f scripts/submit-indexnow-on-deploy ]]; then
+            docker compose --project-name tokamaki exec -T php php artisan indexnow:submit-all
+        fi
+
         echo "Tokamaki deployment is healthy."
         exit 0
     fi
