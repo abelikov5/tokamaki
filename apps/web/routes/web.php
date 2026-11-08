@@ -4,10 +4,16 @@ use App\Http\Controllers\CustomPosterRequestController;
 use App\Http\Controllers\GenerationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PosterCatalogController;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
 Route::view('/privacy', 'privacy')->name('privacy');
+Route::get('/indexnow-key.txt', fn (): Response => response(
+    (string) config('services.indexnow.key'),
+    200,
+    ['Content-Type' => 'text/plain; charset=UTF-8'],
+))->name('index-now.key');
 Route::get('/sitemap.xml', [PosterCatalogController::class, 'sitemap'])->name('sitemap');
 Route::get('/kartiny-na-holste', [PosterCatalogController::class, 'index'])->name('posters.index');
 Route::get('/kartiny-na-holste/po-foto', [CustomPosterRequestController::class, 'create'])->name('posters.custom');

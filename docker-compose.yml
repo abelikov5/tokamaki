@@ -43,6 +43,8 @@ services:
       AITUNNEL_API_URL: ${AITUNNEL_API_URL:-https://api.aitunnel.ru/v1/chat/completions}
       AITUNNEL_POSTER_MODEL: ${AITUNNEL_POSTER_MODEL:-qwen3.7-flash}
       AITUNNEL_TIMEOUT: ${AITUNNEL_TIMEOUT:-120}
+      INDEXNOW_ENDPOINT: ${INDEXNOW_ENDPOINT:-https://yandex.com/indexnow}
+      INDEXNOW_KEY: ${INDEXNOW_KEY:-tokamaki-1c8f72e6a4b945e3b8d2f0a769c4315e}
       POSTER_PRICE_30X40: ${POSTER_PRICE_30X40:-990}
       POSTER_PRICE_40X50: ${POSTER_PRICE_40X50:-1290}
     command: sh -c "php artisan migrate --force && php artisan db:seed --class=AdminUserSeeder --force && php-fpm"

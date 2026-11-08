@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\GeneratePosterContentJob;
+use App\Jobs\SubmitUrlsToIndexNowJob;
 use App\Models\Poster;
 use App\Models\PosterCategory;
 use App\Models\PosterImage;
@@ -10,6 +11,7 @@ use App\Services\AiPosterContentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -39,6 +41,7 @@ class AiPosterContentTest extends TestCase
                 ],
             ],
         ]);
+        Queue::fake([SubmitUrlsToIndexNowJob::class]);
 
         Http::fake([
             'https://aitunnel.test/*' => Http::response($this->responsePayload([
@@ -72,6 +75,11 @@ class AiPosterContentTest extends TestCase
                 && str_contains($userContent, 'priroda')
                 && ! str_contains($userContent, 'skrytaya')
                 && ! str_contains($userContent, 'Старое описание Wildberries');
+        });
+        Queue::assertPushed(SubmitUrlsToIndexNowJob::class, function (SubmitUrlsToIndexNowJob $job) use ($poster, $natureCategory): bool {
+            return count($job->urls) === 4
+                && in_array(route('posters.show', $poster->fresh()), $job->urls, true)
+                && in_array(route('posters.show', $natureCategory), $job->urls, true);
         });
     }
 
@@ -110,6 +118,37 @@ class AiPosterContentTest extends TestCase
             return is_array($content)
                 && str_starts_with((string) data_get($content, '1.image_url.url'), 'data:image/jpeg;base64,');
         });
+    }
+
+    public function test_successful_ai_generation_does_not_index_an_unpublished_poster(): void
+    {
+        config()->set([
+            'services.aitunnel.key' => 'test-key',
+            'services.aitunnel.api_url' => 'https://aitunnel.test/v1/chat/completions',
+            'services.aitunnel.poster_model' => 'qwen3.7-flash',
+        ]);
+        $category = PosterCategory::create([
+            'name' => 'Интерьерные картины',
+            'slug' => 'interernye-kartiny',
+            'is_active' => true,
+        ]);
+        $poster = Poster::factory()->create([
+            'status' => 'draft',
+            'published_at' => null,
+            'category_id' => $category->id,
+            'source_payload' => ['visual_analysis' => ['description' => 'Абстрактный сюжет']],
+        ]);
+        Queue::fake([SubmitUrlsToIndexNowJob::class]);
+        Http::fake([
+            'https://aitunnel.test/*' => Http::response($this->responsePayload([
+                ['name' => 'Интерьерные картины', 'slug' => 'interernye-kartiny', 'type' => 'collection'],
+            ])),
+        ]);
+
+        (new GeneratePosterContentJob($poster->id))->handle(app(AiPosterContentService::class));
+
+        $this->assertSame('generated', $poster->fresh()->ai_generation_status);
+        Queue::assertNotPushed(SubmitUrlsToIndexNowJob::class);
     }
 
     public function test_ai_can_create_a_new_normalized_group(): void

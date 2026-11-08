@@ -59,6 +59,21 @@ class GeneratePosterContentJob implements ShouldBeUnique, ShouldQueue
         $poster->categories()->sync($groupIds);
 
         $poster->images()->update(['alt_text' => $poster->fresh()->title]);
+
+        $poster = $poster->fresh();
+        if ($poster->status !== 'published' || $poster->published_at === null) {
+            return;
+        }
+
+        $urls = collect([route('posters.show', $poster)])
+            ->merge($poster->categories()->active()->get()->map(
+                fn ($category): string => route('posters.show', $category),
+            ))
+            ->unique()
+            ->values()
+            ->all();
+
+        SubmitUrlsToIndexNowJob::dispatch($urls);
     }
 
     public function failed(?Throwable $exception): void

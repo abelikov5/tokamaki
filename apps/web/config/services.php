@@ -61,4 +61,9 @@ return [
         'timeout' => (int) env('AITUNNEL_TIMEOUT', 120),
     ],
 
+    'indexnow' => [
+        'endpoint' => env('INDEXNOW_ENDPOINT', 'https://yandex.com/indexnow'),
+        'key' => env('INDEXNOW_KEY', 'tokamaki-1c8f72e6a4b945e3b8d2f0a769c4315e'),
+    ],
+
 ];
