@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PosterImports\Pages;
 
 use App\Filament\Resources\PosterImports\PosterImportResource;
+use App\Models\IndexNowSubmission;
 use App\Models\PosterImportSchedule;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +15,26 @@ use Filament\Resources\Pages\ListRecords;
 class ListPosterImports extends ListRecords
 {
     protected static string $resource = PosterImportResource::class;
+
+    public function getSubheading(): ?string
+    {
+        $submission = IndexNowSubmission::query()
+            ->where('source', 'full')
+            ->latest()
+            ->first();
+
+        if ($submission === null) {
+            return 'Полная отправка сайта в IndexNow ещё не запускалась.';
+        }
+
+        $createdAt = $submission->created_at->timezone('Europe/Moscow')->format('d.m.Y H:i:s');
+
+        if ($submission->status === 'failed') {
+            return "Последняя полная отправка в IndexNow: ошибка {$createdAt}.";
+        }
+
+        return "Последняя полная отправка в IndexNow: {$submission->urls_count} URL, {$createdAt}.";
+    }
 
     protected function getHeaderActions(): array
     {

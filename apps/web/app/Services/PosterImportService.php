@@ -62,6 +62,7 @@ class PosterImportService
                         $source,
                         $posterImport->image_limit ?: 3,
                         $posterImport->generate_ai,
+                        $posterImport->id,
                     ) || $wasCreated;
                 } catch (Throwable $exception) {
                     $designFailed = true;
@@ -134,8 +135,13 @@ class PosterImportService
     /**
      * @param  array<string, mixed>  $source
      */
-    private function syncPoster(int $sourceUserId, array $source, int $imageLimit, bool $generateAi): bool
-    {
+    private function syncPoster(
+        int $sourceUserId,
+        array $source,
+        int $imageLimit,
+        bool $generateAi,
+        int $posterImportId,
+    ): bool {
         $sourceKey = $this->sourceKey($source);
         $contentHash = hash('sha256', json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
@@ -218,7 +224,11 @@ class PosterImportService
         }
 
         if ($needsGeneration && $generateAi) {
-            GeneratePosterContentJob::dispatch($poster->id, updateSlug: true);
+            GeneratePosterContentJob::dispatch(
+                $poster->id,
+                updateSlug: true,
+                posterImportId: $posterImportId,
+            );
         }
 
         return $wasCreated;

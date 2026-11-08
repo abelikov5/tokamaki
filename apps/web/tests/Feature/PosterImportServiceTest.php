@@ -85,7 +85,9 @@ class PosterImportServiceTest extends TestCase
         $this->assertSame([900, 901, 902], $poster->images()->pluck('source_id')->all());
         $this->assertNotNull(PosterImage::firstOrFail()->path);
         $this->assertSame('pending', $poster->ai_generation_status);
-        Queue::assertPushed(GeneratePosterContentJob::class, fn (GeneratePosterContentJob $job): bool => $job->posterId === $poster->id && $job->updateSlug);
+        Queue::assertPushed(GeneratePosterContentJob::class, fn (GeneratePosterContentJob $job): bool => $job->posterId === $poster->id
+            && $job->updateSlug
+            && $job->posterImportId === $posterImport->id);
     }
 
     public function test_random_import_selects_unique_designs_and_skips_existing_ones(): void

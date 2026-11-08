@@ -6,6 +6,7 @@ use App\Models\PosterImport;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 
 class PosterImportsTable
 {
@@ -52,6 +53,32 @@ class PosterImportsTable
                 TextColumn::make('image_limit')->label('Фото')->numeric(),
                 IconColumn::make('generate_ai')->label('ИИ-описание')->boolean(),
                 IconColumn::make('only_new')->label('Только новые')->boolean(),
+                TextColumn::make('indexnow_status')
+                    ->label('Индексация')
+                    ->badge()
+                    ->getStateUsing(function (PosterImport $record): string {
+                        if (! $record->generate_ai) {
+                            return 'Не запрошена';
+                        }
+
+                        if ((int) $record->indexnow_completed_count === 0 && (int) $record->indexnow_failed_count === 0) {
+                            return 'Ожидает';
+                        }
+
+                        if ((int) $record->indexnow_failed_count > 0) {
+                            return $record->indexnow_completed_count.' успешно · '.$record->indexnow_failed_count.' ошибок';
+                        }
+
+                        return $record->indexnow_completed_count.' картин · '.((int) $record->indexnow_urls_count).' URL';
+                    })
+                    ->color(fn (PosterImport $record): string => match (true) {
+                        (int) $record->indexnow_failed_count > 0 => 'danger',
+                        (int) $record->indexnow_completed_count > 0 => 'success',
+                        default => 'gray',
+                    })
+                    ->tooltip(fn (PosterImport $record): ?string => $record->indexnow_last_submitted_at === null
+                        ? null
+                        : 'Последняя отправка: '.Carbon::parse($record->indexnow_last_submitted_at)->timezone('Europe/Moscow')->format('d.m.Y H:i:s')),
                 TextColumn::make('created_count')->label('Создано')->numeric(),
                 TextColumn::make('updated_count')->label('Обновлено')->numeric(),
                 TextColumn::make('skipped_count')->label('Пропущено')->numeric(),

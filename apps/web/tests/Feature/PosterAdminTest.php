@@ -6,6 +6,7 @@ use App\Filament\Resources\PosterCategories\Pages\ListPosterCategories;
 use App\Filament\Resources\PosterImports\Pages\ListPosterImports;
 use App\Filament\Resources\Posters\Pages\EditPoster;
 use App\Filament\Resources\Posters\Pages\ListPosters;
+use App\Models\IndexNowSubmission;
 use App\Models\Poster;
 use App\Models\PosterImage;
 use App\Models\PosterImport;
@@ -63,6 +64,35 @@ class PosterAdminTest extends TestCase
 
         $this->assertDatabaseCount('posters', 1);
         $this->assertDatabaseHas('posters', ['id' => $posters->last()->id]);
+    }
+
+    public function test_admin_sees_indexnow_results_on_the_imports_page(): void
+    {
+        $admin = User::factory()->create(['email' => config('services.filament_admin.email')]);
+        $posterImport = PosterImport::create([
+            'source_user_id' => 1,
+            'status' => 'completed',
+            'generate_ai' => true,
+        ]);
+        IndexNowSubmission::create([
+            'poster_import_id' => $posterImport->id,
+            'source' => 'import',
+            'status' => 'completed',
+            'urls_count' => 4,
+            'submitted_at' => now(),
+        ]);
+        IndexNowSubmission::create([
+            'source' => 'full',
+            'status' => 'completed',
+            'urls_count' => 25,
+            'submitted_at' => now(),
+        ]);
+
+        Livewire::actingAs($admin)->test(ListPosterImports::class)
+            ->assertOk()
+            ->assertTableColumnExists('indexnow_status')
+            ->assertSee('1 картин · 4 URL')
+            ->assertSee('Последняя полная отправка в IndexNow: 25 URL');
     }
 
     public function test_admin_can_configure_scheduled_poster_import(): void

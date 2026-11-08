@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SubmitUrlsToIndexNowJob;
+use App\Models\IndexNowSubmission;
 use App\Models\Poster;
 use App\Models\PosterCategory;
+use App\Models\PosterImport;
 use App\Services\IndexNowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
+use RuntimeException;
 use Tests\TestCase;
 
 class IndexNowTest extends TestCase
@@ -116,5 +120,50 @@ class IndexNowTest extends TestCase
             route('posters.show', $category),
             route('posters.show', $poster),
         ], $request['urlList']);
+        $this->assertDatabaseHas('index_now_submissions', [
+            'poster_import_id' => null,
+            'source' => 'full',
+            'status' => 'completed',
+            'urls_count' => 5,
+        ]);
+    }
+
+    public function test_queued_submission_records_success_for_its_import(): void
+    {
+        $posterImport = PosterImport::create(['source_user_id' => 1, 'status' => 'completed']);
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://yandex.test/indexnow' => Http::response([], 200),
+        ]);
+
+        $job = new SubmitUrlsToIndexNowJob([
+            'https://tokamaki.test/kartiny-na-holste/example',
+            'https://tokamaki.test/kartiny-na-holste/category',
+        ], $posterImport->id);
+        $job->handle(app(IndexNowService::class));
+
+        $this->assertDatabaseHas('index_now_submissions', [
+            'poster_import_id' => $posterImport->id,
+            'source' => 'import',
+            'status' => 'completed',
+            'urls_count' => 2,
+        ]);
+        $this->assertNotNull(IndexNowSubmission::firstOrFail()->submitted_at);
+    }
+
+    public function test_terminal_queued_submission_failure_is_recorded_for_its_import(): void
+    {
+        $posterImport = PosterImport::create(['source_user_id' => 1, 'status' => 'completed']);
+        $job = new SubmitUrlsToIndexNowJob(['https://tokamaki.test/example'], $posterImport->id);
+
+        $job->failed(new RuntimeException('Yandex unavailable'));
+
+        $this->assertDatabaseHas('index_now_submissions', [
+            'poster_import_id' => $posterImport->id,
+            'source' => 'import',
+            'status' => 'failed',
+            'urls_count' => 0,
+            'error' => 'Yandex unavailable',
+        ]);
     }
 }

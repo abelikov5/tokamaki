@@ -20,7 +20,11 @@ class GeneratePosterContentJob implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 600;
 
-    public function __construct(public int $posterId, public bool $updateSlug = false) {}
+    public function __construct(
+        public int $posterId,
+        public bool $updateSlug = false,
+        public ?int $posterImportId = null,
+    ) {}
 
     /** @return array<int, int> */
     public function backoff(): array
@@ -73,7 +77,7 @@ class GeneratePosterContentJob implements ShouldBeUnique, ShouldQueue
             ->values()
             ->all();
 
-        SubmitUrlsToIndexNowJob::dispatch($urls);
+        SubmitUrlsToIndexNowJob::dispatch($urls, $this->posterImportId);
     }
 
     public function failed(?Throwable $exception): void

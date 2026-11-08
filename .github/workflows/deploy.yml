@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      submit_indexnow:
+        description: Submit all public URLs to Yandex IndexNow after deploy
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: tokamaki-production
@@ -29,3 +35,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 tokamaki-deploy@77.222.54.42 \
             'cd /opt/tokamaki && git fetch origin main && git checkout main && git reset --hard origin/main && ./scripts/deploy.sh'
+
+      - name: Submit all public URLs to Yandex IndexNow
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.submit_indexnow }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 tokamaki-deploy@77.222.54.42 \
+            'cd /opt/tokamaki && docker compose --project-name tokamaki exec -T php php artisan indexnow:submit-all'
