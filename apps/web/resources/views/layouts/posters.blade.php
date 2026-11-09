@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Картины на холсте — Токамаки')</title>
     <meta name="description" content="@yield('description', 'Готовые интерьерные картины и картины по вашему фото: печать на холсте с деревянным подрамником.')">
-    @if(request()->query())<meta name="robots" content="noindex,follow">@endif
+    <meta name="robots" content="@yield('robots', 'index,follow')">
     <link rel="canonical" href="@yield('canonical', url()->current())">
     <link rel="icon" type="image/webp" href="{{ asset('images/logo_tokamaki.webp') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">

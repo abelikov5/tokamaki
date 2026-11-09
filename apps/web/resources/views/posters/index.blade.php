@@ -2,6 +2,7 @@
 
 @section('title', 'Картины на холсте купить — готовые 30×40 и 40×50 | Токамаки')
 @section('description', 'Купить готовые интерьерные картины на холсте с деревянным подрамником. Размеры 30×40 и 40×50 см, подборки по сюжету, стилю и комнате.')
+@section('robots', request()->hasAny(['q', 'category', 'orientation', 'size', 'sort', 'page']) ? 'noindex,follow' : 'index,follow')
 
 @php
     $featuredCategories = $categories

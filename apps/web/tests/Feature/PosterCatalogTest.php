@@ -66,6 +66,27 @@ class PosterCatalogTest extends TestCase
             ->assertDontSee('https://www.wildberries.ru/catalog/123456789/detail.aspx', false);
     }
 
+    public function test_tracking_parameters_do_not_block_poster_indexing(): void
+    {
+        $poster = Poster::factory()->published()->create();
+
+        $this->get(route('posters.show', $poster).'?utm_source=chatgpt.com')
+            ->assertOk()
+            ->assertSee('<meta name="robots" content="index,follow">', false)
+            ->assertDontSee('<meta name="robots" content="noindex,follow">', false)
+            ->assertSee('<link rel="canonical" href="'.route('posters.show', $poster).'">', false);
+    }
+
+    public function test_catalog_filters_remain_excluded_from_indexing(): void
+    {
+        Poster::factory()->published()->create();
+
+        $this->get(route('posters.index', ['size' => '30x40']))
+            ->assertOk()
+            ->assertSee('<meta name="robots" content="noindex,follow">', false)
+            ->assertSee('<link rel="canonical" href="'.route('posters.index').'">', false);
+    }
+
     public function test_draft_poster_page_is_not_public(): void
     {
         $poster = Poster::factory()->create();

@@ -2,6 +2,7 @@
 
 @section('title'){{ $category->seo_title ?: $category->name.' — картины на холсте | Токамаки' }}@endsection
 @section('description'){{ $category->seo_description ?: 'Картины категории «'.$category->name.'» с печатью на холсте и деревянным подрамником. Размеры 30×40 и 40×50 см.' }}@endsection
+@section('robots', request()->has('page') ? 'noindex,follow' : 'index,follow')
 
 @section('content')
 <nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="{{ route('home') }}">Главная</a><span>→</span><a href="{{ route('posters.index') }}">Картины на холсте</a><span>→</span><span>{{ $category->name }}</span></nav>
